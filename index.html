@@ -238,10 +238,10 @@ button.insignia{font:inherit;font-size:11px;letter-spacing:0;min-height:36px;cur
         <label class="campo"><span>Batería mínima al destino (%)</span><input id="minDestino" type="number" min="0" max="100" step="1" value="20"><small>Independiente del mínimo de los cargadores. Por ejemplo: 10 % en cargadores y 20 % al destino.</small></label>
         <label class="campo"><span>Tiempo máximo por recarga (min)</span><input id="tmax" type="number" value="40"></label>
         <details name="panel-ev" class="subgrupo"><summary>Más opciones de recarga</summary><div class="contenido-subgrupo">
-        <label class="campo"><span>Recarga mínima deseada (min)</span><input id="tmin" type="number" value="15"></label> <label class="campo"><span>Distancia máxima entre paradas (km, 0 = sin límite)</span><input id="maxkm" type="number" value="300"></label> <label class="campo"><span>Tiempo extra por parada (min)</span><input id="extra" type="number" value="5"></label> <input id="pen" type="hidden" value="8"> <label class="campo"><span>Potencia mínima (kW)</span><input id="minkw" type="number" value="50"></label> <label class="campo"><span>Operadores (separados por comas; vacío = todos)</span><input id="ops" type="text" placeholder="Ej: Iberdrola, Zunder"></label>
+        <label class="campo"><span>Margen para el tiempo de recarga (%)</span><input id="margenCarga" type="number" min="0" max="100" value="20"><small>20 % adicional sobre la curva estimada. Es un margen de planificación, no un dato medido del EV3. Auméntalo si observas cargas más lentas.</small></label><p class="ayuda">La batería fría o caliente y la potencia compartida pueden alargar más la carga. La previsión meteorológica no mide la temperatura de la batería. El tiempo extra por parada (5 min por defecto) se suma aparte para acceso, conexión y preparación; no incluyen colas.</p><label class="campo"><span>Recarga mínima deseada (min)</span><input id="tmin" type="number" value="15"></label> <label class="campo"><span>Distancia máxima entre paradas (km, 0 = sin límite)</span><input id="maxkm" type="number" value="300"></label> <label class="campo"><span>Tiempo extra por parada (min)</span><input id="extra" type="number" value="5"></label> <input id="pen" type="hidden" value="8"> <label class="campo"><span>Potencia mínima (kW)</span><input id="minkw" type="number" value="50"></label> <label class="campo"><span>Operadores (separados por comas; vacío = todos)</span><input id="ops" type="text" placeholder="Ej: Iberdrola, Zunder"></label>
         </div></details>
         <details name="panel-ev" class="subgrupo"><summary>Características de mi EV</summary><div class="contenido-subgrupo"><p class="ayuda">Referencia personal: 16,5 kWh/100 km a 18 °C y 100 km/h de media, incluidos picos ocasionales de 120 km/h. El desnivel se estima aparte; la referencia aún necesita contrastarse con viajes de terreno conocido.</p>
-        <label class="campo"><span>Batería útil (kWh)</span><input id="bat" type="number" value="78" step="0.1"></label> <label class="campo"><span>Consumo en viajes largos (kWh/100 km)</span><input id="cons" type="number" value="16.5" step="0.1"></label> <label class="campo"><span>Carga máx. DC (kW)</span><input id="maxkw" type="number" value="128"></label> <input id="velref" type="hidden" value="100"><p class="ayuda">Velocidad media de referencia del consumo: <strong id="velref-visible">100 km/h</strong>. La velocidad media prevista se cambia en Opciones del viaje.</p> <label class="campo"><span>Masa del coche con carga (kg). Valor aproximado, ajústalo a tu ficha técnica</span><input id="masa" type="number" value="1950"></label>
+        <label class="campo"><span>Batería útil (kWh)</span><input id="bat" type="number" value="78" step="0.1"></label> <label class="campo"><span>Consumo en viajes largos (kWh/100 km)</span><input id="cons" type="number" value="16.5" step="0.1"></label> <label class="campo"><span>Límite de carga DC del EV3 (kW)</span><input id="maxkw" type="number" min="1" max="128" value="128"></label> <input id="velref" type="hidden" value="100"><p class="ayuda">Velocidad media de referencia del consumo: <strong id="velref-visible">100 km/h</strong>. La velocidad media prevista se cambia en Opciones del viaje.</p> <label class="campo"><span>Masa del coche con carga (kg). Valor aproximado, ajústalo a tu ficha técnica</span><input id="masa" type="number" value="1950"></label>
         </div></details>
         <details name="panel-ev" class="subgrupo" id="conexion-carga"><summary>Cargadores · <span id="estado-clave">Clave pendiente</span></summary><div class="contenido-subgrupo">
         <p class="ayuda">Introduce tu clave de Open Charge Map para buscar recargas. No hace falta en viajes que puedas completar sin cargar. Se guarda en este navegador al calcular.</p>
@@ -408,7 +408,9 @@ async function buscarCargadores(coords, acum, minkw, key, cache = new Map()) {
 // Curva de carga del EV3 Long Range (kW según % de batería). Fuente: evkx.net (web de terceros).
 // De 0 a 80 % es la curva publicada; por encima del 80 % la he ajustado yo y es menos fiable.
 const CURVA = [[0,49],[1,115],[10,117],[20,119],[26,120],[44,124],[49,125],[62,125],[65,113],[69,114],[72,73],[77,61],[80,40],[85,25],[90,16],[95,11],[100,8]];
-const K_CURVA = 0.924; // calibrado para que 10-80 % dure ~33 min (publicado: 32 min 45 s)
+const K_CURVA = 0.924; // Curva aproximada existente; no equivale a una medición del vehículo del usuario.
+const LIMITE_DC_EV3 = 128; // Kia EV3 Long Range: máximo DC, no potencia sostenida.
+const MARGEN_CARGA_DEF = 20; // Decisión prudente de planificación, no coeficiente publicado por Kia.
 function potenciaCurva(s) {
   for (let i = 1; i < CURVA.length; i++) if (s <= CURVA[i][0]) {
     const a = CURVA[i-1], b = CURVA[i];
@@ -416,14 +418,15 @@ function potenciaCurva(s) {
   }
   return CURVA[CURVA.length - 1][1] * K_CURVA;
 }
-function minutosCarga(desde, hasta, bat, kwCargador, kwMax) {
+function minutosCarga(desde, hasta, bat, kwCargador, kwMax, margen = MARGEN_CARGA_DEF) {
+  if (![desde,hasta,bat,kwCargador,kwMax,margen].every(Number.isFinite) || desde < 0 || hasta > 100 || hasta < desde || bat <= 0 || kwCargador <= 0 || kwMax <= 0 || margen < 0 || margen > 100) throw new Error("Revisa los datos de recarga.");
   let m = 0;
   for (let s = desde; s < hasta; s += 0.5) {
     const paso = Math.min(0.5, hasta - s);
-    const kw = Math.min(kwCargador, kwMax, potenciaCurva(s + paso / 2));
+    const kw = Math.min(kwCargador, kwMax, LIMITE_DC_EV3, potenciaCurva(s + paso / 2));
     m += (paso / 100 * bat) / kw * 60;
   }
-  return m;
+  return m * (1 + margen / 100);
 }
 // Perfil de energía acumulada (kWh) a lo largo de la ruta.
 function energiaPlana(total, cons) { return typeof cons === "object" ? cons : {km: [0, total], kwh: [0, total * cons / 100]}; }
@@ -543,7 +546,7 @@ function optimizar(total, socIni, cargadores, P, perfil, tmax, maxkm) {
     const cap = Math.min(c.kw, P.maxkw);
     if (!tablas.has(cap)) {
       const t = [0];
-      for (let s = 0; s < 100; s++) t.push(t[s] + minutosCarga(s, s + 1, bat, cap, cap));
+      for (let s = 0; s < 100; s++) t.push(t[s] + minutosCarga(s, s + 1, bat, cap, cap, P.margenCarga ?? MARGEN_CARGA_DEF));
       tablas.set(cap, t);
     }
     return tablas.get(cap);
@@ -635,7 +638,7 @@ function planificarVoraz(total, socIni, cargadores, P, perfil) {
       .filter(x => x.id !== c.id && x.along > pos + 5 && alcanza(x) && Math.abs(x.along - c.along) <= 15)
       .sort((a, b) => b.kw - a.kw).slice(0, 2);
     paradas.push({...c, alternativas, km: c.along, llegada, objetivo,
-      kwh: (objetivo - llegada) / 100 * P.bat, minutos: minutosCarga(llegada, objetivo, P.bat, c.kw, P.maxkw)});
+      kwh: (objetivo - llegada) / 100 * P.bat, minutos: minutosCarga(llegada, objetivo, P.bat, c.kw, P.maxkw, P.margenCarga ?? MARGEN_CARGA_DEF)});
     pos = c.along; soc = objetivo;
   }
   return {paradas, ok: false, motivo: "Demasiadas paradas, revisa los datos."};
@@ -711,7 +714,7 @@ function enlaces(origen, destino, paradas) {
 }
 function pintaSoc() { $("socv").textContent = $("soc").value + " %"; }
 $("soc").addEventListener("input", pintaSoc);
-const PREFS = ["modoTiempo", "temp", "vel", "bat", "cons", "maxkw", "min", "max", "minDestino", "minkw", "ops", "velref", "masa", "tmin", "pen", "tmax", "maxkm", "extra", "margen"];
+const PREFS = ["margenCarga", "modoTiempo", "temp", "vel", "bat", "cons", "maxkw", "min", "max", "minDestino", "minkw", "ops", "velref", "masa", "tmin", "pen", "tmax", "maxkm", "extra", "margen"];
 const num = (id, def) => { const v = parseFloat($(id).value); return isNaN(v) ? def : v; };
 // Factor por temperatura. DATOS: Geotab (4.200 EV): ~100 % de autonomía entre 10 y 30 °C, ~54 % a -15 °C.
 // ESTIMACIÓN MÍA: interpolación lineal entre esos puntos y +10 % de consumo a 40 °C.
@@ -862,10 +865,10 @@ $("calc").onclick = async () => {
     const ocmKey = $("ocmKey").value.trim();
 
     try { localStorage.setItem("rutaev:ocmKey", ocmKey); } catch (e) {}
-    const P = {bat: +$("bat").value, cons: consumoAjustado(), maxkw: +$("maxkw").value,
+    const P = {bat: +$("bat").value, cons: consumoAjustado(), maxkw: +$("maxkw").value, margenCarga: num("margenCarga", MARGEN_CARGA_DEF),
                min: +$("min").value, minDestino: +$("minDestino").value, max: +$("max").value,
                tmin: num("tmin", 15), pen: num("pen", 8), tmax: num("tmax", 40), maxkm: num("maxkm", 300) || Infinity, extra: num("extra", 5)};
-    if (!(P.bat > 0 && P.cons > 0 && P.maxkw > 0 && P.min >= 0 && Number.isFinite(P.minDestino) && P.minDestino >= 0 && P.minDestino <= 100 && P.max > P.min && P.max <= 100 && P.tmax > 0 && P.extra >= 0 && P.tmin >= 0 && P.pen >= 0 && P.maxkm > 0 && num("minkw", 50) > 0 && num("velref", 100) > 0 && num("vel", 100) > 0 && num("masa", 1950) > 0)) throw new Error("Revisa los ajustes: batería, consumo, potencias y tiempos deben ser válidos; el máximo de batería debe superar al mínimo.");
+    if (!(P.bat > 0 && P.cons > 0 && P.maxkw > 0 && P.maxkw <= LIMITE_DC_EV3 && P.margenCarga >= 0 && P.margenCarga <= 100 && P.min >= 0 && Number.isFinite(P.minDestino) && P.minDestino >= 0 && P.minDestino <= 100 && P.max > P.min && P.max <= 100 && P.tmax > 0 && P.extra >= 0 && P.tmin >= 0 && P.pen >= 0 && P.maxkm > 0 && num("minkw", 50) > 0 && num("velref", 100) > 0 && num("vel", 100) > 0 && num("masa", 1950) > 0)) throw new Error("Revisa los ajustes: batería, consumo, potencias y tiempos deben ser válidos; el máximo de batería debe superar al mínimo.");
     $("res").textContent = ""; capas.clearLayers(); hayDatos = false;
     const margen = num("margen", 10), socIni = +$("soc").value;
     if (margen < 0 || margen > 50) throw new Error("El margen de tiempo debe estar entre 0 y 50 %.");
@@ -1007,6 +1010,11 @@ function mostrarOpcion(sesion, op) {
     const tl = document.createElement("p"); tl.className = "meta";
     tl.textContent = `Conducción: ${duracion(r.min)} (${r.modoTiempo === "media" ? "tu media de " + r.mediaPrevista + " km/h" : "OSRM"}) · Recargas: ${duracion(op.tCarga)} · Extras de carga: ${duracion(P.extra * nP)}.`;
     $("res").appendChild(tl);
+    if (nP) {
+      const avisoCarga = document.createElement("p"); avisoCarga.className = "meta";
+      avisoCarga.textContent = `Recargas calculadas con curva aproximada del EV3 Long Range, límite de ${Math.min(P.maxkw,LIMITE_DC_EV3)} kW y margen del ${P.margenCarga ?? MARGEN_CARGA_DEF} %. La potencia baja al subir la batería. Temperatura de batería, potencia compartida y colas no se conocen; el tiempo real puede ser mayor. Los extras se suman aparte.`;
+      $("res").appendChild(avisoCarga);
+    }
     if (Number.isFinite(r.osrmMin)) {
       const contraste = document.createElement("p"); contraste.className = "meta";
       contraste.textContent = `Referencia de conducción: OSRM ${duracion(r.osrmMin)} (media ${r.mediaOSRM.toFixed(0)} km/h). A ${r.mediaPrevista} km/h de media: ${duracion(r.minMedia)}. Cambia el criterio en Opciones del viaje y vuelve a calcular.`;
@@ -1045,13 +1053,13 @@ function mostrarOpcion(sesion, op) {
       const li = document.createElement("li");
       const t = document.createElement("strong"); t.textContent = p.nombre + (p.pueblo ? ", " + p.pueblo : "");
       const m = document.createElement("span"); m.className = "meta"; m.textContent = `Km ${p.km.toFixed(0)}, ${p.op}`;
-      const kw = document.createElement("span"); kw.className = "chip kw"; kw.textContent = `${p.kw} kW CCS2`;
-      const tm = document.createElement("span"); tm.className = "chip min"; tm.textContent = `${Math.round(p.minutos)} min`;
+      const kw = document.createElement("span"); kw.className = "chip kw"; kw.textContent = `${p.kw} kW · cargador CCS2`;
+      const tm = document.createElement("span"); tm.className = "chip min"; tm.textContent = `${Math.ceil(p.minutos)} min estimados`;
       const fila = document.createElement("div"); fila.className = "fila-chips"; fila.append(kw, tm);
       const bar = document.createElement("div"); bar.className = "barra-soc";
       const rel = document.createElement("span"); rel.style.left = p.llegada + "%"; rel.style.width = Math.max(0, p.objetivo - p.llegada) + "%"; bar.appendChild(rel);
       const c = document.createElement("span"); c.className = "carga";
-      c.textContent = `Llegas con ${p.llegada.toFixed(0)} %, cargas hasta ${p.objetivo.toFixed(0)} % (${p.kwh.toFixed(0)} kWh)${p.objetivo > 80 ? ". Por encima del 80 % la estimación es menos fiable" : ""}`;
+      c.textContent = `Llegas con ${p.llegada.toFixed(0)} %, cargas hasta ${p.objetivo.toFixed(0)} % (${p.kwh.toFixed(0)} kWh). Potencia media estimada hacia la batería: ${(p.kwh / p.minutos * 60).toFixed(0)} kW${p.objetivo > 80 ? ". Por encima del 80 % la estimación es menos fiable" : ""}`;
       li.append(t, m, fila, bar, c);
       const w = document.createElement("a"); w.className = "wz"; w.href = en.waze(p.pos); w.target = "_blank"; w.rel = "noopener";
       w.textContent = "Ir a esta parada con Waze"; li.appendChild(w);
