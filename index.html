@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ruta EV · Revisión 1 · Kia EV3</title>
+<title>Ruta EV · Revisión 2 · Kia EV3</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap">
 <style>
@@ -109,6 +109,79 @@ input[type=text],input[type=number],#calc{min-height:44px;font-size:16px}
 #datos{max-height:55dvh}
 @media(min-width:900px){#datos{max-height:calc(100dvh - 24px);width:390px}}
 @media(max-width:899px){#formulario{max-height:calc(100dvh - 16px)}#estado{bottom:8px;border-radius:12px}#datos{bottom:max(8px,env(safe-area-inset-bottom))}}
+
+/* Revisión 2: formulario esencial y opciones agrupadas. */
+:root{--card:rgba(255,255,255,.96);--grad:linear-gradient(120deg,#086956,#16836c);--field:#f1f5f4;--acc:#087660;--accsoft:#e6f3ed}
+@media(prefers-color-scheme:dark){:root{--card:rgba(17,24,39,.96);--field:#1b2930;--acc:#5ed7b3;--accsoft:#123a31}}
+#formulario{padding:20px;border-radius:24px;max-height:calc(100dvh - 24px)}
+@media(min-width:900px){#formulario{width:380px;left:18px;top:18px;max-height:calc(100dvh - 36px)}}
+.cabecera-viaje{gap:10px;margin:0 0 16px;flex-wrap:wrap}
+.cabecera-viaje .logo{width:38px;height:38px;font-size:30px;border-radius:13px;color:white}
+.cabecera-viaje h1{font-size:21px;line-height:1.2}
+.cabecera-viaje p{font-size:11px;margin-top:2px}
+.insignia{margin-left:auto;font-size:9px;letter-spacing:.08em;font-weight:700;color:var(--acc);background:var(--accsoft);border-radius:20px;padding:6px 9px}
+#cerrar{min-height:44px}
+.form{display:flex;flex-direction:column;gap:12px}
+.proposito{font-size:13px;line-height:1.5;margin:0 0 2px}
+.trayecto{position:relative;border:1px solid var(--line);border-radius:16px;padding:0 14px 0 33px;background:var(--solid)}
+.trayecto::before{content:"";position:absolute;left:16px;top:35px;bottom:35px;border-left:1px dashed var(--mute);opacity:.5}
+.lugar{position:relative;padding:8px 0 10px}
+.lugar+.lugar{border-top:1px solid var(--line)}
+.lugar::before{content:"";position:absolute;left:-22px;top:24px;width:9px;height:9px;border:2px solid var(--acc);border-radius:50%;background:var(--solid)}
+.destino-lugar::before{border-radius:3px;background:var(--acc)}
+.etiqueta-lugar{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.etiqueta-lugar label{font-size:12px;font-weight:700;color:var(--mute)}
+.mini{font-size:11px;min-height:32px;padding:0 2px;color:var(--acc)}
+.lugar input[type=text]{padding:5px 0;min-height:35px;background:none;border-radius:0;font-size:16px}
+.lugar input:focus{border-color:transparent;box-shadow:0 2px 0 var(--acc)}
+.campo>span{font-size:12px;text-transform:none;letter-spacing:0;font-weight:500;gap:6px}
+.bateria-inicial{padding:12px 14px 7px;border-radius:14px;background:var(--field)}
+.bateria-inicial>span:first-child{color:var(--ink);font-weight:600;align-items:center}
+.bateria-inicial output{font-size:21px;color:var(--acc)}
+.bateria-inicial input{height:32px}
+.bateria-inicial>.extremos{font-size:10px;color:var(--mute);margin:0}
+#calc{padding:13px 17px;display:flex;align-items:center;justify-content:space-between;border-radius:13px;font-size:15px;min-height:48px;box-shadow:0 5px 12px #08766022}
+#calc span{font-size:22px;line-height:1}
+.ayuda-principal{font-size:11px;color:var(--mute);text-align:center;margin:-5px 0 1px}
+.grupo{margin:0;border-top:1px solid var(--line)}
+.grupo>summary{list-style:none;display:flex;align-items:center;gap:10px;min-height:61px;padding:10px 0;color:var(--ink)}
+.grupo>summary::-webkit-details-marker{display:none}
+.icono-grupo{width:29px;height:29px;flex-shrink:0;background:var(--field);color:var(--acc);border-radius:9px;display:grid;place-items:center;font-size:20px}
+.texto-grupo{display:flex;flex-direction:column;gap:3px;min-width:0}
+.texto-grupo strong{font-size:13px;font-weight:600}
+.texto-grupo small{font-size:11px;color:var(--mute);font-weight:400}
+.flecha{margin-left:auto;color:var(--mute);transition:transform .15s}
+.grupo[open]>summary .flecha{transform:rotate(180deg)}
+.contenido-grupo{padding:4px 0 12px}
+.contenido-grupo h2{font-size:13px;margin:12px 0 10px;color:var(--ink)}
+.contenido-grupo h2:first-child{margin-top:0}
+.contenido-grupo .campo{margin-bottom:12px;min-width:0}
+.contenido-grupo input[type=password]{width:100%;padding:10px;font:inherit;color:var(--ink);background:var(--field);border:1px solid transparent;border-radius:10px;min-height:44px;font-size:16px}
+.contenido-grupo input[type=password]:focus{border-color:var(--acc);outline:0}
+.contenido-grupo small,.ayuda{font-size:11px;color:var(--mute);line-height:1.5}
+.ayuda{margin:0 0 12px}
+.dos-columnas{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.subgrupo{border-top:1px solid var(--line);margin-top:10px;padding-top:2px}
+.subgrupo>summary{min-height:44px;display:list-item;list-style-position:inside;font-size:12px}
+.contenido-subgrupo{padding:8px 0}
+#historial{margin-top:0}
+#viajes{margin:0}
+#viajes button{min-height:44px;padding:10px 12px;line-height:1.4}
+#viajes strong{display:none}
+@media(max-width:899px){#formulario{padding:16px;left:10px;right:10px;top:10px;max-height:calc(100dvh - 20px);border-radius:22px}.cabecera-viaje{margin-bottom:12px}.form{gap:10px}.grupo>summary{min-height:57px}}
+@media(prefers-reduced-motion:reduce){.flecha{transition:none}}
+
+button.insignia{font:inherit;font-size:11px;letter-spacing:0;min-height:36px;cursor:pointer;border:1px solid var(--line);padding:6px 10px}
+#preparar{position:fixed;z-index:1250;top:38px;right:12px;font:600 14px "DM Sans",system-ui,sans-serif;min-height:44px;padding:10px 18px;border-radius:24px;border:0;background:var(--grad);color:white;box-shadow:0 5px 20px #0003;cursor:pointer}
+
+@media(max-width:899px){
+  .form{gap:8px}.form>.proposito{display:none}
+  .cabecera-viaje{margin-bottom:10px}
+  .lugar{padding:4px 0 6px}
+  .bateria-inicial{padding:9px 12px 5px}
+  .bateria-inicial input{height:26px}
+  .grupo>summary{min-height:52px;padding:8px 0}
+}
 </style>
 </head>
 <body>
@@ -116,42 +189,57 @@ input[type=text],input[type=number],#calc{min-height:44px;font-size:16px}
 <div id="estado" role="status"></div>
 <div id="elegir" class="oculto"><span>Toca el mapa para elegir el destino</span><button id="cancelarmapa">Cancelar</button></div>
 <button id="abrir" class="oculto">Editar viaje</button>
-<section id="formulario" class="panel">
-  <header><span class="logo"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6z" fill="#fff"/></svg></span><h1>Ruta EV</h1><p>Kia EV3 Long Range</p><button id="cerrar" class="oculto">Volver a la ruta</button></header>
+<button id="preparar" class="oculto">Preparar viaje</button>
+<section id="formulario" class="panel" aria-label="Preparar viaje">
+  <header class="cabecera-viaje">
+    <span class="logo" aria-hidden="true">ϟ</span>
+    <div><h1>Ruta EV</h1><p>Kia EV3 Long Range</p></div>
+    <button type="button" id="ver-mapa" class="insignia">Ver mapa</button>
+    <button id="cerrar" class="oculto">Volver a la ruta</button>
+  </header>
   <div class="form">
-    <p class="proposito">Menos energía, sin alargar demasiado el viaje. Comparamos las rutas disponibles y sus recargas.</p>
-    <label class="campo c4"><span>Origen <button type="button" id="miub" class="mini">Mi ubicación</button></span><input id="origen" type="text" placeholder="Ciudad o dirección"></label>
-    <label class="campo c4"><span>Destino <button type="button" id="elegirdest" class="mini">Elegir en el mapa</button></span><input id="destino" type="text" placeholder="Ciudad o dirección"></label>
-    <label class="campo c6"><span>Paradas intermedias (separadas por ;)</span><input id="vias" type="text" placeholder="Ej: Zaragoza; Medinaceli"></label>
-    <label class="campo c2 sm1"><span>Min. por parada</span><input id="minvia" type="number" value="30"></label>
-    <label class="campo c2 sm1"><span>Batería <output id="socv">90 %</output></span><input id="soc" type="range" min="11" max="100" value="90"></label>
-    <label class="campo c2 sm"><span>Temperatura (°C)</span><input id="temp" type="number" value="15"></label>
-    <label class="campo c2 sm"><span>Velocidad de referencia del viaje (km/h)</span><input id="vel" type="number" value="100"></label>
-    <label class="campo c4"><span>Margen de tiempo para ahorrar energía (%)</span><input id="margen" type="number" min="0" max="50" step="1" value="10"><small>10 % permite hasta 12 min más en un viaje de 2 horas.</small></label>
-    <button id="calc">Comparar rutas</button>
-    <details>
-      <summary>Ajustes</summary>
-      <div class="rejilla">
-        <label class="campo"><span>Batería útil (kWh)</span><input id="bat" type="number" value="81.4" step="0.1"></label>
-        <label class="campo"><span>Consumo (kWh/100 km)</span><input id="cons" type="number" value="15.8" step="0.1"></label>
-        <label class="campo"><span>Carga máx. DC (kW)</span><input id="maxkw" type="number" value="128"></label>
-        <label class="campo"><span>Llegar con mínimo (%)</span><input id="min" type="number" value="10"></label>
-        <label class="campo"><span>Cargar hasta (%)</span><input id="max" type="number" value="80"></label>
-        <label class="campo"><span>Potencia mínima (kW)</span><input id="minkw" type="number" value="50"></label>
-        <label class="campo"><span>Recarga mínima deseada (min)</span><input id="tmin" type="number" value="15"></label>
-        <label class="campo"><span>Evitar paradas cortas (0 = indiferente; más = las evita más)</span><input id="pen" type="number" value="8"></label>
-        <label class="campo"><span>Tiempo máximo por recarga (min)</span><input id="tmax" type="number" value="40"></label>
-        <label class="campo"><span>Distancia máxima entre paradas (km, 0 = sin límite)</span><input id="maxkm" type="number" value="300"></label>
-        <label class="campo"><span>Tiempo extra por parada (min)</span><input id="extra" type="number" value="5"></label>
+    <p class="proposito">Tu próximo viaje, con menos energía y tiempo.</p>
+    <div class="trayecto">
+      <div class="lugar origen-lugar"><div class="etiqueta-lugar"><label for="origen">Desde</label><button type="button" id="miub" class="mini">Mi ubicación</button></div><input id="origen" type="text" placeholder="Ciudad o dirección" autocomplete="off"></div>
+      <div class="lugar destino-lugar"><div class="etiqueta-lugar"><label for="destino">Hasta</label><button type="button" id="elegirdest" class="mini">Elegir en el mapa</button></div><input id="destino" type="text" placeholder="¿Adónde vamos?" autocomplete="off"></div>
+    </div>
+    <label class="campo bateria-inicial"><span>Batería al salir <output id="socv">90 %</output></span><input id="soc" type="range" min="11" max="100" value="90"></label>
+    <button id="calc">Comparar rutas <span aria-hidden="true">→</span></button>
+    <p class="ayuda-principal">Menor consumo con hasta <strong id="margen-visible">10 %</strong> más de tiempo.</p>
+    <details class="grupo" id="opciones-viaje">
+      <summary><span class="icono-grupo" aria-hidden="true">↗</span><span class="texto-grupo"><strong>Opciones del viaje</strong><small id="resumen-viaje">15 °C · 100 km/h · Sin paradas</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
+      <div class="contenido-grupo">
+        <h2>Paradas que tú eliges</h2>
+        <label class="campo"><span>Ciudades o lugares (separados por ;)</span><input id="vias" type="text" placeholder="Ej: Zaragoza; Medinaceli"></label>
+        <label class="campo"><span>Duración de cada parada (min)</span><input id="minvia" type="number" value="30"></label>
+        <h2>Condiciones del viaje</h2>
+        <div class="dos-columnas"><label class="campo"><span>Temperatura (°C)</span><input id="temp" type="number" value="15"></label> <label class="campo"><span>Velocidad de referencia (km/h)</span><input id="vel" type="number" value="100"></label></div>
+        <label class="campo"><span><input id="desn" type="checkbox" checked> Tener en cuenta el desnivel</span></label>
+        <h2>Tu equilibrio</h2>
+        <label class="campo"><span>Tiempo adicional que aceptas (%)</span><input id="margen" type="number" min="0" max="50" step="1" value="10"><small>10 % permite hasta 12 min más en un viaje de 2 horas.</small></label>
       </div>
-      <label class="campo"><span>Velocidad a la que obtuviste tu consumo base (km/h)</span><input id="velref" type="number" value="100"></label>
-      <label class="campo"><span>Masa del coche con carga (kg). Valor aproximado, ajústalo a tu ficha técnica</span><input id="masa" type="number" value="1950"></label>
-      <label class="campo"><span><input id="desn" type="checkbox" checked> Tener en cuenta el desnivel</span></label>
-      <label class="campo"><span>Operadores (separados por comas; vacío = todos)</span><input id="ops" type="text" placeholder="Ej: Iberdrola, Zunder"></label>
-      <label class="campo"><span>Clave de Open Charge Map</span><input id="ocmKey" type="password" autocomplete="off"></label>
+    </details>
+    <details class="grupo" id="ajustes-ev">
+      <summary><span class="icono-grupo" aria-hidden="true">ϟ</span><span class="texto-grupo"><strong>Mi EV y recargas</strong><small id="resumen-ev">Reserva 10 % · Cargar hasta 80 %</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
+      <div class="contenido-grupo">
+        <p class="ayuda">Estos ajustes se guardan al calcular. Solo necesitas revisarlos cuando cambien tus preferencias.</p>
+        <h2>Cómo quieres cargar</h2>
+        <div class="dos-columnas"><label class="campo"><span>Llegar con mínimo (%)</span><input id="min" type="number" value="10"></label> <label class="campo"><span>Cargar hasta (%)</span><input id="max" type="number" value="80"></label></div>
+        <label class="campo"><span>Tiempo máximo por recarga (min)</span><input id="tmax" type="number" value="40"></label>
+        <details class="subgrupo"><summary>Más opciones de recarga</summary><div class="contenido-subgrupo">
+        <label class="campo"><span>Recarga mínima deseada (min)</span><input id="tmin" type="number" value="15"></label> <label class="campo"><span>Distancia máxima entre paradas (km, 0 = sin límite)</span><input id="maxkm" type="number" value="300"></label> <label class="campo"><span>Tiempo extra por parada (min)</span><input id="extra" type="number" value="5"></label> <label class="campo"><span>Evitar paradas cortas (0 = indiferente; más = las evita más)</span><input id="pen" type="number" value="8"></label> <label class="campo"><span>Potencia mínima (kW)</span><input id="minkw" type="number" value="50"></label> <label class="campo"><span>Operadores (separados por comas; vacío = todos)</span><input id="ops" type="text" placeholder="Ej: Iberdrola, Zunder"></label>
+        </div></details>
+        <details class="subgrupo"><summary>Características de mi EV</summary><div class="contenido-subgrupo">
+        <label class="campo"><span>Batería útil (kWh)</span><input id="bat" type="number" value="81.4" step="0.1"></label> <label class="campo"><span>Consumo (kWh/100 km)</span><input id="cons" type="number" value="15.8" step="0.1"></label> <label class="campo"><span>Carga máx. DC (kW)</span><input id="maxkw" type="number" value="128"></label> <label class="campo"><span>Velocidad a la que obtuviste tu consumo base (km/h)</span><input id="velref" type="number" value="100"></label> <label class="campo"><span>Masa del coche con carga (kg). Valor aproximado, ajústalo a tu ficha técnica</span><input id="masa" type="number" value="1950"></label>
+        </div></details>
+        <details class="subgrupo" id="conexion-carga"><summary>Cargadores · <span id="estado-clave">Clave pendiente</span></summary><div class="contenido-subgrupo">
+        <p class="ayuda">Introduce tu clave de Open Charge Map para buscar recargas. No hace falta en viajes que puedas completar sin cargar. Se guarda en este navegador al calcular.</p>
+        <label class="campo"><span>Clave de Open Charge Map</span><input id="ocmKey" type="password" autocomplete="off"></label>
+        </div></details>
+      </div>
     </details>
   </div>
-  <section id="viajes"></section>
+  <details class="grupo" id="historial" hidden><summary><span class="icono-grupo" aria-hidden="true">↶</span><span class="texto-grupo"><strong>Viajes recientes</strong><small id="resumen-historial">Recuperar un viaje guardado</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><section id="viajes" class="contenido-grupo"></section></details>
 </section>
 <section id="datos" class="panel oculto">
   <div id="barra"><button id="plegar">Plegar</button></div>
@@ -183,7 +271,14 @@ function km(a, b) { // distancia entre 2 puntos [lon,lat] en km
   return 12742 * Math.asin(Math.sqrt(h));
 }
 const estado = t => { $("estado").textContent = t; $("estado").className = ""; };
-const fallo = t => { $("estado").textContent = t; $("estado").className = "error"; vista("form"); };
+const fallo = t => {
+  $("estado").textContent = t; $("estado").className = "error"; vista("form");
+  if (/clave de Open Charge Map/i.test(t)) {
+    $("ajustes-ev").open = true; $("conexion-carga").open = true;
+    $("ocmKey").scrollIntoView({block:"center"}); $("ocmKey").focus({preventScroll:true});
+  } else if (/Revisa los ajustes/.test(t)) $("ajustes-ev").open = true;
+  else if (/margen de tiempo/.test(t)) $("opciones-viaje").open = true;
+};
 let hayDatos = false, limitesRuta = null;
 // Encuadra la ruta en el hueco libre del mapa, midiendo el panel real (no un tamaño estimado).
 function centrarRuta() {
@@ -218,6 +313,7 @@ function vista(m) {
   $("abrir").classList.toggle("oculto", m !== "datos");
   $("cerrar").classList.toggle("oculto", !(m === "form" && hayDatos));
   $("elegir").classList.toggle("oculto", m !== "mapa");
+  $("preparar").classList.toggle("oculto", m !== "explorar");
 }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -529,6 +625,14 @@ function factorVel(v, ref) { return 0.4 + 0.6 * Math.pow(v / ref, 2); }
 function consumoAjustado() {
   return num("cons", 15.8) * factorTemp(num("temp", 15)) * factorVel(num("vel", 100), num("velref", 100));
 }
+function actualizarResumenes() {
+  const paradas = $("vias").value.split(";").filter(v => v.trim()).length;
+  $("resumen-viaje").textContent = `${num("temp",15)} °C · ${num("vel",100)} km/h · ${paradas ? paradas + (paradas === 1 ? " parada" : " paradas") : "Sin paradas"}`;
+  $("margen-visible").textContent = num("margen",10) + " %";
+  $("resumen-ev").textContent = `Reserva ${num("min",10)} % · Cargar hasta ${num("max",80)} %`;
+  $("estado-clave").textContent = $("ocmKey").value.trim() ? "Clave introducida" : "Clave pendiente";
+}
+$("formulario").addEventListener("input", actualizarResumenes);
 function cargarPrefs() {
   try { const p = JSON.parse(localStorage.getItem("rutaev:prefs") || "{}"); PREFS.forEach(i => { if (p[i] !== undefined) $(i).value = p[i]; }); } catch (e) {}
 }
@@ -547,20 +651,20 @@ function guardarViaje(v) {
 }
 function pintarViajes() {
   const c = $("viajes"); c.textContent = "";
-  const l = leerViajes(); if (!l.length) return;
+  const l = leerViajes(); $("historial").hidden = !l.length; $("resumen-historial").textContent = l.length + (l.length === 1 ? " viaje guardado" : " viajes guardados"); if (!l.length) return;
   const h = document.createElement("strong"); h.textContent = "Viajes guardados"; c.appendChild(h);
   l.forEach(v => {
     const b = document.createElement("button");
     b.textContent = `${v.o} → ${v.d} (${v.km} km, ${v.p} paradas)`;
     b.onclick = () => { origenFijo = null; $("origen").value = v.o === "Mi ubicación actual" ? "" : v.o; // la ubicación actual hay que volver a pedirla
-    destinoFijo = v.dp ? {pos: v.dp, texto: v.d} : null; $("destino").value = v.d; pintarPuntos(); $("soc").value = v.soc; $("vias").value = v.v || ""; pintaSoc(); };
+    destinoFijo = v.dp ? {pos: v.dp, texto: v.d} : null; $("destino").value = v.d; pintarPuntos(); $("soc").value = v.soc; $("vias").value = v.v || ""; pintaSoc(); actualizarResumenes(); };
     c.appendChild(b);
   });
   const x = document.createElement("button"); x.textContent = "Borrar viajes guardados";
   x.onclick = () => { try { localStorage.removeItem("rutaev:viajes"); } catch (e) {} pintarViajes(); };
   c.appendChild(x);
 }
-cargarPrefs(); pintarViajes();
+cargarPrefs(); pintarViajes(); actualizarResumenes();
 
 $("origen").addEventListener("input", () => { if (origenFijo && $("origen").value !== origenFijo.texto) { origenFijo = null; pintarPuntos(); } });
 $("destino").addEventListener("input", () => { if (destinoFijo && $("destino").value !== destinoFijo.texto) { destinoFijo = null; pintarPuntos(); } });
@@ -588,6 +692,8 @@ map.on("click", async ev => {
   } catch (err) {}
 });
 $("abrir").onclick = () => vista("form");
+$("ver-mapa").onclick = () => vista("explorar");
+$("preparar").onclick = () => vista("form");
 $("cerrar").onclick = () => { vista("datos"); setTimeout(centrarRuta, 80); };
 $("plegar").onclick = () => { const p = $("datos").classList.toggle("plegado"); $("plegar").textContent = p ? "Desplegar" : "Plegar"; setTimeout(centrarRuta, 80); };
 function duracion(minutos) {
