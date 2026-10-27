@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planificador EV - Kia EV3</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#eef2f7;--card:rgba(255,255,255,.88);--solid:#fff;--ink:#0f172a;--mute:#64748b;--line:#e2e8f0;--field:rgba(100,116,139,.11);--acc:#059669;--acc2:#0284c7;--amber:#f59e0b;--accsoft:#dcf5ec;--err:#dc2626;--grad:linear-gradient(135deg,#047857,#0369a1)}
+@media (prefers-color-scheme:dark){:root{--bg:#0b1220;--card:rgba(17,24,39,.88);--solid:#111827;--ink:#e6ebf3;--mute:#94a3b8;--line:#243044;--field:rgba(148,163,184,.13);--acc:#34d399;--acc2:#38bdf8;--amber:#fbbf24;--accsoft:#0f2e2a;--err:#f87171}}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 "DM Sans",system-ui,sans-serif;overflow:hidden}
+#map{position:fixed;inset:0;z-index:0}
+.panel{position:fixed;z-index:1200;background:var(--card);-webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);border:1px solid var(--line);border-radius:18px;box-shadow:0 12px 32px rgba(15,23,42,.2);overflow:auto;scrollbar-width:thin}
+@media (prefers-reduced-motion:no-preference){.panel{animation:entra .25s ease}@keyframes entra{from{opacity:0;transform:translateY(8px)}}}
+#formulario{left:8px;right:8px;top:8px;max-height:calc(100vh - 16px);padding:10px}
+#datos{left:8px;right:8px;bottom:8px;max-height:46vh;padding:10px}
+@media (min-width:900px){#formulario,#datos{left:12px;right:auto;top:12px;width:360px}#datos{bottom:auto;max-height:calc(100vh - 24px)}#formulario{max-height:calc(100vh - 24px)}}
+@media (max-width:899px){.leaflet-control-zoom{display:none}}
+.oculto{display:none!important}
+header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.logo{display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:var(--grad)}
+h1{font-size:17px;margin:0;font-weight:700;letter-spacing:-.02em}
+header p{margin:0;color:var(--mute);font-size:12px}
+.campo{display:block;margin-bottom:8px}
+.campo>span{display:flex;justify-content:space-between;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mute);margin-bottom:3px}
+input[type=text],input:not([type]),input[type=number]{width:100%;padding:7px 10px;font:inherit;color:var(--ink);background:var(--field);border:1px solid transparent;border-radius:10px}
+input[type=text]:focus,input[type=number]:focus{border-color:var(--acc);outline:0;background:var(--solid)}
+input[type=range]{width:100%;accent-color:var(--acc);height:22px;margin:0}
+output{color:var(--ink);font-weight:700;text-transform:none;letter-spacing:0}
+button:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+#calc{width:100%;font:inherit;font-weight:700;color:#fff;background:var(--grad);border:0;border-radius:10px;cursor:pointer;align-self:end;padding:9px;box-shadow:0 4px 12px rgba(2,132,199,.3)}
+#calc:disabled{opacity:.55;cursor:wait}
+details{margin-top:0}
+summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--acc2);padding:2px 0}
+.rejilla{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0 8px;margin-top:8px}
+.form{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}
+.form>.campo{margin:0}
+.c4{grid-column:span 4}.c2{grid-column:span 2}.c6{grid-column:span 6}
+.form>details{grid-column:1/-1}
+@media (max-width:700px){.c4,.c6{grid-column:1/-1}.c2.sm{grid-column:span 4}.c2.sm1{grid-column:1/-1}#calc{grid-column:1/-1}}
+#estado{position:fixed;z-index:1300;left:50%;bottom:16px;transform:translateX(-50%);max-width:92vw;text-align:center;background:var(--solid);border:1px solid var(--line);border-radius:999px;padding:8px 16px;font-size:13px;font-weight:500;color:var(--ink);box-shadow:0 8px 24px rgba(15,23,42,.25)}
+#estado:empty{display:none}
+#estado.error{color:var(--err);border-color:var(--err)}
+#viajes{margin-top:10px}
+#viajes strong{display:block;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--mute);font-weight:600;margin-bottom:4px}
+#viajes button{display:block;width:100%;text-align:left;font:inherit;font-size:13px;color:var(--ink);background:var(--field);border:0;border-radius:10px;padding:6px 10px;margin-bottom:4px;cursor:pointer}
+#viajes button:last-child{color:var(--mute);font-size:12px;background:none;padding:4px 0}
+#abrir{position:fixed;z-index:1250;top:38px;right:10px;font:inherit;font-size:13px;font-weight:700;color:#fff;background:var(--grad);border:0;border-radius:999px;padding:9px 16px;box-shadow:0 8px 22px rgba(2,132,199,.4);cursor:pointer}
+#cerrar{margin-left:auto;font:inherit;font-size:12px;font-weight:600;color:var(--ink);background:var(--field);border:0;border-radius:999px;padding:5px 11px;cursor:pointer}
+#barra{display:flex;gap:6px;margin-bottom:4px}
+#barra button{font:inherit;font-size:12px;font-weight:600;color:var(--mute);background:var(--field);border:0;border-radius:999px;padding:4px 11px;cursor:pointer}
+#datos.plegado #res>*:not(.resumen){display:none}
+.chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:700}
+.chip.km,.chip.kw{background:color-mix(in srgb,var(--acc2) 15%,transparent);color:color-mix(in srgb,var(--acc2) 78%,var(--ink))}
+.chip.t{background:color-mix(in srgb,var(--acc) 15%,transparent);color:color-mix(in srgb,var(--acc) 78%,var(--ink))}
+.chip.n,.chip.min{background:color-mix(in srgb,var(--amber) 22%,transparent);color:color-mix(in srgb,var(--amber) 50%,var(--ink))}
+.resumen{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 6px}
+.aviso{color:var(--err);font-size:13px;margin:4px 0}
+.meta{font-size:12px;color:var(--mute);margin:2px 0}
+.exportar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0}
+.exportar a,.wz{font-size:12px;font-weight:600;border-radius:999px;padding:4px 11px;text-decoration:none}
+.exportar a:nth-of-type(1){background:var(--ink);color:var(--solid)}
+.exportar a:nth-of-type(2){background:color-mix(in srgb,var(--acc2) 15%,transparent);color:color-mix(in srgb,var(--acc2) 78%,var(--ink))}
+.exportar a:nth-of-type(3){background:color-mix(in srgb,var(--acc) 15%,transparent);color:color-mix(in srgb,var(--acc) 78%,var(--ink))}
+.wz{align-self:flex-start;margin-top:4px;background:var(--field);color:var(--ink)}
+.paradas{list-style:none;margin:10px 0 0 12px;padding:0 0 0 14px;border-left:2px solid var(--line);counter-reset:p}
+.paradas li{position:relative;padding:0 0 14px 4px;display:flex;flex-direction:column;gap:2px;counter-increment:p}
+.paradas li::before{content:counter(p);position:absolute;left:-30px;top:0;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#3b2300;background:var(--amber);box-shadow:0 0 0 3px var(--solid)}
+.paradas strong{font-size:14px;padding-top:2px}
+.mini{font:inherit;font-size:11px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--acc2);background:none;border:0;padding:0;cursor:pointer}
+#elegir{position:fixed;z-index:1300;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:var(--solid);border:1px solid var(--line);border-radius:999px;padding:6px 6px 6px 16px;font-weight:600;font-size:13px;box-shadow:0 8px 24px rgba(15,23,42,.25);white-space:nowrap}
+#elegir button{font:inherit;font-size:12px;font-weight:700;color:var(--ink);background:var(--field);border:0;border-radius:999px;padding:6px 12px;cursor:pointer}
+.pin.dest{background:#dc2626;color:#fff}
+.paradas li.via{counter-increment:none}
+.paradas li.via::before{content:"★";background:var(--acc2);color:#fff;font-size:12px}
+.pin.via{background:#0284c7;color:#fff}
+.fila-chips{display:flex;gap:6px;margin:3px 0}
+.barra-soc{position:relative;height:6px;border-radius:4px;background:var(--field);margin:4px 0 3px;overflow:hidden}
+.barra-soc span{position:absolute;top:0;bottom:0;border-radius:4px;background:linear-gradient(90deg,var(--amber),var(--acc))}
+.carga{font-size:12px;color:var(--mute)}
+.alt{font-size:12px;color:var(--mute);margin-top:4px;padding:6px 9px;background:var(--field);border-radius:8px}
+.pin{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:700 14px "DM Sans",system-ui,sans-serif;color:#3b2300;background:#f59e0b;border:3px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.35)}
+.perfil{display:block;width:100%;height:auto;margin:4px 0;touch-action:pan-y;cursor:crosshair}
+.perfil .guia{stroke:var(--ink);stroke-width:1}
+.perfil .punto{fill:var(--acc2);stroke:var(--solid);stroke-width:2}
+.perfil .area{fill:url(#gdesn)}
+.perfil .linea{fill:none;stroke:var(--acc2);stroke-width:2.5;stroke-linejoin:round}
+.perfil .eje{font-size:14px;fill:var(--mute);font-family:inherit}
+.perfil .num{fill:var(--ink);font-weight:700}
+.perfil .rotulo{fill:var(--ink);font-weight:700;paint-order:stroke;stroke:var(--solid);stroke-width:4px;stroke-linejoin:round}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="estado" role="status"></div>
+<div id="elegir" class="oculto"><span>Toca el mapa para elegir el destino</span><button id="cancelarmapa">Cancelar</button></div>
+<button id="abrir" class="oculto">Editar viaje</button>
+<section id="formulario" class="panel">
+  <header><span class="logo"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6z" fill="#fff"/></svg></span><h1>Ruta EV</h1><p>Kia EV3 Long Range</p><button id="cerrar" class="oculto">Volver a la ruta</button></header>
+  <div class="form">
+    <label class="campo c4"><span>Origen <button type="button" id="miub" class="mini">Mi ubicación</button></span><input id="origen" type="text" placeholder="Ciudad o dirección"></label>
+    <label class="campo c4"><span>Destino <button type="button" id="elegirdest" class="mini">Elegir en el mapa</button></span><input id="destino" type="text" placeholder="Ciudad o dirección"></label>
+    <label class="campo c6"><span>Paradas intermedias (separadas por ;)</span><input id="vias" type="text" placeholder="Ej: Zaragoza; Medinaceli"></label>
+    <label class="campo c2 sm1"><span>Min. por parada</span><input id="minvia" type="number" value="30"></label>
+    <label class="campo c2 sm1"><span>Batería <output id="socv">90 %</output></span><input id="soc" type="range" min="11" max="100" value="90"></label>
+    <label class="campo c2 sm"><span>Temperatura (°C)</span><input id="temp" type="number" value="15"></label>
+    <label class="campo c2 sm"><span>Velocidad (km/h)</span><input id="vel" type="number" value="100"></label>
+    <button id="calc">Calcular viaje</button>
+    <details>
+      <summary>Ajustes</summary>
+      <div class="rejilla">
+        <label class="campo"><span>Batería útil (kWh)</span><input id="bat" type="number" value="81.4" step="0.1"></label>
+        <label class="campo"><span>Consumo (kWh/100 km)</span><input id="cons" type="number" value="15.8" step="0.1"></label>
+        <label class="campo"><span>Carga máx. DC (kW)</span><input id="maxkw" type="number" value="128"></label>
+        <label class="campo"><span>Llegar con mínimo (%)</span><input id="min" type="number" value="10"></label>
+        <label class="campo"><span>Cargar hasta (%)</span><input id="max" type="number" value="80"></label>
+        <label class="campo"><span>Potencia mínima (kW)</span><input id="minkw" type="number" value="50"></label>
+        <label class="campo"><span>Recarga mínima deseada (min)</span><input id="tmin" type="number" value="15"></label>
+        <label class="campo"><span>Evitar paradas cortas (0 = indiferente; más = las evita más)</span><input id="pen" type="number" value="8"></label>
+        <label class="campo"><span>Tiempo máximo por recarga (min)</span><input id="tmax" type="number" value="40"></label>
+        <label class="campo"><span>Distancia máxima entre paradas (km, 0 = sin límite)</span><input id="maxkm" type="number" value="300"></label>
+        <label class="campo"><span>Tiempo extra por parada (min)</span><input id="extra" type="number" value="5"></label>
+      </div>
+      <label class="campo"><span>Velocidad a la que obtuviste tu consumo base (km/h)</span><input id="velref" type="number" value="100"></label>
+      <label class="campo"><span>Masa del coche con carga (kg). Valor aproximado, ajústalo a tu ficha técnica</span><input id="masa" type="number" value="1950"></label>
+      <label class="campo"><span><input id="desn" type="checkbox" checked> Tener en cuenta el desnivel</span></label>
+      <label class="campo"><span>Operadores (separados por comas; vacío = todos)</span><input id="ops" type="text" placeholder="Ej: Iberdrola, Zunder"></label>
+      <label class="campo"><span>Clave de Open Charge Map</span><input id="ocmKey" type="text"></label>
+    </details>
+  </div>
+  <section id="viajes"></section>
+</section>
+<section id="datos" class="panel oculto">
+  <div id="barra"><button id="plegar">Plegar</button></div>
+  <div id="res"></div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+for (const id of ["ocmKey"]) {
+  try { $(id).value = localStorage.getItem("rutaev:" + id) || ""; } catch (e) {}
+}
+const map = L.map("map", {zoomControl: false}).setView([41.4, 2.0], 7);
+L.control.zoom({position: "bottomright"}).addTo(map);
+map.attributionControl.setPosition("topright");
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+  {maxZoom: 18, attribution: "© OpenStreetMap"}).addTo(map);
+let capas = L.layerGroup().addTo(map);
+
+function km(a, b) { // distancia entre 2 puntos [lon,lat] en km
+  const r = Math.PI / 180, dLa = (b[1]-a[1])*r, dLo = (b[0]-a[0])*r;
+  const h = Math.sin(dLa/2)**2 + Math.cos(a[1]*r)*Math.cos(b[1]*r)*Math.sin(dLo/2)**2;
+  return 12742 * Math.asin(Math.sqrt(h));
+}
+const estado = t => { $("estado").textContent = t; $("estado").className = ""; };
+const fallo = t => { $("estado").textContent = t; $("estado").className = "error"; vista("form"); };
+let hayDatos = false, limitesRuta = null;
+// Encuadra la ruta en el hueco libre del mapa, midiendo el panel real (no un tamaño estimado).
+function centrarRuta() {
+  if (!limitesRuta) return;
+  const d = $("datos").classList.contains("oculto") ? null : $("datos").getBoundingClientRect();
+  const opt = innerWidth >= 900
+    ? {paddingTopLeft: [(d ? d.right : 0) + 30, 70], paddingBottomRight: [30, 30]}
+    : {paddingTopLeft: [24, 70], paddingBottomRight: [24, (d ? innerHeight - d.top : 0) + 24]};
+  map.fitBounds(limitesRuta, {...opt, animate: true, maxZoom: 15});
+}
+addEventListener("resize", () => { if (hayDatos) setTimeout(centrarRuta, 150); });
+// Puntos elegidos sin escribir: "Mi ubicación" (origen) y un toque en el mapa (destino).
+let origenFijo = null, destinoFijo = null, modoElegir = false;
+const capaPuntos = L.layerGroup().addTo(map);
+function pintarPuntos() {
+  capaPuntos.clearLayers();
+  if (origenFijo) L.circleMarker([origenFijo.pos[1], origenFijo.pos[0]], {radius: 8, color: "#fff", weight: 3, fillColor: "#0284c7", fillOpacity: 1}).addTo(capaPuntos);
+  if (destinoFijo) L.marker([destinoFijo.pos[1], destinoFijo.pos[0]], {icon: L.divIcon({className: "", html: '<div class="pin dest">⚑</div>', iconSize: [30, 30], iconAnchor: [15, 15]})}).addTo(capaPuntos);
+}
+async function nombreLugar(pos) { // nombre aproximado del punto (Nominatim inverso)
+  const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=16&lat=${pos[1]}&lon=${pos[0]}`);
+  if (!r.ok) throw new Error("error " + r.status);
+  const j = await r.json(), a = j.address || {};
+  const nombre = [a.road || j.name || "", a.city || a.town || a.village || a.municipality || a.hamlet || ""].filter(Boolean).join(", ");
+  if (!nombre) throw new Error("sin nombre");
+  return nombre;
+}
+// Pantallas: "form" (formulario), "calculando" (solo mapa) y "datos" (panel de la ruta + botón Editar viaje)
+function vista(m) {
+  $("formulario").classList.toggle("oculto", m !== "form");
+  $("datos").classList.toggle("oculto", m !== "datos");
+  $("abrir").classList.toggle("oculto", m !== "datos");
+  $("cerrar").classList.toggle("oculto", !(m === "form" && hayDatos));
+  $("elegir").classList.toggle("oculto", m !== "mapa");
+}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+async function geocodificar(texto) {
+  const u = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(texto)}`;
+  const r = await fetch(u);
+  if (!r.ok) throw new Error("Búsqueda de dirección falló (" + r.status + ")");
+  const j = await r.json();
+  if (!j.length) throw new Error("No encuentro: " + texto);
+  return [parseFloat(j[0].lon), parseFloat(j[0].lat)];
+}
+
+async function ruta(a, b, vias = []) {
+  const u = `https://router.project-osrm.org/route/v1/driving/${[a, ...vias, b].map(p => p[0] + "," + p[1]).join(";")}?overview=full&geometries=geojson`;
+  const r = await fetch(u);
+  if (!r.ok) throw new Error("Cálculo de ruta falló (" + r.status + ")");
+  const j = await r.json();
+  if (j.code !== "Ok") throw new Error("No se pudo calcular la ruta: " + j.code);
+  const f = j.routes[0];
+  return {coords: f.geometry.coordinates, total: f.distance/1000, min: f.duration/60};
+}
+
+async function buscarCargadores(coords, acum, minkw, key) {
+  const vistos = new Map();
+  let ultimo = -999;
+  const puntos = coords.filter((c, i) => { if (acum[i] - ultimo >= 35) { ultimo = acum[i]; return true; } return false; });
+  for (let i = 0; i < puntos.length; i++) {
+    estado(`Buscando cargadores (${i+1}/${puntos.length})...`);
+    const p = puntos[i];
+    const u = `https://api.openchargemap.io/v3/poi/?output=json&latitude=${p[1]}&longitude=${p[0]}&distance=6&distanceunit=KM&minpowerkw=${minkw}&connectiontypeid=33&maxresults=30&verbose=false&key=${encodeURIComponent(key)}`;
+    const r = await fetch(u);
+    if (!r.ok) throw new Error("Open Charge Map falló (" + r.status + ")");
+    for (const c of await r.json()) vistos.set(c.ID, c);
+    await sleep(300); // para no saturar el servicio
+  }
+  const lista = [];
+  for (const c of vistos.values()) {
+    const kw = Math.max(0, ...c.Connections.filter(x => x.ConnectionTypeID === 33).map(x => x.PowerKW || 0));
+    if (kw < minkw) continue;
+    const pos = [c.AddressInfo.Longitude, c.AddressInfo.Latitude];
+    let mejor = 1e9, idx = 0;
+    coords.forEach((q, i) => { const d = km(pos, q); if (d < mejor) { mejor = d; idx = i; } });
+    if (mejor > 6) continue;
+    lista.push({id: c.ID, nombre: c.AddressInfo.Title, pueblo: c.AddressInfo.Town || "",
+      op: c.OperatorInfo ? c.OperatorInfo.Title : "Operador desconocido",
+      kw, pos, along: acum[idx], desvio: mejor});
+  }
+  return lista;
+}
+
+// Curva de carga del EV3 Long Range (kW según % de batería). Fuente: evkx.net (web de terceros).
+// De 0 a 80 % es la curva publicada; por encima del 80 % la he ajustado yo y es menos fiable.
+const CURVA = [[0,49],[1,115],[10,117],[20,119],[26,120],[44,124],[49,125],[62,125],[65,113],[69,114],[72,73],[77,61],[80,40],[85,25],[90,16],[95,11],[100,8]];
+const K_CURVA = 0.924; // calibrado para que 10-80 % dure ~33 min (publicado: 32 min 45 s)
+function potenciaCurva(s) {
+  for (let i = 1; i < CURVA.length; i++) if (s <= CURVA[i][0]) {
+    const a = CURVA[i-1], b = CURVA[i];
+    return (a[1] + (b[1] - a[1]) * (s - a[0]) / (b[0] - a[0])) * K_CURVA;
+  }
+  return CURVA[CURVA.length - 1][1] * K_CURVA;
+}
+function minutosCarga(desde, hasta, bat, kwCargador, kwMax) {
+  let m = 0;
+  for (let s = desde; s < hasta; s += 0.5) {
+    const paso = Math.min(0.5, hasta - s);
+    const kw = Math.min(kwCargador, kwMax, potenciaCurva(s + paso / 2));
+    m += (paso / 100 * bat) / kw * 60;
+  }
+  return m;
+}
+// Perfil de energía acumulada (kWh) a lo largo de la ruta.
+function energiaPlana(total, cons) { return {km: [0, total], kwh: [0, total * cons / 100]}; }
+function energiaEn(perfil, x) {
+  const k = perfil.km, e = perfil.kwh, n = k.length - 1;
+  if (x <= 0) return 0;
+  if (x >= k[n]) return e[n];
+  let lo = 0, hi = n;
+  while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (k[mid] <= x) lo = mid; else hi = mid; }
+  return k[hi] === k[lo] ? e[lo] : e[lo] + (e[hi] - e[lo]) * (x - k[lo]) / (k[hi] - k[lo]);
+}
+// Altitudes: Open-Meteo (sin clave, 100 puntos por consulta). Energía de subida/bajada: estimación mía
+// (subida con 85 % de rendimiento; en bajada se recupera el 60 %).
+async function perfilDesnivel(coords, acum, cons, masa) {
+  const idx = [0]; let ult = 0;
+  for (let i = 1; i < coords.length; i++) if (acum[i] - ult >= 4) { idx.push(i); ult = acum[i]; }
+  if (idx[idx.length - 1] !== coords.length - 1) idx.push(coords.length - 1);
+  const alt = [];
+  for (let i = 0; i < idx.length; i += 100) {
+    const tr = idx.slice(i, i + 100).map(j => coords[j]);
+    const u = `https://api.open-meteo.com/v1/elevation?latitude=${tr.map(c => c[1].toFixed(4)).join(",")}&longitude=${tr.map(c => c[0].toFixed(4)).join(",")}`;
+    const r = await fetch(u);
+    if (!r.ok) throw new Error("error " + r.status);
+    const j = await r.json();
+    if (!j.elevation || j.elevation.length !== tr.length || j.elevation.some(v => v === null || isNaN(v))) throw new Error("datos incompletos");
+    alt.push(...j.elevation);
+    await sleep(200);
+  }
+  const km = [], kwh = []; let acc = 0, sube = 0, baja = 0;
+  idx.forEach((j, n) => {
+    if (n > 0) {
+      const d = acum[j] - acum[idx[n - 1]], dh = alt[n] - alt[n - 1];
+      const pot = masa * 9.81 * Math.abs(dh) / 3.6e6;
+      acc += d * cons / 100 + (dh > 0 ? pot / 0.85 : -pot * 0.6);
+      if (dh > 0) sube += dh; else baja -= dh;
+    }
+    km.push(acum[j]); kwh.push(acc);
+  });
+  return {km, kwh, sube, baja, alt};
+}
+
+// Optimizador: busca el plan de MENOR tiempo total (carga + tiempo extra por parada).
+//  - El tiempo máximo por recarga y la distancia máxima entre paradas se cumplen siempre.
+//  - El tiempo mínimo es una preferencia: una parada más corta que el mínimo tiene una pequeña
+//    penalización (ajustable) al comparar planes, así que solo sale si no se puede evitar (por ejemplo,
+//    juntando esa carga en la parada anterior o en la siguiente sin pasar del máximo).
+// Programación dinámica sobre (cargador, % de batería al llegar), en pasos de 1 % (redondeo a la baja).
+function optimizar(total, socIni, cargadores, P, perfil, tmax, maxkm) {
+  const tmin = P.tmin || 0; // preferencia: una recarga más corta que esto se penaliza
+  const bat = P.bat, INF = 1e18;
+  const smin = Math.ceil(P.min), smax = Math.min(100, Math.floor(P.max));
+  const nodos = [{along: 0}, ...cargadores.slice().sort((a, b) => a.along - b.along)];
+  const n = nodos.length - 1;
+  const En = nodos.map(c => energiaEn(perfil, c.along)), Efin = energiaEn(perfil, total);
+  const tablas = new Map();
+  const tabla = c => {
+    const cap = Math.min(c.kw, P.maxkw);
+    if (!tablas.has(cap)) {
+      const t = [0];
+      for (let s = 0; s < 100; s++) t.push(t[s] + minutosCarga(s, s + 1, bat, cap, cap));
+      tablas.set(cap, t);
+    }
+    return tablas.get(cap);
+  };
+  const mejor = nodos.map(() => new Float64Array(101).fill(INF));
+  const prev = nodos.map(() => new Array(101).fill(null));
+  const depArg = nodos.map(() => new Array(101).fill(-1));
+  let fin = {coste: INF, i: -1, st: -1};
+  const salir = (i, st, coste) => {
+    if (Efin - En[i] <= (st - P.min) / 100 * bat + 1e-9 && total - nodos[i].along <= maxkm && coste < fin.coste) fin = {coste, i, st};
+    for (let j = i + 1; j <= n; j++) {
+      const d = nodos[j].along - nodos[i].along;
+      if (d > maxkm) break;
+      if (d < 3) continue;
+      const sa = Math.floor(st - (En[j] - En[i]) / bat * 100 + 1e-9);
+      if (sa < smin) continue;
+      if (coste < mejor[j][sa]) { mejor[j][sa] = coste; prev[j][sa] = [i, st]; }
+    }
+  };
+  salir(0, socIni, 0);
+  for (let i = 1; i <= n; i++) {
+    const T = tabla(nodos[i]), dep = new Float64Array(101).fill(INF);
+    for (let sa = smin; sa <= 100; sa++) {
+      const c0 = mejor[i][sa];
+      if (c0 >= INF) continue;
+      for (let st = sa + 1; st <= smax; st++) {
+        const ct = T[st] - T[sa];
+        if (ct > tmax) break;
+        const c = c0 + ct + P.extra + (ct < tmin ? (P.pen === undefined ? 8 : P.pen) : 0); // parada corta: penalización pequeña
+        if (c < dep[st]) { dep[st] = c; depArg[i][st] = sa; }
+      }
+    }
+    for (let st = 1; st <= smax; st++) if (dep[st] < INF) salir(i, st, dep[st]);
+  }
+  if (fin.i < 0) return null;
+  const elegidas = []; let i = fin.i, st = fin.st;
+  while (i > 0) {
+    const sa = depArg[i][st];
+    elegidas.unshift({...nodos[i], sa, st});
+    [i, st] = prev[i][sa];
+  }
+  let pos = 0, socDep = socIni;
+  return elegidas.map(c => {
+    const T = tabla(c);
+    const alternativas = cargadores
+      .filter(x => x.id !== c.id && Math.abs(x.along - c.along) <= 15 && x.along > pos + 3 && x.along - pos <= maxkm
+        && energiaEn(perfil, x.along) - energiaEn(perfil, pos) <= (socDep - P.min) / 100 * bat)
+      .sort((a, b) => b.kw - a.kw).slice(0, 2);
+    const r = {...c, alternativas, km: c.along, llegada: c.sa, objetivo: c.st, kwh: (c.st - c.sa) / 100 * bat, minutos: T[c.st] - T[c.sa]};
+    pos = c.along; socDep = c.st;
+    return r;
+  });
+}
+function planificar(total, socIni, cargadores, P, perfil) {
+  let r = optimizar(total, socIni, cargadores, P, perfil, P.tmax, P.maxkm), aviso = null;
+  if (!r && isFinite(P.maxkm)) { // el límite de distancia es lo único que se puede relajar; el tiempo máximo, nunca
+    r = optimizar(total, socIni, cargadores, P, perfil, P.tmax, Infinity);
+    if (r) aviso = `No hay plan con ${P.maxkm} km como máximo entre paradas; se muestra el mejor sin ese límite (el máximo de ${P.tmax} min por recarga se mantiene).`;
+  }
+  if (r) {
+    const cortas = r.map((p, i) => p.minutos < P.tmin - 0.5 ? i + 1 : 0).filter(Boolean);
+    const lista = cortas.length > 1 ? cortas.slice(0, -1).join(", ") + " y " + cortas[cortas.length - 1] : cortas[0];
+    if (cortas.length) aviso = [aviso, `${cortas.length > 1 ? "Las paradas " + lista + " duran" : "La parada " + lista + " dura"} menos de ${P.tmin} min: evitarlo alargaba el viaje o exigía pasar de ${P.tmax} min en alguna recarga.`].filter(Boolean).join(" ");
+    return {paradas: r, ok: true, aviso: aviso || undefined};
+  }
+  const v = planificarVoraz(total, socIni, cargadores, P, perfil); // solo para explicar el motivo
+  return {paradas: [], ok: false, motivo: v.ok ? `No hay un plan con recargas de máximo ${P.tmax} min con los cargadores encontrados.` : v.motivo};
+}
+function planificarVoraz(total, socIni, cargadores, P, perfil) {
+  const E = x => energiaEn(perfil, x);
+  const aSoc = kwh => kwh / P.bat * 100;
+  let pos = 0, soc = socIni; const paradas = [];
+  for (let n = 0; n < 12; n++) {
+    const disp = (soc - P.min) / 100 * P.bat; // kWh utilizables hasta el mínimo
+    if (E(total) - E(pos) <= disp) return {paradas, ok: true};
+    const alcanza = c => E(c.along) - E(pos) <= disp;
+    const cands = cargadores.filter(c => c.along > pos + 5 && alcanza(c));
+    if (!cands.length) return {paradas, ok: false, motivo: `No hay cargador alcanzable pasado el km ${Math.round(pos)}.`};
+    const c = cands.reduce((a, b) => b.along > a.along ? b : a); // el más lejano alcanzable
+    const llegada = soc - aSoc(E(c.along) - E(pos));
+    const necesario = P.min + aSoc(E(total) - E(c.along));
+    const objetivo = Math.max(llegada, Math.min(P.max, Math.max(necesario, llegada + 1), 100));
+    const alternativas = cargadores
+      .filter(x => x.id !== c.id && x.along > pos + 5 && alcanza(x) && Math.abs(x.along - c.along) <= 15)
+      .sort((a, b) => b.kw - a.kw).slice(0, 2);
+    paradas.push({...c, alternativas, km: c.along, llegada, objetivo,
+      kwh: (objetivo - llegada) / 100 * P.bat, minutos: minutosCarga(llegada, objetivo, P.bat, c.kw, P.maxkw)});
+    pos = c.along; soc = objetivo;
+  }
+  return {paradas, ok: false, motivo: "Demasiadas paradas, revisa los datos."};
+}
+
+function dibujarPerfil(perfil, paradas, alMover) {
+  const W = 600, H = 190, m = {l: 52, r: 10, t: 16, b: 26};
+  const alts = perfil.alt, kms = perfil.km, total = kms[kms.length - 1];
+  const amin = Math.min(...alts), amax = Math.max(...alts), rango = Math.max(amax - amin, 50);
+  const X = k => m.l + k / total * (W - m.l - m.r);
+  const Y = a => H - m.b - (a - amin) / rango * (H - m.t - m.b);
+  const ns = "http://www.w3.org/2000/svg";
+  const el = (n, at, txt) => { const e = document.createElementNS(ns, n); for (const k in at) e.setAttribute(k, at[k]); if (txt) e.textContent = txt; return e; };
+  const svg = el("svg", {viewBox: `0 0 ${W} ${H}`, class: "perfil", role: "img", "aria-label": "Perfil de altitud de la ruta"});
+  const defs = el("defs", {}), g = el("linearGradient", {id: "gdesn", x1: 0, y1: 0, x2: 0, y2: 1});
+  g.appendChild(el("stop", {offset: "0%", "stop-color": "#0ea5e9", "stop-opacity": .5}));
+  g.appendChild(el("stop", {offset: "100%", "stop-color": "#10b981", "stop-opacity": .05}));
+  defs.appendChild(g); svg.appendChild(defs);
+  const pts = kms.map((k, i) => `${X(k).toFixed(1)},${Y(alts[i]).toFixed(1)}`);
+  svg.appendChild(el("polygon", {points: `${X(0).toFixed(1)},${H - m.b} ${pts.join(" ")} ${X(total).toFixed(1)},${H - m.b}`, class: "area"}));
+  svg.appendChild(el("polyline", {points: pts.join(" "), class: "linea"}));
+  svg.appendChild(el("text", {x: m.l - 6, y: Y(amax) + 5, "text-anchor": "end", class: "eje"}, Math.round(amax) + " m"));
+  svg.appendChild(el("text", {x: m.l - 6, y: Y(amin) + 5, "text-anchor": "end", class: "eje"}, Math.round(amin) + " m"));
+  svg.appendChild(el("text", {x: m.l, y: H - 6, class: "eje"}, "0 km"));
+  svg.appendChild(el("text", {x: W - m.r, y: H - 6, "text-anchor": "end", class: "eje"}, Math.round(total) + " km"));
+  paradas.forEach((p, i) => {
+    svg.appendChild(el("line", {x1: X(p.km).toFixed(1), x2: X(p.km).toFixed(1), y1: m.t, y2: H - m.b, class: "parada-l"}));
+    svg.appendChild(el("text", {x: X(p.km).toFixed(1), y: m.t - 4, "text-anchor": "middle", class: "eje num"}, String(i + 1)));
+  });
+  const guia = el("line", {y1: m.t, y2: H - m.b, class: "guia", visibility: "hidden"});
+  const punto = el("circle", {r: 4, class: "punto", visibility: "hidden"});
+  const rotulo = el("text", {class: "eje rotulo", visibility: "hidden"});
+  [guia, punto, rotulo].forEach(e => svg.appendChild(e));
+  const altEn = k => {
+    let lo = 0, hi = kms.length - 1;
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (kms[mid] <= k) lo = mid; else hi = mid; }
+    return kms[hi] === kms[lo] ? alts[lo] : alts[lo] + (alts[hi] - alts[lo]) * (k - kms[lo]) / (kms[hi] - kms[lo]);
+  };
+  const mover = ev => {
+    const rc = svg.getBoundingClientRect();
+    const xs = (ev.clientX - rc.left) / rc.width * W;
+    const k = Math.min(total, Math.max(0, (xs - m.l) / (W - m.l - m.r) * total));
+    const a = altEn(k), x = X(k), y = Y(a), der = x > W / 2;
+    guia.setAttribute("x1", x); guia.setAttribute("x2", x);
+    punto.setAttribute("cx", x); punto.setAttribute("cy", y);
+    rotulo.textContent = `Km ${k.toFixed(0)}, ${Math.round(a)} m`;
+    rotulo.setAttribute("x", der ? x - 8 : x + 8);
+    rotulo.setAttribute("y", m.t + 12);
+    rotulo.setAttribute("text-anchor", der ? "end" : "start");
+    [guia, punto, rotulo].forEach(e => e.setAttribute("visibility", "visible"));
+    if (alMover) alMover(k);
+  };
+  const ocultar = ev => {
+    if (ev && ev.pointerType !== "mouse") return; // en pantalla táctil se queda hasta el siguiente toque
+    [guia, punto, rotulo].forEach(e => e.setAttribute("visibility", "hidden"));
+    if (alMover) alMover(null);
+  };
+  svg.addEventListener("pointermove", mover);
+  svg.addEventListener("pointerdown", mover);
+  svg.addEventListener("pointerleave", ocultar);
+  return svg;
+}
+// Enlaces para abrir la ruta en otras apps. Los puntos son [lon, lat]; las apps piden "lat,lon".
+const ll = p => p[1].toFixed(5) + "," + p[0].toFixed(5);
+function enlaces(origen, destino, paradas) {
+  const pts = paradas.map(p => p.pos);
+  return {
+    apple: "https://maps.apple.com/?saddr=" + ll(origen) + [...pts, destino].map(p => "&daddr=" + ll(p)).join("") + "&dirflg=d",
+    google: "https://www.google.com/maps/dir/?api=1&origin=" + ll(origen) + "&destination=" + ll(destino) +
+            (pts.length ? "&waypoints=" + pts.map(ll).join("%7C") : "") + "&travelmode=driving",
+    waze: p => "https://waze.com/ul?ll=" + ll(p) + "&navigate=yes"
+  };
+}
+function pintaSoc() { $("socv").textContent = $("soc").value + " %"; }
+$("soc").addEventListener("input", pintaSoc);
+const PREFS = ["bat", "cons", "maxkw", "min", "max", "minkw", "ops", "velref", "masa", "minvia", "tmin", "pen", "tmax", "maxkm", "extra"];
+const num = (id, def) => { const v = parseFloat($(id).value); return isNaN(v) ? def : v; };
+// Factor por temperatura. DATOS: Geotab (4.200 EV): ~100 % de autonomía entre 10 y 30 °C, ~54 % a -15 °C.
+// ESTIMACIÓN MÍA: interpolación lineal entre esos puntos y +10 % de consumo a 40 °C.
+function factorTemp(t) {
+  if (t >= 10 && t <= 30) return 1;
+  if (t < 10) return 1 + (Math.min(10 - t, 25) / 25) * (1 / 0.54 - 1);
+  return 1 + (Math.min(t - 30, 10) / 10) * 0.10;
+}
+// Factor por velocidad. ESTIMACIÓN MÍA: 40 % del consumo no depende de la velocidad y 60 % crece con su cuadrado.
+function factorVel(v, ref) { return 0.4 + 0.6 * Math.pow(v / ref, 2); }
+function consumoAjustado() {
+  return num("cons", 15.8) * factorTemp(num("temp", 15)) * factorVel(num("vel", 100), num("velref", 100));
+}
+function cargarPrefs() {
+  try { const p = JSON.parse(localStorage.getItem("rutaev:prefs") || "{}"); PREFS.forEach(i => { if (p[i] !== undefined) $(i).value = p[i]; }); } catch (e) {}
+}
+function guardarPrefs() {
+  try { const p = {}; PREFS.forEach(i => p[i] = $(i).value); localStorage.setItem("rutaev:prefs", JSON.stringify(p)); } catch (e) {}
+}
+function leerViajes() {
+  try { return JSON.parse(localStorage.getItem("rutaev:viajes") || "[]"); } catch (e) { return []; }
+}
+function guardarViaje(v) {
+  try {
+    const l = leerViajes().filter(x => !(x.o === v.o && x.d === v.d));
+    l.unshift(v); localStorage.setItem("rutaev:viajes", JSON.stringify(l.slice(0, 20)));
+  } catch (e) {}
+  pintarViajes();
+}
+function pintarViajes() {
+  const c = $("viajes"); c.textContent = "";
+  const l = leerViajes(); if (!l.length) return;
+  const h = document.createElement("strong"); h.textContent = "Viajes guardados"; c.appendChild(h);
+  l.forEach(v => {
+    const b = document.createElement("button");
+    b.textContent = `${v.o} → ${v.d} (${v.km} km, ${v.p} paradas)`;
+    b.onclick = () => { origenFijo = null; $("origen").value = v.o === "Mi ubicación actual" ? "" : v.o; // la ubicación actual hay que volver a pedirla
+    destinoFijo = v.dp ? {pos: v.dp, texto: v.d} : null; $("destino").value = v.d; pintarPuntos(); $("soc").value = v.soc; $("vias").value = v.v || ""; pintaSoc(); };
+    c.appendChild(b);
+  });
+  const x = document.createElement("button"); x.textContent = "Borrar viajes guardados";
+  x.onclick = () => { try { localStorage.removeItem("rutaev:viajes"); } catch (e) {} pintarViajes(); };
+  c.appendChild(x);
+}
+cargarPrefs(); pintarViajes();
+
+$("origen").addEventListener("input", () => { if (origenFijo && $("origen").value !== origenFijo.texto) { origenFijo = null; pintarPuntos(); } });
+$("destino").addEventListener("input", () => { if (destinoFijo && $("destino").value !== destinoFijo.texto) { destinoFijo = null; pintarPuntos(); } });
+$("miub").onclick = () => {
+  if (!window.isSecureContext || !navigator.geolocation) return fallo("La ubicación solo funciona en páginas https y con un navegador compatible.");
+  estado("Obteniendo tu ubicación...");
+  navigator.geolocation.getCurrentPosition(p => {
+    origenFijo = {pos: [p.coords.longitude, p.coords.latitude], texto: "Mi ubicación actual"};
+    $("origen").value = origenFijo.texto; pintarPuntos(); estado("");
+    map.setView([p.coords.latitude, p.coords.longitude], Math.max(map.getZoom(), 10));
+  }, err => fallo(err.code === 1 ? "Permiso de ubicación denegado. Actívalo en los ajustes del navegador para esta página."
+                 : err.code === 3 ? "La ubicación tarda demasiado. Inténtalo de nuevo." : "No se pudo determinar la ubicación."),
+  {enableHighAccuracy: true, timeout: 12000, maximumAge: 60000});
+};
+$("elegirdest").onclick = () => { modoElegir = true; vista("mapa"); };
+$("cancelarmapa").onclick = () => { modoElegir = false; vista("form"); };
+map.on("click", async ev => {
+  if (!modoElegir) return;
+  modoElegir = false;
+  const pos = [ev.latlng.lng, ev.latlng.lat], d = {pos, texto: `Punto del mapa (${ev.latlng.lat.toFixed(4)}, ${ev.latlng.lng.toFixed(4)})`};
+  destinoFijo = d; $("destino").value = d.texto; pintarPuntos(); vista("form");
+  try { // intenta poner un nombre legible; si falla, se queda con las coordenadas
+    const n = await nombreLugar(pos);
+    if (destinoFijo === d && $("destino").value === d.texto) { d.texto = n; $("destino").value = n; }
+  } catch (err) {}
+});
+$("abrir").onclick = () => vista("form");
+$("cerrar").onclick = () => { vista("datos"); setTimeout(centrarRuta, 80); };
+$("plegar").onclick = () => { const p = $("datos").classList.toggle("plegado"); $("plegar").textContent = p ? "Desplegar" : "Plegar"; setTimeout(centrarRuta, 80); };
+$("calc").onclick = async () => {
+  try {
+    $("calc").disabled = true;
+    vista("calculando");
+    const ocmKey = $("ocmKey").value.trim();
+    if (!ocmKey) throw new Error("Falta la clave de Open Charge Map (abre 'Ajustes').");
+    try { localStorage.setItem("rutaev:ocmKey", ocmKey); } catch (e) {}
+    const P = {bat: +$("bat").value, cons: consumoAjustado(), maxkw: +$("maxkw").value,
+               min: +$("min").value, max: +$("max").value,
+               tmin: num("tmin", 15), pen: num("pen", 8), tmax: num("tmax", 40), maxkm: num("maxkm", 300) || Infinity, extra: num("extra", 5)};
+    $("res").textContent = ""; capas.clearLayers(); hayDatos = false;
+    estado("Buscando direcciones...");
+    const a = origenFijo ? origenFijo.pos : await geocodificar($("origen").value);
+    if (!origenFijo && !destinoFijo) await sleep(1100); // Nominatim pide máximo 1 consulta por segundo
+    const b = destinoFijo ? destinoFijo.pos : await geocodificar($("destino").value);
+    const nombresVia = $("vias").value.split(";").map(x => x.trim()).filter(Boolean).slice(0, 8);
+    const minVia = num("minvia", 30), puntosVia = [];
+    for (const nombre of nombresVia) { await sleep(1100); estado("Buscando " + nombre + "..."); puntosVia.push({nombre, pos: await geocodificar(nombre)}); }
+    estado("Calculando ruta...");
+    const r = await ruta(a, b, puntosVia.map(v => v.pos));
+    const acum = [0];
+    for (let i = 1; i < r.coords.length; i++) acum.push(acum[i-1] + km(r.coords[i-1], r.coords[i]));
+    const esc = r.total / acum[acum.length-1]; // ajusta a la distancia oficial de la ruta
+    for (let i = 0; i < acum.length; i++) acum[i] *= esc;
+    const vias = puntosVia.map(v => { // km de la ruta más cercano a cada parada intermedia
+      let mej = 1e9, idx = 0;
+      r.coords.forEach((q, i) => { const d = km(v.pos, q); if (d < mej) { mej = d; idx = i; } });
+      return {...v, km: acum[idx]};
+    });
+    const trazo = r.coords.map(c => [c[1], c[0]]);
+    L.polyline(trazo, {color: "#fff", weight: 10, opacity: .9}).addTo(capas);
+    const linea = L.polyline(trazo, {color: "#0284c7", weight: 6}).addTo(capas);
+    limitesRuta = linea.getBounds(); centrarRuta();
+    const cargadores = await buscarCargadores(r.coords, acum, +$("minkw").value, ocmKey);
+    const ops = $("ops").value.toLowerCase().split(",").map(x => x.trim()).filter(Boolean);
+    const filtrados = ops.length ? cargadores.filter(c => ops.some(o => c.op.toLowerCase().includes(o))) : cargadores;
+    if (!filtrados.length) throw new Error("Ningún cargador de la ruta cumple el filtro de operador.");
+    let perfil, notaDesnivel = "";
+    if ($("desn").checked) {
+      estado("Calculando desnivel...");
+      try {
+        perfil = await perfilDesnivel(r.coords, acum, P.cons, num("masa", 1950));
+        notaDesnivel = `Desnivel estimado: +${Math.round(perfil.sube)} m y -${Math.round(perfil.baja)} m.`;
+      } catch (e) { notaDesnivel = "No se pudo obtener la altitud (" + e.message + "): cálculo sin desnivel."; }
+    }
+    if (!perfil) perfil = energiaPlana(r.total, P.cons);
+    const plan = planificar(r.total, +$("soc").value, filtrados, P, perfil);
+    guardarPrefs();
+    guardarViaje({o: $("origen").value, d: $("destino").value, soc: $("soc").value, km: Math.round(r.total), p: plan.paradas.length, v: $("vias").value, dp: destinoFijo ? destinoFijo.pos : null});
+    const nP = plan.paradas.length;
+    const cab = document.createElement("div"); cab.className = "resumen";
+    const chip = (txt, cls) => { const e = document.createElement("span"); e.className = "chip " + cls; e.textContent = txt; return e; };
+    cab.append(chip(`${r.total.toFixed(0)} km`, "km"), chip(`${Math.floor(r.min / 60)} h ${Math.round(r.min % 60)} min`, "t"),
+               chip(nP ? `${nP} ${nP === 1 ? "parada" : "paradas"}` : "Sin paradas", "n"));
+    $("res").appendChild(cab);
+    const ce = document.createElement("p"); ce.className = "meta";
+    ce.textContent = `Consumo ajustado por temperatura y velocidad: ${P.cons.toFixed(1)} kWh/100 km (base ${num("cons", 15.8).toFixed(1)}). Energía total del viaje: ${energiaEn(perfil, r.total).toFixed(0)} kWh. ${notaDesnivel}`;
+    $("res").appendChild(ce);
+const tVias = vias.length * minVia;
+    if (nP || vias.length) {
+      const tCarga = plan.paradas.reduce((acc, p) => acc + p.minutos, 0), tTotal = r.min + tCarga + P.extra * nP + tVias;
+      const tl = document.createElement("p"); tl.className = "meta";
+      tl.textContent = (nP ? `Carga total: ${Math.round(tCarga)} min, más ${P.extra} min extra por parada. ` : "")
+        + (vias.length ? `Paradas intermedias: ${Math.round(tVias)} min. ` : "")
+        + `Tiempo total estimado: ${Math.floor(tTotal / 60)} h ${Math.round(tTotal % 60)} min.`;
+      $("res").appendChild(tl);
+    }
+    const todos = [...plan.paradas, ...vias].sort((x, y) => x.km - y.km);
+    const en = enlaces(a, b, todos);
+    const ex = document.createElement("div"); ex.className = "exportar";
+    const tx = document.createElement("span"); tx.className = "meta"; tx.textContent = "Abrir la ruta en:";
+    ex.appendChild(tx);
+    [["Apple Maps", en.apple], ["Google Maps", en.google], ["Waze (destino final)", en.waze(b)]].forEach(([nombre, url]) => {
+      const l = document.createElement("a"); l.href = url; l.target = "_blank"; l.rel = "noopener"; l.textContent = nombre; ex.appendChild(l);
+    });
+    $("res").appendChild(ex);
+    if (perfil.alt) {
+      const tg = document.createElement("p"); tg.className = "meta";
+      tg.textContent = "Altitud a lo largo de la ruta. Las líneas numeradas son las paradas de carga. Pasa el cursor o el dedo por encima para ver el valor y su posición en el mapa.";
+      let marca = null;
+      const alMover = km => {
+        if (marca) { capas.removeLayer(marca); marca = null; }
+        if (km === null) return;
+        let lo = 0, hi = acum.length - 1;
+        while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (acum[mid] <= km) lo = mid; else hi = mid; }
+        marca = L.circleMarker([r.coords[lo][1], r.coords[lo][0]], {radius: 7, color: "#f59e0b", fillOpacity: 1}).addTo(capas);
+      };
+      $("res").appendChild(tg); $("res").appendChild(dibujarPerfil(perfil, plan.paradas, alMover));
+    }
+    const ol = document.createElement("ol"); ol.className = "paradas"; $("res").appendChild(ol);
+    const items = [];
+    plan.paradas.forEach((p, i) => {
+      L.marker([p.pos[1], p.pos[0]], {icon: L.divIcon({className: "", html: `<div class="pin">${i + 1}</div>`, iconSize: [30, 30], iconAnchor: [15, 15]})}).addTo(capas).bindPopup(`${i+1}. ${p.nombre} (${p.kw} kW)`);
+      p.alternativas.forEach(a => L.circleMarker([a.pos[1], a.pos[0]], {radius: 7, color: "#94a3b8"}).addTo(capas).bindPopup(`Alternativa: ${a.nombre} (${a.kw} kW)`));
+      const li = document.createElement("li");
+      const t = document.createElement("strong"); t.textContent = p.nombre + (p.pueblo ? ", " + p.pueblo : "");
+      const m = document.createElement("span"); m.className = "meta"; m.textContent = `Km ${p.km.toFixed(0)}, ${p.op}`;
+      const kw = document.createElement("span"); kw.className = "chip kw"; kw.textContent = `${p.kw} kW CCS2`;
+      const tm = document.createElement("span"); tm.className = "chip min"; tm.textContent = `${Math.round(p.minutos)} min`;
+      const fila = document.createElement("div"); fila.className = "fila-chips"; fila.append(kw, tm);
+      const bar = document.createElement("div"); bar.className = "barra-soc";
+      const rel = document.createElement("span"); rel.style.left = p.llegada + "%"; rel.style.width = Math.max(0, p.objetivo - p.llegada) + "%"; bar.appendChild(rel);
+      const c = document.createElement("span"); c.className = "carga";
+      c.textContent = `Llegas con ${p.llegada.toFixed(0)} %, cargas hasta ${p.objetivo.toFixed(0)} % (${p.kwh.toFixed(0)} kWh)${p.objetivo > 80 ? ". Por encima del 80 % la estimación es menos fiable" : ""}`;
+      li.append(t, m, fila, bar, c);
+      const w = document.createElement("a"); w.className = "wz"; w.href = en.waze(p.pos); w.target = "_blank"; w.rel = "noopener";
+      w.textContent = "Ir a esta parada con Waze"; li.appendChild(w);
+      if (p.alternativas.length) {
+        const al = document.createElement("div"); al.className = "alt";
+        al.textContent = "Alternativas: " + p.alternativas.map(x => `${x.nombre}, ${x.op}, ${x.kw} kW, km ${x.along.toFixed(0)}`).join(" / ");
+        li.appendChild(al);
+      }
+      items.push({km: p.km, li});
+    });
+    vias.forEach(v => {
+      L.marker([v.pos[1], v.pos[0]], {icon: L.divIcon({className: "", html: '<div class="pin via">★</div>', iconSize: [30, 30], iconAnchor: [15, 15]})}).addTo(capas).bindPopup("Parada: " + v.nombre);
+      const li = document.createElement("li"); li.className = "via";
+      const t = document.createElement("strong"); t.textContent = v.nombre;
+      const m = document.createElement("span"); m.className = "meta"; m.textContent = `Km ${v.km.toFixed(0)}, parada de ${minVia} min`;
+      const w = document.createElement("a"); w.className = "wz"; w.href = en.waze(v.pos); w.target = "_blank"; w.rel = "noopener"; w.textContent = "Ir a esta parada con Waze";
+      li.append(t, m, w); items.push({km: v.km, li});
+    });
+    items.sort((x, y) => x.km - y.km).forEach(x => ol.appendChild(x.li));
+    estado("");
+    const msgAviso = plan.ok ? plan.aviso : "Aviso: " + plan.motivo;
+    if (msgAviso) {
+      const av = document.createElement("p"); av.className = "aviso"; av.textContent = msgAviso;
+      cab.insertAdjacentElement("afterend", av);
+    }
+    hayDatos = true; $("datos").classList.remove("plegado"); $("plegar").textContent = "Plegar"; vista("datos"); setTimeout(centrarRuta, 80);
+  } catch (e) { fallo(e.message); } finally { $("calc").disabled = false; }
+};
+</script>
+</body>
+</html>
