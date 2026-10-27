@@ -207,13 +207,13 @@ button.insignia{font:inherit;font-size:11px;letter-spacing:0;min-height:36px;cur
     <button id="calc">Comparar rutas <span aria-hidden="true">→</span></button>
     <p class="ayuda-principal">Menor consumo con hasta <strong id="margen-visible">10 %</strong> más de tiempo.</p>
     <details class="grupo" id="opciones-viaje">
-      <summary><span class="icono-grupo" aria-hidden="true">↗</span><span class="texto-grupo"><strong>Opciones del viaje</strong><small id="resumen-viaje">15 °C · 100 km/h · Sin paradas</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
+      <summary><span class="icono-grupo" aria-hidden="true">↗</span><span class="texto-grupo"><strong>Opciones del viaje</strong><small id="resumen-viaje">18 °C · 100 km/h · Sin paradas</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
       <div class="contenido-grupo">
         <h2>Paradas que tú eliges</h2>
         <label class="campo"><span>Ciudades o lugares (separados por ;)</span><input id="vias" type="text" placeholder="Ej: Zaragoza; Medinaceli"></label>
         <label class="campo"><span>Duración de cada parada (min)</span><input id="minvia" type="number" value="30"></label>
         <h2>Condiciones del viaje</h2>
-        <div class="dos-columnas"><label class="campo"><span>Temperatura (°C)</span><input id="temp" type="number" value="15"></label> <label class="campo"><span>Velocidad de referencia (km/h)</span><input id="vel" type="number" value="100"></label></div>
+        <div class="dos-columnas"><label class="campo"><span>Temperatura (°C)</span><input id="temp" type="number" value="18"></label> <label class="campo"><span>Velocidad media prevista (km/h)</span><input id="vel" type="number" value="100"></label></div>
         <label class="campo"><span><input id="desn" type="checkbox" checked> Tener en cuenta el desnivel</span></label>
         <h2>Tu equilibrio</h2>
         <label class="campo"><span>Tiempo adicional que aceptas (%)</span><input id="margen" type="number" min="0" max="50" step="1" value="10"><small>10 % permite hasta 12 min más en un viaje de 2 horas.</small></label>
@@ -229,8 +229,8 @@ button.insignia{font:inherit;font-size:11px;letter-spacing:0;min-height:36px;cur
         <details class="subgrupo"><summary>Más opciones de recarga</summary><div class="contenido-subgrupo">
         <label class="campo"><span>Recarga mínima deseada (min)</span><input id="tmin" type="number" value="15"></label> <label class="campo"><span>Distancia máxima entre paradas (km, 0 = sin límite)</span><input id="maxkm" type="number" value="300"></label> <label class="campo"><span>Tiempo extra por parada (min)</span><input id="extra" type="number" value="5"></label> <label class="campo"><span>Evitar paradas cortas (0 = indiferente; más = las evita más)</span><input id="pen" type="number" value="8"></label> <label class="campo"><span>Potencia mínima (kW)</span><input id="minkw" type="number" value="50"></label> <label class="campo"><span>Operadores (separados por comas; vacío = todos)</span><input id="ops" type="text" placeholder="Ej: Iberdrola, Zunder"></label>
         </div></details>
-        <details class="subgrupo"><summary>Características de mi EV</summary><div class="contenido-subgrupo">
-        <label class="campo"><span>Batería útil (kWh)</span><input id="bat" type="number" value="81.4" step="0.1"></label> <label class="campo"><span>Consumo (kWh/100 km)</span><input id="cons" type="number" value="15.8" step="0.1"></label> <label class="campo"><span>Carga máx. DC (kW)</span><input id="maxkw" type="number" value="128"></label> <label class="campo"><span>Velocidad a la que obtuviste tu consumo base (km/h)</span><input id="velref" type="number" value="100"></label> <label class="campo"><span>Masa del coche con carga (kg). Valor aproximado, ajústalo a tu ficha técnica</span><input id="masa" type="number" value="1950"></label>
+        <details class="subgrupo"><summary>Características de mi EV</summary><div class="contenido-subgrupo"><p class="ayuda">Referencia personal: 16,5 kWh/100 km a 18 °C y 100 km/h de media, incluidos picos ocasionales de 120 km/h. El desnivel se estima aparte; la referencia aún necesita contrastarse con viajes de terreno conocido.</p>
+        <label class="campo"><span>Batería útil (kWh)</span><input id="bat" type="number" value="81.4" step="0.1"></label> <label class="campo"><span>Consumo en viajes largos (kWh/100 km)</span><input id="cons" type="number" value="16.5" step="0.1"></label> <label class="campo"><span>Carga máx. DC (kW)</span><input id="maxkw" type="number" value="128"></label> <label class="campo"><span>Velocidad a la que obtuviste tu consumo base (km/h)</span><input id="velref" type="number" value="100"></label> <label class="campo"><span>Masa del coche con carga (kg). Valor aproximado, ajústalo a tu ficha técnica</span><input id="masa" type="number" value="1950"></label>
         </div></details>
         <details class="subgrupo" id="conexion-carga"><summary>Cargadores · <span id="estado-clave">Clave pendiente</span></summary><div class="contenido-subgrupo">
         <p class="ayuda">Introduce tu clave de Open Charge Map para buscar recargas. No hace falta en viajes que puedas completar sin cargar. Se guarda en este navegador al calcular.</p>
@@ -622,22 +622,29 @@ function factorTemp(t) {
 }
 // Factor por velocidad. ESTIMACIÓN MÍA: 40 % del consumo no depende de la velocidad y 60 % crece con su cuadrado.
 function factorVel(v, ref) { return 0.4 + 0.6 * Math.pow(v / ref, 2); }
+// Calibración personal acordada: viajes largos a 18 °C y 100 km/h de media.
+// Los picos ocasionales de 120 km/h ya forman parte del consumo base observado.
+function consumoModelo(base, temperatura, velocidad, velocidadBase) {
+  return base * factorTemp(temperatura) / factorTemp(18) * factorVel(velocidad, velocidadBase);
+}
 function consumoAjustado() {
-  return num("cons", 15.8) * factorTemp(num("temp", 15)) * factorVel(num("vel", 100), num("velref", 100));
+  return consumoModelo(num("cons", 16.5), num("temp", 18), num("vel", 100), num("velref", 100));
 }
 function actualizarResumenes() {
   const paradas = $("vias").value.split(";").filter(v => v.trim()).length;
-  $("resumen-viaje").textContent = `${num("temp",15)} °C · ${num("vel",100)} km/h · ${paradas ? paradas + (paradas === 1 ? " parada" : " paradas") : "Sin paradas"}`;
+  $("resumen-viaje").textContent = `${num("temp",18)} °C · ${num("vel",100)} km/h · ${paradas ? paradas + (paradas === 1 ? " parada" : " paradas") : "Sin paradas"}`;
   $("margen-visible").textContent = num("margen",10) + " %";
   $("resumen-ev").textContent = `Reserva ${num("min",10)} % · Cargar hasta ${num("max",80)} %`;
   $("estado-clave").textContent = $("ocmKey").value.trim() ? "Clave introducida" : "Clave pendiente";
 }
 $("formulario").addEventListener("input", actualizarResumenes);
 function cargarPrefs() {
-  try { const p = JSON.parse(localStorage.getItem("rutaev:prefs") || "{}"); PREFS.forEach(i => { if (p[i] !== undefined) $(i).value = p[i]; }); } catch (e) {}
+  try { const p = JSON.parse(localStorage.getItem("rutaev:prefs") || "{}"); PREFS.forEach(i => { if (p[i] !== undefined) $(i).value = p[i]; });
+    // Adoptar una vez la nueva referencia acordada, aunque haya preferencias antiguas.
+    if (p.perfilConsumo !== "largos-165-v1") { $("cons").value = "16.5"; $("velref").value = "100"; } } catch (e) {}
 }
 function guardarPrefs() {
-  try { const p = {}; PREFS.forEach(i => p[i] = $(i).value); localStorage.setItem("rutaev:prefs", JSON.stringify(p)); } catch (e) {}
+  try { const p = {perfilConsumo:"largos-165-v1"}; PREFS.forEach(i => p[i] = $(i).value); localStorage.setItem("rutaev:prefs", JSON.stringify(p)); } catch (e) {}
 }
 function leerViajes() {
   try { return JSON.parse(localStorage.getItem("rutaev:viajes") || "[]"); } catch (e) { return []; }
@@ -843,7 +850,7 @@ function mostrarOpcion(sesion, op) {
                chip(nP ? `${nP} ${nP === 1 ? "parada" : "paradas"}` : "Sin recargas", "n"));
     $("res").appendChild(cab);
     const ce = document.createElement("p"); ce.className = "meta";
-    ce.textContent = `Consumo ajustado por temperatura y velocidad: ${P.cons.toFixed(1)} kWh/100 km (base ${num("cons", 15.8).toFixed(1)}). Energía total del viaje: ${energiaEn(perfil, r.total).toFixed(0)} kWh. ${notaDesnivel}`;
+    ce.textContent = `Consumo ajustado por temperatura y velocidad: ${P.cons.toFixed(1)} kWh/100 km (base ${num("cons", 16.5).toFixed(1)} a 18 °C y ${num("velref",100)} km/h de media). Energía total del viaje: ${energiaEn(perfil, r.total).toFixed(0)} kWh. ${notaDesnivel}`;
     $("res").appendChild(ce);
     const tl = document.createElement("p"); tl.className = "meta";
     tl.textContent = `Conducción: ${duracion(r.min)} · Recargas: ${duracion(op.tCarga)} · Extras de carga: ${duracion(P.extra * nP)} · Otras paradas: ${duracion(vias.length * minVia)}.`;
