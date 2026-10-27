@@ -238,7 +238,7 @@ button.insignia{font:inherit;font-size:11px;letter-spacing:0;min-height:36px;cur
         <label class="campo"><span>Recarga mínima deseada (min)</span><input id="tmin" type="number" value="15"></label> <label class="campo"><span>Distancia máxima entre paradas (km, 0 = sin límite)</span><input id="maxkm" type="number" value="300"></label> <label class="campo"><span>Tiempo extra por parada (min)</span><input id="extra" type="number" value="5"></label> <input id="pen" type="hidden" value="8"> <label class="campo"><span>Potencia mínima (kW)</span><input id="minkw" type="number" value="50"></label> <label class="campo"><span>Operadores (separados por comas; vacío = todos)</span><input id="ops" type="text" placeholder="Ej: Iberdrola, Zunder"></label>
         </div></details>
         <details name="panel-ev" class="subgrupo"><summary>Características de mi EV</summary><div class="contenido-subgrupo"><p class="ayuda">Referencia personal: 16,5 kWh/100 km a 18 °C y 100 km/h de media, incluidos picos ocasionales de 120 km/h. El desnivel se estima aparte; la referencia aún necesita contrastarse con viajes de terreno conocido.</p>
-        <label class="campo"><span>Batería útil (kWh)</span><input id="bat" type="number" value="81.4" step="0.1"></label> <label class="campo"><span>Consumo en viajes largos (kWh/100 km)</span><input id="cons" type="number" value="16.5" step="0.1"></label> <label class="campo"><span>Carga máx. DC (kW)</span><input id="maxkw" type="number" value="128"></label> <input id="velref" type="hidden" value="100"><p class="ayuda">Velocidad media de referencia del consumo: <strong id="velref-visible">100 km/h</strong>. La velocidad media prevista se cambia en Opciones del viaje.</p> <label class="campo"><span>Masa del coche con carga (kg). Valor aproximado, ajústalo a tu ficha técnica</span><input id="masa" type="number" value="1950"></label>
+        <label class="campo"><span>Batería útil (kWh)</span><input id="bat" type="number" value="78" step="0.1"></label> <label class="campo"><span>Consumo en viajes largos (kWh/100 km)</span><input id="cons" type="number" value="16.5" step="0.1"></label> <label class="campo"><span>Carga máx. DC (kW)</span><input id="maxkw" type="number" value="128"></label> <input id="velref" type="hidden" value="100"><p class="ayuda">Velocidad media de referencia del consumo: <strong id="velref-visible">100 km/h</strong>. La velocidad media prevista se cambia en Opciones del viaje.</p> <label class="campo"><span>Masa del coche con carga (kg). Valor aproximado, ajústalo a tu ficha técnica</span><input id="masa" type="number" value="1950"></label>
         </div></details>
         <details name="panel-ev" class="subgrupo" id="conexion-carga"><summary>Cargadores · <span id="estado-clave">Clave pendiente</span></summary><div class="contenido-subgrupo">
         <p class="ayuda">Introduce tu clave de Open Charge Map para buscar recargas. No hace falta en viajes que puedas completar sin cargar. Se guarda en este navegador al calcular.</p>
@@ -746,13 +746,14 @@ $("formulario").addEventListener("toggle", ev => {
 function cargarPrefs() {
   try { const p = JSON.parse(localStorage.getItem("rutaev:prefs") || "{}"); PREFS.forEach(i => { if (p[i] !== undefined) $(i).value = p[i]; });
     $("tempAuto").checked = p.tempAuto !== false;
+    if (p.perfilBateria !== "util-78-v1") $("bat").value = "78";
     // Conservar el requisito de llegada de las preferencias anteriores.
     if (p.minDestino === undefined && p.min !== undefined) $("minDestino").value = p.min;
     // Adoptar una vez la nueva referencia acordada, aunque haya preferencias antiguas.
     if (p.perfilConsumo !== "largos-165-v1") { $("cons").value = "16.5"; $("velref").value = "100"; } } catch (e) {}
 }
 function guardarPrefs() {
-  try { const p = {perfilConsumo:"largos-165-v1", tempAuto:$("tempAuto").checked}; PREFS.forEach(i => p[i] = $(i).value); localStorage.setItem("rutaev:prefs", JSON.stringify(p)); } catch (e) {}
+  try { const p = {perfilBateria:"util-78-v1", perfilConsumo:"largos-165-v1", tempAuto:$("tempAuto").checked}; PREFS.forEach(i => p[i] = $(i).value); localStorage.setItem("rutaev:prefs", JSON.stringify(p)); } catch (e) {}
 }
 function leerViajes() {
   try { return JSON.parse(localStorage.getItem("rutaev:viajes") || "[]"); } catch (e) { return []; }
