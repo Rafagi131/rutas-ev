@@ -240,12 +240,60 @@ button.insignia{min-height:44px;border-radius:12px;background:var(--field);font-
 .chip.n,.chip.min{background:var(--field);color:var(--ink)}
 .barra-soc span{background:linear-gradient(90deg,#9ca3af,var(--acc))}
 .pin,.paradas li::before{background:var(--acc);color:var(--solid)}
+
+/* Dirección visual: geometría lineal, contraste editorial y azul de acción. */
+:root{--alto-marca:calc(72px + env(safe-area-inset-top,0px));--bg:#e5e7eb;--solid:#fcfcfd;--card:#fcfcfd;--field:#eff0f2;--ink:#181c23;--mute:#59616f;--line:#d3d7de;--acc:#145bda;--acc2:#145bda;--accsoft:#eaf0fc;--grad:linear-gradient(100deg,#145bda,#145bda)}
+.marca-app{background:#171b23;border-bottom:3px solid #397fff;box-shadow:none;color:#f5f7fc}
+.marca-inicio{color:#f5f7fc;border-radius:0;gap:12px}
+.marca-nombre{font-size:20px;text-transform:uppercase;letter-spacing:.07em}
+.marca-descripcion{color:#aeb8ca;font:10px/1.4 ui-monospace,SFMono-Regular,monospace;letter-spacing:.07em;margin-top:4px}
+.marca-vehiculo{background:transparent;border-color:#465064;color:#dce5f7;border-radius:2px;font:600 11px ui-monospace,SFMono-Regular,monospace;letter-spacing:.05em;padding:10px}
+.marca-simbolo{width:40px;height:40px}
+#map .leaflet-tile-pane{filter:grayscale(1) contrast(.94) brightness(1.02)}
+.panel{border-radius:3px!important;box-shadow:0 10px 32px #18213119;backdrop-filter:none;-webkit-backdrop-filter:none}
+#formulario{padding:22px;border-top:3px solid var(--ink)}
+.cabecera-viaje{gap:8px;align-items:end;margin-bottom:21px}
+.sobre-titulo{display:block;font:600 10px/1.4 ui-monospace,SFMono-Regular,monospace;letter-spacing:.12em;color:var(--acc);margin-bottom:10px}
+.cabecera-viaje h1{font-size:38px;line-height:1.02;letter-spacing:-1.5px;font-weight:700}
+.cabecera-viaje p{font-size:12px;line-height:1.5;margin-top:10px;max-width:230px}
+button.insignia{border-radius:2px;background:transparent;border:1px solid var(--line);min-height:44px;padding:8px 10px;font-size:11px;color:var(--ink)}
+.trayecto{padding-left:45px;border:1px solid var(--line);border-radius:2px;background:var(--solid)}
+.trayecto::before{left:22px;top:47px;bottom:47px;border-left:1px solid var(--line);opacity:1}
+.lugar{padding:6px 0 9px}
+.lugar::before{content:"01";left:-33px;top:30px;width:20px;height:20px;background:var(--field);border:0;border-radius:0;font:600 10px/20px ui-monospace,SFMono-Regular,monospace;text-align:center;color:var(--mute)}
+.destino-lugar::before{content:"02";background:var(--acc);color:white}
+.etiqueta-lugar label{font:600 10px ui-monospace,SFMono-Regular,monospace;letter-spacing:.1em}
+.lugar input[type=text]{font-size:16px}
+.bateria-inicial{border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;padding:3px 0 10px}
+.bateria-inicial>span:first-child{font-size:12px;color:var(--mute)}
+.bateria-inicial output{font-size:32px;letter-spacing:-1px;font-variant-numeric:tabular-nums;color:var(--ink)}
+#calc{border-radius:2px;min-height:54px;box-shadow:none;font-size:15px;padding:14px 16px}
+#calc span{font-size:26px}
+.ayuda-principal{text-align:left;font-size:11px;border-left:2px solid var(--acc);padding-left:10px;margin:2px 0 8px}
+.grupo{border-color:var(--line)}
+.grupo>summary{min-height:61px;gap:10px}
+.icono-grupo{border-radius:0;background:transparent;width:27px;height:30px;font-size:22px}
+.texto-grupo strong{font-size:12px;letter-spacing:.03em;text-transform:uppercase}
+.texto-grupo small{font-size:11px;line-height:1.5}
+input[type=text],input[type=number],.contenido-grupo input[type=password],#modoTiempo,#comprobar-ocm,#viajes button{border-radius:2px}
+input[type=range]{accent-color:var(--acc)}
+.ruta-opcion{border-radius:2px;padding:14px;box-shadow:none}
+.ruta-opcion[aria-pressed=true]{border-width:1px;border-left:4px solid var(--acc);box-shadow:none;background:var(--accsoft)}
+.chip{border-radius:2px;font-size:12px}
+#abrir,#preparar,#cerrar,#barra button,#elegir,#elegir button,.exportar a,.wz,.alt,#estado.error{border-radius:2px;box-shadow:none}
+#datos{border-top:3px solid var(--acc)}
+#res h2{letter-spacing:-.5px;font-size:21px}
+.barra-soc,.barra-soc span{border-radius:0}
+.barra-soc span{background:var(--acc)}
+@media(max-width:899px){#formulario{padding:18px}.cabecera-viaje h1{font-size:36px}.cabecera-viaje{margin-bottom:18px}.form{gap:10px}}
+@media(max-width:359px){.cabecera-viaje h1{font-size:30px}.marca-nombre{font-size:17px}.marca-simbolo{width:34px;height:34px}#formulario{padding:14px}}
+@media(prefers-color-scheme:dark){:root{--bg:#14161b;--solid:#1c2028;--card:#1c2028;--field:#292e38;--ink:#f1f3f8;--mute:#b0b8c6;--line:#414958;--acc:#8ab6ff;--acc2:#8ab6ff;--accsoft:#253955;--grad:linear-gradient(100deg,#145bda,#145bda)}#map .leaflet-tile-pane{filter:grayscale(1) brightness(.75)}.panel{box-shadow:0 8px 30px #0003}.destino-lugar::before{background:#145bda}}
 </style>
 </head>
 <body>
 <header class="marca-app" aria-label="Ruta EV">
   <button class="marca-inicio" id="marca-inicio" type="button" aria-label="Ruta EV · Abrir planificación">
-    <svg class="marca-simbolo" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect width="48" height="48" rx="15" fill="#303640"/><path d="M13 36V21c0-6 4-10 10-10h9" fill="none" stroke="#f1f4f9" stroke-width="4" stroke-linecap="round"/><circle cx="13" cy="36" r="3" fill="#f1f4f9"/><path d="m29 17-9 12h7l-2 9 12-15h-8l3-6Z" fill="#75baff"/></svg>
+    <svg class="marca-simbolo" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path d="M3 8h22L13 20H3Z" fill="#f0f4ff"/><path d="M23 8h22L14 40H3Z" fill="#438aff"/><path d="M34 28h11v12H22Z" fill="#f0f4ff"/></svg>
     <span><strong class="marca-nombre">Ruta EV</strong><span class="marca-descripcion">Planificador eléctrico</span></span>
   </button>
   <span class="marca-vehiculo">Kia EV3</span>
@@ -258,7 +306,7 @@ button.insignia{min-height:44px;border-radius:12px;background:var(--field);font-
 <button id="preparar" class="oculto">Preparar viaje</button>
 <section id="formulario" class="panel" aria-label="Preparar viaje">
   <header class="cabecera-viaje">
-    <div><h1>Prepara tu viaje</h1><p>Encuentra tu equilibrio entre energía y tiempo.</p></div>
+    <div><span class="sobre-titulo">PLANIFICA / 01</span><h1>Tu próxima<br>ruta.</h1><p>Compara consumo y tiempo.</p></div>
     <button type="button" id="ver-mapa" class="insignia">Ver mapa</button>
     <button id="cerrar" class="oculto">Volver a la ruta</button>
   </header>
