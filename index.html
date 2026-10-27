@@ -401,6 +401,31 @@ function energiaEn(perfil, x) {
   while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (k[mid] <= x) lo = mid; else hi = mid; }
   return k[hi] === k[lo] ? e[lo] : e[lo] + (e[hi] - e[lo]) * (x - k[lo]) / (k[hi] - k[lo]);
 }
+// Resume todos los extremos del perfil lineal entre dos puntos. Se reutiliza en cada estado.
+function resumenTramo(perfil, desde, hasta) {
+  const inicio = energiaEn(perfil, desde);
+  let minimo = 0, maximo = 0, subidaMaxima = 0;
+  const incorporar = e => {
+    const x = e - inicio;
+    maximo = Math.max(maximo, x);
+    subidaMaxima = Math.max(subidaMaxima, x - minimo);
+    minimo = Math.min(minimo, x);
+  };
+  for (let i = 0; i < perfil.km.length; i++) {
+    if (perfil.km[i] > desde && perfil.km[i] < hasta) incorporar(perfil.kwh[i]);
+  }
+  const neto = energiaEn(perfil, hasta) - inicio;
+  incorporar(inicio + neto);
+  return {neto, minimo, maximo, subidaMaxima};
+}
+function bateriaEnTramo(tramo, soc, bat) {
+  const inicial = soc / 100 * bat;
+  // La regeneración que ya no cabe en la batería se pierde; no puede usarse en una subida posterior.
+  const perdida = Math.max(0, inicial - tramo.minimo - bat);
+  const final = inicial - tramo.neto - perdida;
+  const minimo = Math.min(inicial - tramo.maximo, bat - tramo.subidaMaxima);
+  return {llegada: final / bat * 100, minimo: minimo / bat * 100, perdida};
+}
 // Altitudes: Open-Meteo (sin clave, 100 puntos por consulta). Energía de subida/bajada: estimación mía
 // (subida con 85 % de rendimiento; en bajada se recupera el 60 %).
 async function perfilDesnivel(coords, acum, cons, masa) {
@@ -444,7 +469,12 @@ function optimizar(total, socIni, cargadores, P, perfil, tmax, maxkm) {
   const smin = Math.ceil(P.min), smax = Math.min(100, Math.floor(P.max));
   const nodos = [{along: 0}, ...cargadores.slice().sort((a, b) => a.along - b.along)];
   const n = nodos.length - 1;
-  const En = nodos.map(c => energiaEn(perfil, c.along)), Efin = energiaEn(perfil, total);
+  const tramos = new Map();
+  const tramo = (i, j) => {
+    const clave = i + ":" + j;
+    if (!tramos.has(clave)) tramos.set(clave, resumenTramo(perfil, nodos[i].along, j === nodos.length ? total : nodos[j].along));
+    return tramos.get(clave);
+  };
   const tablas = new Map();
   const tabla = c => {
     const cap = Math.min(c.kw, P.maxkw);
@@ -460,12 +490,17 @@ function optimizar(total, socIni, cargadores, P, perfil, tmax, maxkm) {
   const depArg = nodos.map(() => new Array(101).fill(-1));
   let fin = {coste: INF, i: -1, st: -1};
   const salir = (i, st, coste) => {
-    if (Efin - En[i] <= (st - minimoDestino) / 100 * bat + 1e-9 && total - nodos[i].along <= maxkm && coste < fin.coste) fin = {coste, i, st};
+    const destino = bateriaEnTramo(tramo(i, nodos.length), st, bat);
+    // Si se pide menos batería al destino que en cargadores, ese mínimo menor rige el último tramo.
+    if (destino.minimo >= Math.min(P.min, minimoDestino) - 1e-9 && destino.llegada >= minimoDestino - 1e-9
+      && total - nodos[i].along <= maxkm && coste < fin.coste) fin = {coste, i, st};
     for (let j = i + 1; j <= n; j++) {
       const d = nodos[j].along - nodos[i].along;
       if (d > maxkm) break;
       if (d < 3) continue;
-      const sa = Math.floor(st - (En[j] - En[i]) / bat * 100 + 1e-9);
+      const recorrido = bateriaEnTramo(tramo(i, j), st, bat);
+      if (recorrido.minimo < P.min - 1e-9) continue;
+      const sa = Math.floor(recorrido.llegada + 1e-9);
       if (sa < smin) continue;
       if (coste < mejor[j][sa]) { mejor[j][sa] = coste; prev[j][sa] = [i, st]; }
     }
@@ -497,7 +532,7 @@ function optimizar(total, socIni, cargadores, P, perfil, tmax, maxkm) {
     const T = tabla(c);
     const alternativas = cargadores
       .filter(x => x.id !== c.id && Math.abs(x.along - c.along) <= 15 && x.along > pos + 3 && x.along - pos <= maxkm
-        && energiaEn(perfil, x.along) - energiaEn(perfil, pos) <= (socDep - P.min) / 100 * bat)
+        && bateriaEnTramo(resumenTramo(perfil, pos, x.along), socDep, bat).minimo >= P.min - 1e-9)
       .sort((a, b) => b.kw - a.kw).slice(0, 2);
     const r = {...c, alternativas, km: c.along, llegada: c.sa, objetivo: c.st, kwh: (c.st - c.sa) / 100 * bat, minutos: T[c.st] - T[c.sa]};
     pos = c.along; socDep = c.st;
@@ -524,13 +559,13 @@ function planificarVoraz(total, socIni, cargadores, P, perfil) {
   const aSoc = kwh => kwh / P.bat * 100;
   let pos = 0, soc = socIni; const paradas = [];
   for (let n = 0; n < 12; n++) {
-    const disp = (soc - P.min) / 100 * P.bat; // kWh utilizables hasta el mínimo
-    if (E(total) - E(pos) <= (soc - (P.minDestino ?? P.min)) / 100 * P.bat) return {paradas, ok: true};
-    const alcanza = c => E(c.along) - E(pos) <= disp;
+    const fin = bateriaEnTramo(resumenTramo(perfil, pos, total), soc, P.bat);
+    if (fin.minimo >= Math.min(P.min, P.minDestino ?? P.min) - 1e-9 && fin.llegada >= (P.minDestino ?? P.min) - 1e-9) return {paradas, ok: true};
+    const alcanza = c => bateriaEnTramo(resumenTramo(perfil, pos, c.along), soc, P.bat).minimo >= P.min - 1e-9;
     const cands = cargadores.filter(c => c.along > pos + 5 && alcanza(c));
-    if (!cands.length) return {paradas, ok: false, motivo: `No hay cargador alcanzable pasado el km ${Math.round(pos)}.`};
+    if (!cands.length) return {paradas, ok: false, motivo: `No hay plan alcanzable desde el km ${Math.round(pos)} que respete la batería mínima a lo largo del perfil y al destino.`};
     const c = cands.reduce((a, b) => b.along > a.along ? b : a); // el más lejano alcanzable
-    const llegada = soc - aSoc(E(c.along) - E(pos));
+    const llegada = bateriaEnTramo(resumenTramo(perfil, pos, c.along), soc, P.bat).llegada;
     const necesario = (P.minDestino ?? P.min) + aSoc(E(total) - E(c.along));
     const objetivo = Math.max(llegada, Math.min(P.max, Math.max(necesario, llegada + 1), 100));
     const alternativas = cargadores
@@ -711,11 +746,16 @@ function duracion(minutos) {
   const m = Math.round(minutos); return `${Math.floor(m / 60)} h ${m % 60} min`;
 }
 function metricasRuta(r, plan, perfil, P, socIni, tVias) {
-  const energia = energiaEn(perfil, r.total);
   const tCarga = plan.paradas.reduce((acc, p) => acc + p.minutos, 0);
-  const ultima = plan.paradas[plan.paradas.length - 1];
-  const socFinal = ultima ? ultima.objetivo - (energia - energiaEn(perfil, ultima.km)) / P.bat * 100 : socIni - energia / P.bat * 100;
-  return {energia, tCarga, tTotal:r.min + tCarga + P.extra * plan.paradas.length + tVias, socFinal};
+  let pos = 0, soc = socIni, perdida = 0, socMinimo = socIni;
+  for (const parada of [...plan.paradas, {km:r.total}]) {
+    const recorrido = bateriaEnTramo(resumenTramo(perfil, pos, parada.km), soc, P.bat);
+    perdida += recorrido.perdida; socMinimo = Math.min(socMinimo, recorrido.minimo);
+    soc = parada.objetivo === undefined ? recorrido.llegada : parada.objetivo;
+    pos = parada.km;
+  }
+  const energia = energiaEn(perfil, r.total) + perdida;
+  return {energia, tCarga, tTotal:r.min + tCarga + P.extra * plan.paradas.length + tVias, socFinal:soc, socMinimo, regeneracionPerdida:perdida};
 }
 function elegirRutas(opciones, margen) {
   if (!opciones.length) throw new Error("Sin rutas viables para comparar.");
@@ -854,13 +894,13 @@ function mostrarOpcion(sesion, op) {
                chip(nP ? `${nP} ${nP === 1 ? "parada" : "paradas"}` : "Sin recargas", "n"));
     $("res").appendChild(cab);
     const ce = document.createElement("p"); ce.className = "meta";
-    ce.textContent = `Consumo ajustado por temperatura y velocidad: ${P.cons.toFixed(1)} kWh/100 km (base ${num("cons", 16.5).toFixed(1)} a 18 °C y ${num("velref",100)} km/h de media). Energía total del viaje: ${energiaEn(perfil, r.total).toFixed(0)} kWh. ${notaDesnivel}`;
+    ce.textContent = `Consumo ajustado por temperatura y velocidad: ${P.cons.toFixed(1)} kWh/100 km (base ${num("cons", 16.5).toFixed(1)} a 18 °C y ${num("velref",100)} km/h de media). Energía total del viaje: ${op.energia.toFixed(1)} kWh. ${notaDesnivel}${op.regeneracionPerdida > 0.05 ? ` Recuperación no aprovechable por batería llena: ${op.regeneracionPerdida.toFixed(1)} kWh.` : ""}`;
     $("res").appendChild(ce);
     const tl = document.createElement("p"); tl.className = "meta";
     tl.textContent = `Conducción: ${duracion(r.min)} · Recargas: ${duracion(op.tCarga)} · Extras de carga: ${duracion(P.extra * nP)} · Otras paradas: ${duracion(vias.length * minVia)}.`;
     $("res").appendChild(tl);
     const llegada = document.createElement("p"); llegada.className = "explicacion";
-    llegada.textContent = `Batería estimada al destino: ${op.socFinal.toFixed(0)} % (mínimo pedido: ${P.minDestino} %) · Llegada estimada si sales al calcular: ${new Date(sesion.salida + op.tTotal * 60000).toLocaleTimeString("es-ES", {hour:"2-digit", minute:"2-digit"})}.`;
+    llegada.textContent = `Batería estimada al destino: ${op.socFinal.toFixed(0)} % (mínimo pedido: ${P.minDestino} %) · Mínimo estimado en ruta: ${Math.floor(op.socMinimo + 1e-9)} % · Llegada estimada si sales al calcular: ${new Date(sesion.salida + op.tTotal * 60000).toLocaleTimeString("es-ES", {hour:"2-digit", minute:"2-digit"})}.`;
     $("res").appendChild(llegada);
     const todos = [...plan.paradas, ...vias].sort((x, y) => x.km - y.km);
     const en = enlaces(a, b, todos);
