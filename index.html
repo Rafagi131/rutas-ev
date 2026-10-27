@@ -183,6 +183,10 @@ button.insignia{font:inherit;font-size:11px;letter-spacing:0;min-height:36px;cur
   .grupo>summary{min-height:52px;padding:8px 0}
 }
 .dos-columnas:has(> [hidden]){grid-template-columns:1fr}
+#comprobar-ocm{font:inherit;min-height:44px;padding:9px 14px;border:1px solid var(--line);border-radius:10px;background:var(--accsoft);color:var(--ink);cursor:pointer}
+#comprobar-ocm:disabled{opacity:.6;cursor:wait}
+#resultado-ocm{margin-top:8px}
+#estado.error{border-radius:14px;max-height:24dvh;overflow:auto;bottom:max(10px,env(safe-area-inset-bottom))}
 </style>
 </head>
 <body>
@@ -238,7 +242,10 @@ button.insignia{font:inherit;font-size:11px;letter-spacing:0;min-height:36px;cur
         </div></details>
         <details name="panel-ev" class="subgrupo" id="conexion-carga"><summary>Cargadores · <span id="estado-clave">Clave pendiente</span></summary><div class="contenido-subgrupo">
         <p class="ayuda">Introduce tu clave de Open Charge Map para buscar recargas. No hace falta en viajes que puedas completar sin cargar. Se guarda en este navegador al calcular.</p>
-        <label class="campo"><span>Clave de Open Charge Map</span><input id="ocmKey" type="password" autocomplete="off"></label>
+        <label class="campo"><span>Clave de Open Charge Map</span><input id="ocmKey" type="password" autocomplete="off" spellcheck="false" autocapitalize="none"></label>
+        <button type="button" id="comprobar-ocm">Comprobar conexión</button>
+        <p id="resultado-ocm" class="ayuda" role="status"></p>
+        <p class="ayuda">La clave se guarda por separado en cada navegador. Puedes obtenerla o revisarla en <a href="https://openchargemap.org/profile" target="_blank" rel="noopener">Open Charge Map → My Apps</a>. No compartas la clave por chat.</p>
         </div></details>
       </div>
     </details>
@@ -277,7 +284,7 @@ function km(a, b) { // distancia entre 2 puntos [lon,lat] en km
 const estado = t => { $("estado").textContent = t; $("estado").className = ""; };
 const fallo = t => {
   $("estado").textContent = t; $("estado").className = "error"; vista("form");
-  if (/clave de Open Charge Map/i.test(t)) {
+  if (/clave de Open Charge Map|rechazado el acceso a los cargadores/i.test(t)) {
     $("ajustes-ev").open = true; $("conexion-carga").open = true;
     $("ocmKey").scrollIntoView({block:"center"}); $("ocmKey").focus({preventScroll:true});
   } else if (/Revisa los ajustes/.test(t)) $("ajustes-ev").open = true;
@@ -340,6 +347,29 @@ async function ruta(a, b, vias = []) {
   return j.routes.slice(0, 3).map(f => ({coords: f.geometry.coordinates, total: f.distance/1000, min: f.duration/60}));
 }
 
+function errorAccesoOCM(status) {
+  const error = new Error(`Open Charge Map ha rechazado el acceso a los cargadores (${status}). Revisa la clave de Open Charge Map y pulsa «Comprobar conexión». Si la clave es correcta, puede haber una restricción del servicio.`);
+  error.codigo = "OCM_ACCESO"; return error;
+}
+async function consultarOCM(url) {
+  const r = await fetchConLimite(url);
+  if (r.status === 401 || r.status === 403) throw errorAccesoOCM(r.status);
+  if (!r.ok) throw new Error("No se pudieron consultar los cargadores (Open Charge Map: " + r.status + ").");
+  const datos = await r.json();
+  if (!Array.isArray(datos)) throw new Error("Open Charge Map devolvió una respuesta inesperada.");
+  return datos;
+}
+$("comprobar-ocm").onclick = async () => {
+  const boton = $("comprobar-ocm"), salida = $("resultado-ocm"), clave = $("ocmKey").value.trim();
+  if (!clave) { salida.textContent = "Introduce tu clave de Open Charge Map antes de comprobar la conexión."; return; }
+  boton.disabled = true; salida.textContent = "Comprobando acceso...";
+  try {
+    await consultarOCM("https://api.openchargemap.io/v3/poi/?output=json&countrycode=ES&maxresults=1&verbose=false&key=" + encodeURIComponent(clave));
+    salida.textContent = "Conexión correcta: Open Charge Map acepta la consulta. Puedes calcular el viaje.";
+    try { localStorage.setItem("rutaev:ocmKey", clave); } catch (e) {}
+  } catch (e) { salida.textContent = e.codigo === "OCM_ACCESO" ? "Acceso rechazado (401/403). Revisa la clave en My Apps y vuelve a pegarla aquí. Si persiste con una clave válida, puede ser una restricción del servicio." : "No se pudo comprobar la conexión. " + e.message; }
+  finally { boton.disabled = false; }
+};
 async function buscarCargadores(coords, acum, minkw, key, cache = new Map()) {
   const vistos = new Map();
   let ultimo = -999;
@@ -351,9 +381,7 @@ async function buscarCargadores(coords, acum, minkw, key, cache = new Map()) {
     const cacheKey = p.join(",");
     let datos = cache.get(cacheKey);
     if (!datos) {
-      const r = await fetchConLimite(u);
-      if (!r.ok) throw new Error("Open Charge Map falló (" + r.status + ")");
-      datos = await r.json(); cache.set(cacheKey, datos);
+      datos = await consultarOCM(u); cache.set(cacheKey, datos);
       await sleep(300);
     }
     for (const c of datos) vistos.set(c.ID, c);
@@ -841,7 +869,7 @@ $("calc").onclick = async () => {
       origenTexto:$("origen").value, destinoTexto:$("destino").value, viasTexto:$("vias").value, dp:destinoFijo ? destinoFijo.pos : null};
     const ops = $("ops").value.toLowerCase().split(",").map(x => x.trim()).filter(Boolean);
     const cache = new Map(), preparadas = [];
-    let falloAltitud = false;
+    let falloAltitud = false, fallosCarga = 0;
     for (let i = 0; i < rutas.length; i++) {
       estado(`Evaluando ruta ${i + 1} de ${rutas.length}...`);
       const r = rutas[i], acum = [0];
@@ -890,13 +918,17 @@ $("calc").onclick = async () => {
           const cargadores = await buscarCargadores(op.r.coords, op.acum, +$("minkw").value, ocmKey, cache);
           filtrados = ops.length ? cargadores.filter(c => ops.some(o => c.op.toLowerCase().includes(o))) : cargadores;
           plan = planificar(op.r.total, socIni, filtrados, P, op.perfil);
-        } catch (e) { sesion.descartes.push(`Ruta ${op.numero}: no se pudo evaluar la carga (${e.message}).`); continue; }
+        } catch (e) {
+          if (e.codigo === "OCM_ACCESO") throw e; // Un rechazo de acceso afecta a todas las alternativas: no repetir la petición.
+          fallosCarga++;
+          sesion.descartes.push(`Ruta ${op.numero}: no se pudo evaluar la carga (${e.message}).`); continue;
+        }
       }
       if (!plan.ok) { sesion.descartes.push(`Ruta ${op.numero}: ${plan.motivo}`); continue; }
       Object.assign(op, metricasRuta(op.r, plan, op.perfil, P, socIni, op.vias.length * minVia), {plan});
       sesion.opciones.push(op);
     }
-    if (!sesion.opciones.length) throw new Error("No se encontró un plan viable. " + sesion.descartes.join(" "));
+    if (!sesion.opciones.length) throw new Error((fallosCarga ? "No se pudo completar el cálculo por un problema al consultar los cargadores. " : "No se encontró un plan viable. ") + sesion.descartes.join(" "));
     if (falloAltitud) sesion.descartes.unshift("No se pudo completar la altitud. Todas las rutas se han comparado sin desnivel.");
     sesion.eleccion = elegirRutas(sesion.opciones, margen);
     guardarPrefs();
