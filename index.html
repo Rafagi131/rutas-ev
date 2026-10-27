@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ruta EV · Revisión 2 · Kia EV3</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ruta EV · Planificador eléctrico</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap">
 <style>
@@ -188,9 +188,63 @@ button.insignia{font:inherit;font-size:11px;letter-spacing:0;min-height:36px;cur
 #resultado-ocm{margin-top:8px}
 #estado.error{border-radius:14px;max-height:24dvh;overflow:auto;bottom:max(10px,env(safe-area-inset-bottom))}
 #modoTiempo{width:100%;min-height:44px;font:inherit;font-size:16px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:10px;padding:8px}
+
+/* Propuesta visual: identidad persistente y espacio de trabajo bajo la cabecera. */
+:root{--alto-marca:calc(68px + env(safe-area-inset-top,0px));--bg:#f4f6f3;--solid:#fff;--card:rgba(255,255,255,.98);--field:#f1f4f1;--ink:#172d2a;--mute:#5d706b;--line:#dfe8e1;--acc:#087b63;--accsoft:#e9f5ee;--grad:linear-gradient(115deg,#086b57,#0c886a)}
+.marca-app{position:fixed;z-index:1500;top:0;left:0;right:0;height:var(--alto-marca);padding:env(safe-area-inset-top,0px) max(20px,env(safe-area-inset-right)) 0 max(20px,env(safe-area-inset-left));margin:0;display:flex;justify-content:space-between;gap:12px;background:var(--solid);border-bottom:1px solid var(--line);box-shadow:0 2px 14px #17352c08}
+.marca-inicio{display:flex;align-items:center;gap:11px;padding:0;min-height:48px;border:0;background:none;color:var(--ink);text-align:left;font:inherit;cursor:pointer;border-radius:10px}
+.marca-simbolo{width:42px;height:42px;flex:none;display:block}
+.marca-nombre{display:block;font-size:21px;letter-spacing:-.6px;line-height:1.2;font-weight:700}
+.marca-descripcion{display:block;font-size:11px;color:var(--mute);margin-top:2px}
+.marca-vehiculo{font-size:12px;font-weight:700;border:1px solid var(--line);border-radius:999px;background:var(--field);padding:8px 12px;white-space:nowrap}
+#map{top:var(--alto-marca)}
+.panel{box-shadow:0 10px 35px #183c2d16;border:1px solid var(--line);scroll-padding:16px;overscroll-behavior:contain}
+#formulario{top:calc(var(--alto-marca) + 16px);left:16px;right:16px;padding:20px;max-height:calc(100dvh - var(--alto-marca) - 32px - env(safe-area-inset-bottom));border-radius:22px}
+.cabecera-viaje{margin-bottom:18px;align-items:center;gap:12px;display:grid;grid-template-columns:minmax(0,1fr) auto}.cabecera-viaje>div{min-width:0}.cabecera-viaje #cerrar{grid-column:1/-1;justify-self:end}
+.cabecera-viaje h1{font-size:24px;letter-spacing:-.8px;line-height:1.2}
+.cabecera-viaje p{font-size:12px;margin-top:5px}
+button.insignia{min-height:44px;border-radius:12px;background:var(--field);font-weight:700;padding:10px 13px;color:var(--acc)}
+.proposito{display:none}
+.trayecto{border-radius:17px;background:var(--field);border-color:transparent}
+.lugar input[type=text]{min-height:44px;font-size:16px}
+.lugar{padding:8px 0}
+.lugar::before{top:31px}
+.trayecto::before{top:38px;bottom:38px}
+.lugar+.lugar{border-top-color:var(--line)}
+.etiqueta-lugar label{font-size:11px;text-transform:uppercase;letter-spacing:.07em}
+.mini{min-height:44px}
+.bateria-inicial{background:var(--accsoft);border:1px solid var(--line);padding:13px 14px 8px;border-radius:17px}
+#calc{min-height:52px;border-radius:15px;font-size:16px;box-shadow:0 6px 16px #087b6320}
+.form{gap:12px}
+.ayuda-principal{font-size:12px;line-height:1.5;margin:0 0 5px}
+.grupo>summary{min-height:62px;padding:11px 0}
+.texto-grupo strong{font-size:14px}.texto-grupo small{font-size:12px}
+.icono-grupo{width:34px;height:34px;border-radius:11px;background:var(--accsoft)}
+.contenido-grupo .ayuda,.contenido-grupo small{font-size:12px}
+#datos{padding:18px;border-radius:22px;max-height:min(58dvh,calc(100dvh - var(--alto-marca) - 76px));bottom:max(12px,env(safe-area-inset-bottom))}
+#abrir,#preparar{top:calc(var(--alto-marca) + 12px);right:max(14px,env(safe-area-inset-right));min-height:44px;border-radius:14px;box-shadow:0 4px 16px #183c2d22}
+#elegir{top:calc(var(--alto-marca) + 12px);max-width:calc(100vw - 24px);white-space:normal;border-radius:16px;min-height:48px;padding:8px 10px 8px 14px}
+#elegir button{min-height:44px}
+.ruta-opcion{border-radius:16px;padding:15px}
+.ruta-opcion[aria-pressed=true]{box-shadow:0 3px 12px #087b6310}
+#res h2{font-size:19px}.explicacion{font-size:14px;line-height:1.5}.meta{line-height:1.55}
+.exportar a,.wz{min-height:44px;display:inline-flex;align-items:center}
+#barra button{min-height:44px}
+@media(min-width:900px){#formulario,#datos{width:410px;left:20px;right:auto;top:calc(var(--alto-marca) + 20px);max-height:calc(100dvh - var(--alto-marca) - 40px)}#datos{bottom:auto}.marca-app{padding-left:26px;padding-right:26px}}
+@media(max-width:899px){#formulario{left:10px;right:10px;top:calc(var(--alto-marca) + 10px);padding:18px;max-height:calc(100dvh - var(--alto-marca) - 20px - env(safe-area-inset-bottom))}#datos{left:10px;right:10px}.cabecera-viaje h1{font-size:23px}.marca-app{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}.form{gap:10px}.grupo>summary{min-height:58px}.cabecera-viaje{margin-bottom:16px}}
+@media(max-width:359px){.marca-descripcion{display:none}.marca-nombre{font-size:19px}.marca-vehiculo{font-size:11px;padding:7px 9px}#formulario{padding:14px}.cabecera-viaje h1{font-size:21px}}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1917;--solid:#14231f;--card:rgba(20,35,31,.98);--field:#1c3029;--ink:#edf4ee;--mute:#a1b8ad;--line:#2c4439;--acc:#64dbb0;--accsoft:#203e31}.marca-app{box-shadow:none}.panel{box-shadow:0 10px 35px #0003}}
 </style>
 </head>
 <body>
+<header class="marca-app" aria-label="Ruta EV">
+  <button class="marca-inicio" id="marca-inicio" type="button" aria-label="Ruta EV · Abrir planificación">
+    <svg class="marca-simbolo" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect width="48" height="48" rx="15" fill="#087b63"/><path d="M13 36V21c0-6 4-10 10-10h9" fill="none" stroke="#d8f9e4" stroke-width="4" stroke-linecap="round"/><circle cx="13" cy="36" r="3" fill="#d8f9e4"/><path d="m29 17-9 12h7l-2 9 12-15h-8l3-6Z" fill="#d5f27c"/></svg>
+    <span><strong class="marca-nombre">Ruta EV</strong><span class="marca-descripcion">Planificador eléctrico</span></span>
+  </button>
+  <span class="marca-vehiculo">Kia EV3</span>
+</header>
+
 <div id="map"></div>
 <div id="estado" role="status"></div>
 <div id="elegir" class="oculto"><span>Toca el mapa para elegir el destino</span><button id="cancelarmapa">Cancelar</button></div>
@@ -198,8 +252,7 @@ button.insignia{font:inherit;font-size:11px;letter-spacing:0;min-height:36px;cur
 <button id="preparar" class="oculto">Preparar viaje</button>
 <section id="formulario" class="panel" aria-label="Preparar viaje">
   <header class="cabecera-viaje">
-    <span class="logo" aria-hidden="true">ϟ</span>
-    <div><h1>Ruta EV</h1><p>Kia EV3 Long Range</p></div>
+    <div><h1>Prepara tu viaje</h1><p>Encuentra tu equilibrio entre energía y tiempo.</p></div>
     <button type="button" id="ver-mapa" class="insignia">Ver mapa</button>
     <button id="cerrar" class="oculto">Volver a la ruta</button>
   </header>
@@ -818,6 +871,7 @@ map.on("click", async ev => {
   } catch (err) {}
 });
 $("abrir").onclick = () => vista("form");
+$("marca-inicio").onclick = () => { vista("form"); $("formulario").scrollTop = 0; };
 $("ver-mapa").onclick = () => vista("explorar");
 $("preparar").onclick = () => vista("form");
 $("cerrar").onclick = () => { vista("datos"); setTimeout(centrarRuta, 80); };
