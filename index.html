@@ -220,11 +220,12 @@ button.insignia{font:inherit;font-size:11px;letter-spacing:0;min-height:36px;cur
       </div>
     </details>
     <details class="grupo" id="ajustes-ev">
-      <summary><span class="icono-grupo" aria-hidden="true">ϟ</span><span class="texto-grupo"><strong>Mi EV y recargas</strong><small id="resumen-ev">Reserva 10 % · Cargar hasta 80 %</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
+      <summary><span class="icono-grupo" aria-hidden="true">ϟ</span><span class="texto-grupo"><strong>Mi EV y recargas</strong><small id="resumen-ev">Cargadores 10 % · Destino 20 %</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
       <div class="contenido-grupo">
         <p class="ayuda">Estos ajustes se guardan al calcular. Solo necesitas revisarlos cuando cambien tus preferencias.</p>
         <h2>Cómo quieres cargar</h2>
-        <div class="dos-columnas"><label class="campo"><span>Llegar con mínimo (%)</span><input id="min" type="number" value="10"></label> <label class="campo"><span>Cargar hasta (%)</span><input id="max" type="number" value="80"></label></div>
+        <div class="dos-columnas"><label class="campo"><span>Mínimo al llegar a cargadores (%)</span><input id="min" type="number" value="10"></label> <label class="campo"><span>Cargar hasta (%)</span><input id="max" type="number" value="80"></label></div>
+        <label class="campo"><span>Batería mínima al destino (%)</span><input id="minDestino" type="number" min="0" max="100" step="1" value="20"><small>Independiente del mínimo de los cargadores. Por ejemplo: 10 % en cargadores y 20 % al destino.</small></label>
         <label class="campo"><span>Tiempo máximo por recarga (min)</span><input id="tmax" type="number" value="40"></label>
         <details class="subgrupo"><summary>Más opciones de recarga</summary><div class="contenido-subgrupo">
         <label class="campo"><span>Recarga mínima deseada (min)</span><input id="tmin" type="number" value="15"></label> <label class="campo"><span>Distancia máxima entre paradas (km, 0 = sin límite)</span><input id="maxkm" type="number" value="300"></label> <label class="campo"><span>Tiempo extra por parada (min)</span><input id="extra" type="number" value="5"></label> <label class="campo"><span>Evitar paradas cortas (0 = indiferente; más = las evita más)</span><input id="pen" type="number" value="8"></label> <label class="campo"><span>Potencia mínima (kW)</span><input id="minkw" type="number" value="50"></label> <label class="campo"><span>Operadores (separados por comas; vacío = todos)</span><input id="ops" type="text" placeholder="Ej: Iberdrola, Zunder"></label>
@@ -439,6 +440,7 @@ async function perfilDesnivel(coords, acum, cons, masa) {
 function optimizar(total, socIni, cargadores, P, perfil, tmax, maxkm) {
   const tmin = P.tmin || 0; // preferencia: una recarga más corta que esto se penaliza
   const bat = P.bat, INF = 1e18;
+  const minimoDestino = P.minDestino ?? P.min;
   const smin = Math.ceil(P.min), smax = Math.min(100, Math.floor(P.max));
   const nodos = [{along: 0}, ...cargadores.slice().sort((a, b) => a.along - b.along)];
   const n = nodos.length - 1;
@@ -458,7 +460,7 @@ function optimizar(total, socIni, cargadores, P, perfil, tmax, maxkm) {
   const depArg = nodos.map(() => new Array(101).fill(-1));
   let fin = {coste: INF, i: -1, st: -1};
   const salir = (i, st, coste) => {
-    if (Efin - En[i] <= (st - P.min) / 100 * bat + 1e-9 && total - nodos[i].along <= maxkm && coste < fin.coste) fin = {coste, i, st};
+    if (Efin - En[i] <= (st - minimoDestino) / 100 * bat + 1e-9 && total - nodos[i].along <= maxkm && coste < fin.coste) fin = {coste, i, st};
     for (let j = i + 1; j <= n; j++) {
       const d = nodos[j].along - nodos[i].along;
       if (d > maxkm) break;
@@ -523,13 +525,13 @@ function planificarVoraz(total, socIni, cargadores, P, perfil) {
   let pos = 0, soc = socIni; const paradas = [];
   for (let n = 0; n < 12; n++) {
     const disp = (soc - P.min) / 100 * P.bat; // kWh utilizables hasta el mínimo
-    if (E(total) - E(pos) <= disp) return {paradas, ok: true};
+    if (E(total) - E(pos) <= (soc - (P.minDestino ?? P.min)) / 100 * P.bat) return {paradas, ok: true};
     const alcanza = c => E(c.along) - E(pos) <= disp;
     const cands = cargadores.filter(c => c.along > pos + 5 && alcanza(c));
     if (!cands.length) return {paradas, ok: false, motivo: `No hay cargador alcanzable pasado el km ${Math.round(pos)}.`};
     const c = cands.reduce((a, b) => b.along > a.along ? b : a); // el más lejano alcanzable
     const llegada = soc - aSoc(E(c.along) - E(pos));
-    const necesario = P.min + aSoc(E(total) - E(c.along));
+    const necesario = (P.minDestino ?? P.min) + aSoc(E(total) - E(c.along));
     const objetivo = Math.max(llegada, Math.min(P.max, Math.max(necesario, llegada + 1), 100));
     const alternativas = cargadores
       .filter(x => x.id !== c.id && x.along > pos + 5 && alcanza(x) && Math.abs(x.along - c.along) <= 15)
@@ -611,7 +613,7 @@ function enlaces(origen, destino, paradas) {
 }
 function pintaSoc() { $("socv").textContent = $("soc").value + " %"; }
 $("soc").addEventListener("input", pintaSoc);
-const PREFS = ["bat", "cons", "maxkw", "min", "max", "minkw", "ops", "velref", "masa", "minvia", "tmin", "pen", "tmax", "maxkm", "extra", "margen"];
+const PREFS = ["bat", "cons", "maxkw", "min", "max", "minDestino", "minkw", "ops", "velref", "masa", "minvia", "tmin", "pen", "tmax", "maxkm", "extra", "margen"];
 const num = (id, def) => { const v = parseFloat($(id).value); return isNaN(v) ? def : v; };
 // Factor por temperatura. DATOS: Geotab (4.200 EV): ~100 % de autonomía entre 10 y 30 °C, ~54 % a -15 °C.
 // ESTIMACIÓN MÍA: interpolación lineal entre esos puntos y +10 % de consumo a 40 °C.
@@ -634,12 +636,14 @@ function actualizarResumenes() {
   const paradas = $("vias").value.split(";").filter(v => v.trim()).length;
   $("resumen-viaje").textContent = `${num("temp",18)} °C · ${num("vel",100)} km/h · ${paradas ? paradas + (paradas === 1 ? " parada" : " paradas") : "Sin paradas"}`;
   $("margen-visible").textContent = num("margen",10) + " %";
-  $("resumen-ev").textContent = `Reserva ${num("min",10)} % · Cargar hasta ${num("max",80)} %`;
+  $("resumen-ev").textContent = `Cargadores ${num("min",10)} % · Destino ${num("minDestino",20)} %`;
   $("estado-clave").textContent = $("ocmKey").value.trim() ? "Clave introducida" : "Clave pendiente";
 }
 $("formulario").addEventListener("input", actualizarResumenes);
 function cargarPrefs() {
   try { const p = JSON.parse(localStorage.getItem("rutaev:prefs") || "{}"); PREFS.forEach(i => { if (p[i] !== undefined) $(i).value = p[i]; });
+    // Conservar el requisito de llegada de las preferencias anteriores.
+    if (p.minDestino === undefined && p.min !== undefined) $("minDestino").value = p.min;
     // Adoptar una vez la nueva referencia acordada, aunque haya preferencias antiguas.
     if (p.perfilConsumo !== "largos-165-v1") { $("cons").value = "16.5"; $("velref").value = "100"; } } catch (e) {}
 }
@@ -735,9 +739,9 @@ $("calc").onclick = async () => {
 
     try { localStorage.setItem("rutaev:ocmKey", ocmKey); } catch (e) {}
     const P = {bat: +$("bat").value, cons: consumoAjustado(), maxkw: +$("maxkw").value,
-               min: +$("min").value, max: +$("max").value,
+               min: +$("min").value, minDestino: +$("minDestino").value, max: +$("max").value,
                tmin: num("tmin", 15), pen: num("pen", 8), tmax: num("tmax", 40), maxkm: num("maxkm", 300) || Infinity, extra: num("extra", 5)};
-    if (!(P.bat > 0 && P.cons > 0 && P.maxkw > 0 && P.min >= 0 && P.max > P.min && P.max <= 100 && P.tmax > 0 && P.extra >= 0 && P.tmin >= 0 && P.pen >= 0 && P.maxkm > 0 && num("minkw", 50) > 0 && num("velref", 100) > 0 && num("vel", 100) > 0 && num("masa", 1950) > 0 && num("minvia", 30) >= 0)) throw new Error("Revisa los ajustes: batería, consumo, potencias y tiempos deben ser válidos; el máximo de batería debe superar al mínimo.");
+    if (!(P.bat > 0 && P.cons > 0 && P.maxkw > 0 && P.min >= 0 && Number.isFinite(P.minDestino) && P.minDestino >= 0 && P.minDestino <= 100 && P.max > P.min && P.max <= 100 && P.tmax > 0 && P.extra >= 0 && P.tmin >= 0 && P.pen >= 0 && P.maxkm > 0 && num("minkw", 50) > 0 && num("velref", 100) > 0 && num("vel", 100) > 0 && num("masa", 1950) > 0 && num("minvia", 30) >= 0)) throw new Error("Revisa los ajustes: batería, consumo, potencias y tiempos deben ser válidos; el máximo de batería debe superar al mínimo.");
     $("res").textContent = ""; capas.clearLayers(); hayDatos = false;
     const margen = num("margen", 10), socIni = +$("soc").value;
     if (margen < 0 || margen > 50) throw new Error("El margen de tiempo debe estar entre 0 y 50 %.");
@@ -856,7 +860,7 @@ function mostrarOpcion(sesion, op) {
     tl.textContent = `Conducción: ${duracion(r.min)} · Recargas: ${duracion(op.tCarga)} · Extras de carga: ${duracion(P.extra * nP)} · Otras paradas: ${duracion(vias.length * minVia)}.`;
     $("res").appendChild(tl);
     const llegada = document.createElement("p"); llegada.className = "explicacion";
-    llegada.textContent = `Batería estimada al destino: ${op.socFinal.toFixed(0)} % · Llegada estimada si sales al calcular: ${new Date(sesion.salida + op.tTotal * 60000).toLocaleTimeString("es-ES", {hour:"2-digit", minute:"2-digit"})}.`;
+    llegada.textContent = `Batería estimada al destino: ${op.socFinal.toFixed(0)} % (mínimo pedido: ${P.minDestino} %) · Llegada estimada si sales al calcular: ${new Date(sesion.salida + op.tTotal * 60000).toLocaleTimeString("es-ES", {hour:"2-digit", minute:"2-digit"})}.`;
     $("res").appendChild(llegada);
     const todos = [...plan.paradas, ...vias].sort((x, y) => x.km - y.km);
     const en = enlaces(a, b, todos);
