@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Planificador EV - Kia EV3</title>
+<title>Ruta EV · Revisión 1 · Kia EV3</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap">
 <style>
@@ -91,6 +91,24 @@ summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--acc2);padding:
 .perfil .eje{font-size:14px;fill:var(--mute);font-family:inherit}
 .perfil .num{fill:var(--ink);font-weight:700}
 .perfil .rotulo{fill:var(--ink);font-weight:700;paint-order:stroke;stroke:var(--solid);stroke-width:4px;stroke-linejoin:round}
+/* Primera revisión: comparación legible y controles cómodos en móvil. */
+.form>.campo{min-width:0}
+.form>.c4,.form>.c6,.form>.sm1,#calc{grid-column:1/-1}
+.form>.sm{grid-column:span 4}
+input[type=text],input[type=number],#calc{min-height:44px;font-size:16px}
+.mini,summary{min-height:32px;display:inline-flex;align-items:center}
+.campo>span{flex-wrap:wrap;gap:4px;letter-spacing:0}
+.proposito{grid-column:1/-1;margin:0;color:var(--mute);font-size:13px}
+.comparacion{display:grid;gap:8px;margin:10px 0}
+.ruta-opcion{width:100%;text-align:left;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--solid);color:var(--ink);font:inherit;cursor:pointer;min-height:44px}
+.ruta-opcion[aria-pressed=true]{border:2px solid var(--acc);background:var(--accsoft)}
+.ruta-opcion strong,.ruta-opcion span{display:block}
+.ruta-opcion span{font-size:13px;margin-top:4px}
+#res h2{font-size:17px;margin:10px 0 4px}
+.explicacion{font-size:13px;margin:8px 0}
+#datos{max-height:55dvh}
+@media(min-width:900px){#datos{max-height:calc(100dvh - 24px);width:390px}}
+@media(max-width:899px){#formulario{max-height:calc(100dvh - 16px)}#estado{bottom:8px;border-radius:12px}#datos{bottom:max(8px,env(safe-area-inset-bottom))}}
 </style>
 </head>
 <body>
@@ -101,14 +119,16 @@ summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--acc2);padding:
 <section id="formulario" class="panel">
   <header><span class="logo"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6z" fill="#fff"/></svg></span><h1>Ruta EV</h1><p>Kia EV3 Long Range</p><button id="cerrar" class="oculto">Volver a la ruta</button></header>
   <div class="form">
+    <p class="proposito">Menos energía, sin alargar demasiado el viaje. Comparamos las rutas disponibles y sus recargas.</p>
     <label class="campo c4"><span>Origen <button type="button" id="miub" class="mini">Mi ubicación</button></span><input id="origen" type="text" placeholder="Ciudad o dirección"></label>
     <label class="campo c4"><span>Destino <button type="button" id="elegirdest" class="mini">Elegir en el mapa</button></span><input id="destino" type="text" placeholder="Ciudad o dirección"></label>
     <label class="campo c6"><span>Paradas intermedias (separadas por ;)</span><input id="vias" type="text" placeholder="Ej: Zaragoza; Medinaceli"></label>
     <label class="campo c2 sm1"><span>Min. por parada</span><input id="minvia" type="number" value="30"></label>
     <label class="campo c2 sm1"><span>Batería <output id="socv">90 %</output></span><input id="soc" type="range" min="11" max="100" value="90"></label>
     <label class="campo c2 sm"><span>Temperatura (°C)</span><input id="temp" type="number" value="15"></label>
-    <label class="campo c2 sm"><span>Velocidad (km/h)</span><input id="vel" type="number" value="100"></label>
-    <button id="calc">Calcular viaje</button>
+    <label class="campo c2 sm"><span>Velocidad de referencia del viaje (km/h)</span><input id="vel" type="number" value="100"></label>
+    <label class="campo c4"><span>Margen de tiempo para ahorrar energía (%)</span><input id="margen" type="number" min="0" max="50" step="1" value="10"><small>10 % permite hasta 12 min más en un viaje de 2 horas.</small></label>
+    <button id="calc">Comparar rutas</button>
     <details>
       <summary>Ajustes</summary>
       <div class="rejilla">
@@ -128,7 +148,7 @@ summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--acc2);padding:
       <label class="campo"><span>Masa del coche con carga (kg). Valor aproximado, ajústalo a tu ficha técnica</span><input id="masa" type="number" value="1950"></label>
       <label class="campo"><span><input id="desn" type="checkbox" checked> Tener en cuenta el desnivel</span></label>
       <label class="campo"><span>Operadores (separados por comas; vacío = todos)</span><input id="ops" type="text" placeholder="Ej: Iberdrola, Zunder"></label>
-      <label class="campo"><span>Clave de Open Charge Map</span><input id="ocmKey" type="text"></label>
+      <label class="campo"><span>Clave de Open Charge Map</span><input id="ocmKey" type="password" autocomplete="off"></label>
     </details>
   </div>
   <section id="viajes"></section>
@@ -141,6 +161,12 @@ summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--acc2);padding:
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 const $ = id => document.getElementById(id);
+async function fetchConLimite(url) {
+  const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 30000);
+  try { return await fetch(url, {signal:controller.signal}); }
+  catch (e) { if (e.name === "AbortError") throw new Error("El servicio tarda demasiado. Vuelve a intentarlo."); throw e; }
+  finally { clearTimeout(timer); }
+}
 for (const id of ["ocmKey"]) {
   try { $(id).value = localStorage.getItem("rutaev:" + id) || ""; } catch (e) {}
 }
@@ -178,7 +204,7 @@ function pintarPuntos() {
   if (destinoFijo) L.marker([destinoFijo.pos[1], destinoFijo.pos[0]], {icon: L.divIcon({className: "", html: '<div class="pin dest">⚑</div>', iconSize: [30, 30], iconAnchor: [15, 15]})}).addTo(capaPuntos);
 }
 async function nombreLugar(pos) { // nombre aproximado del punto (Nominatim inverso)
-  const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=16&lat=${pos[1]}&lon=${pos[0]}`);
+  const r = await fetchConLimite(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=16&lat=${pos[1]}&lon=${pos[0]}`);
   if (!r.ok) throw new Error("error " + r.status);
   const j = await r.json(), a = j.address || {};
   const nombre = [a.road || j.name || "", a.city || a.town || a.village || a.municipality || a.hamlet || ""].filter(Boolean).join(", ");
@@ -197,7 +223,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function geocodificar(texto) {
   const u = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(texto)}`;
-  const r = await fetch(u);
+  const r = await fetchConLimite(u);
   if (!r.ok) throw new Error("Búsqueda de dirección falló (" + r.status + ")");
   const j = await r.json();
   if (!j.length) throw new Error("No encuentro: " + texto);
@@ -205,16 +231,16 @@ async function geocodificar(texto) {
 }
 
 async function ruta(a, b, vias = []) {
-  const u = `https://router.project-osrm.org/route/v1/driving/${[a, ...vias, b].map(p => p[0] + "," + p[1]).join(";")}?overview=full&geometries=geojson`;
-  const r = await fetch(u);
+  const u = `https://router.project-osrm.org/route/v1/driving/${[a, ...vias, b].map(p => p[0] + "," + p[1]).join(";")}?overview=full&geometries=geojson&alternatives=${vias.length ? "false" : "true"}`;
+  const r = await fetchConLimite(u);
   if (!r.ok) throw new Error("Cálculo de ruta falló (" + r.status + ")");
   const j = await r.json();
   if (j.code !== "Ok") throw new Error("No se pudo calcular la ruta: " + j.code);
-  const f = j.routes[0];
-  return {coords: f.geometry.coordinates, total: f.distance/1000, min: f.duration/60};
+  if (!j.routes || !j.routes.length) throw new Error("El servicio no devolvió rutas.");
+  return j.routes.slice(0, 3).map(f => ({coords: f.geometry.coordinates, total: f.distance/1000, min: f.duration/60}));
 }
 
-async function buscarCargadores(coords, acum, minkw, key) {
+async function buscarCargadores(coords, acum, minkw, key, cache = new Map()) {
   const vistos = new Map();
   let ultimo = -999;
   const puntos = coords.filter((c, i) => { if (acum[i] - ultimo >= 35) { ultimo = acum[i]; return true; } return false; });
@@ -222,10 +248,16 @@ async function buscarCargadores(coords, acum, minkw, key) {
     estado(`Buscando cargadores (${i+1}/${puntos.length})...`);
     const p = puntos[i];
     const u = `https://api.openchargemap.io/v3/poi/?output=json&latitude=${p[1]}&longitude=${p[0]}&distance=6&distanceunit=KM&minpowerkw=${minkw}&connectiontypeid=33&maxresults=30&verbose=false&key=${encodeURIComponent(key)}`;
-    const r = await fetch(u);
-    if (!r.ok) throw new Error("Open Charge Map falló (" + r.status + ")");
-    for (const c of await r.json()) vistos.set(c.ID, c);
-    await sleep(300); // para no saturar el servicio
+    const cacheKey = p.join(",");
+    let datos = cache.get(cacheKey);
+    if (!datos) {
+      const r = await fetchConLimite(u);
+      if (!r.ok) throw new Error("Open Charge Map falló (" + r.status + ")");
+      datos = await r.json(); cache.set(cacheKey, datos);
+      await sleep(300);
+    }
+    for (const c of datos) vistos.set(c.ID, c);
+    // // para no saturar el servicio
   }
   const lista = [];
   for (const c of vistos.values()) {
@@ -282,7 +314,7 @@ async function perfilDesnivel(coords, acum, cons, masa) {
   for (let i = 0; i < idx.length; i += 100) {
     const tr = idx.slice(i, i + 100).map(j => coords[j]);
     const u = `https://api.open-meteo.com/v1/elevation?latitude=${tr.map(c => c[1].toFixed(4)).join(",")}&longitude=${tr.map(c => c[0].toFixed(4)).join(",")}`;
-    const r = await fetch(u);
+    const r = await fetchConLimite(u);
     if (!r.ok) throw new Error("error " + r.status);
     const j = await r.json();
     if (!j.elevation || j.elevation.length !== tr.length || j.elevation.some(v => v === null || isNaN(v))) throw new Error("datos incompletos");
@@ -483,7 +515,7 @@ function enlaces(origen, destino, paradas) {
 }
 function pintaSoc() { $("socv").textContent = $("soc").value + " %"; }
 $("soc").addEventListener("input", pintaSoc);
-const PREFS = ["bat", "cons", "maxkw", "min", "max", "minkw", "ops", "velref", "masa", "minvia", "tmin", "pen", "tmax", "maxkm", "extra"];
+const PREFS = ["bat", "cons", "maxkw", "min", "max", "minkw", "ops", "velref", "masa", "minvia", "tmin", "pen", "tmax", "maxkm", "extra", "margen"];
 const num = (id, def) => { const v = parseFloat($(id).value); return isNaN(v) ? def : v; };
 // Factor por temperatura. DATOS: Geotab (4.200 EV): ~100 % de autonomía entre 10 y 30 °C, ~54 % a -15 °C.
 // ESTIMACIÓN MÍA: interpolación lineal entre esos puntos y +10 % de consumo a 40 °C.
@@ -558,17 +590,45 @@ map.on("click", async ev => {
 $("abrir").onclick = () => vista("form");
 $("cerrar").onclick = () => { vista("datos"); setTimeout(centrarRuta, 80); };
 $("plegar").onclick = () => { const p = $("datos").classList.toggle("plegado"); $("plegar").textContent = p ? "Desplegar" : "Plegar"; setTimeout(centrarRuta, 80); };
+function duracion(minutos) {
+  const m = Math.round(minutos); return `${Math.floor(m / 60)} h ${m % 60} min`;
+}
+function metricasRuta(r, plan, perfil, P, socIni, tVias) {
+  const energia = energiaEn(perfil, r.total);
+  const tCarga = plan.paradas.reduce((acc, p) => acc + p.minutos, 0);
+  const ultima = plan.paradas[plan.paradas.length - 1];
+  const socFinal = ultima ? ultima.objetivo - (energia - energiaEn(perfil, ultima.km)) / P.bat * 100 : socIni - energia / P.bat * 100;
+  return {energia, tCarga, tTotal:r.min + tCarga + P.extra * plan.paradas.length + tVias, socFinal};
+}
+function elegirRutas(opciones, margen) {
+  if (!opciones.length) throw new Error("Sin rutas viables para comparar.");
+  const rapida = opciones.slice().sort((a,b) => a.tTotal - b.tTotal || a.energia - b.energia)[0];
+  const ahorro = opciones.slice().sort((a,b) => a.energia - b.energia || a.tTotal - b.tTotal)[0];
+  const elegibles = opciones.filter(o => o.tTotal <= rapida.tTotal * (1 + margen / 100) + 1e-9);
+  const equilibrada = elegibles.sort((a,b) => a.energia - b.energia || a.tTotal - b.tTotal)[0];
+  return {rapida, ahorro, equilibrada};
+}
+function explicarEquilibrio(e, margen) {
+  const ahorro = e.rapida.energia - e.equilibrada.energia, extra = e.equilibrada.tTotal - e.rapida.tTotal;
+  const regla = `Elegimos el menor consumo entre las rutas viables que tardan como máximo un ${margen} % más que la más rápida, contando recargas y paradas. `;
+  if (e.equilibrada === e.rapida) return regla + "En estas opciones, la recomendada también es la más rápida.";
+  return regla + `La recomendada ahorra ${ahorro.toFixed(1)} kWh y añade ${Math.ceil(extra)} min frente a la más rápida.`;
+}
 $("calc").onclick = async () => {
   try {
     $("calc").disabled = true;
     vista("calculando");
     const ocmKey = $("ocmKey").value.trim();
-    if (!ocmKey) throw new Error("Falta la clave de Open Charge Map (abre 'Ajustes').");
+
     try { localStorage.setItem("rutaev:ocmKey", ocmKey); } catch (e) {}
     const P = {bat: +$("bat").value, cons: consumoAjustado(), maxkw: +$("maxkw").value,
                min: +$("min").value, max: +$("max").value,
                tmin: num("tmin", 15), pen: num("pen", 8), tmax: num("tmax", 40), maxkm: num("maxkm", 300) || Infinity, extra: num("extra", 5)};
+    if (!(P.bat > 0 && P.cons > 0 && P.maxkw > 0 && P.min >= 0 && P.max > P.min && P.max <= 100 && P.tmax > 0 && P.extra >= 0 && P.tmin >= 0 && P.pen >= 0 && P.maxkm > 0 && num("minkw", 50) > 0 && num("velref", 100) > 0 && num("vel", 100) > 0 && num("masa", 1950) > 0 && num("minvia", 30) >= 0)) throw new Error("Revisa los ajustes: batería, consumo, potencias y tiempos deben ser válidos; el máximo de batería debe superar al mínimo.");
     $("res").textContent = ""; capas.clearLayers(); hayDatos = false;
+    const margen = num("margen", 10), socIni = +$("soc").value;
+    if (margen < 0 || margen > 50) throw new Error("El margen de tiempo debe estar entre 0 y 50 %.");
+    if (!$("origen").value.trim() || !$("destino").value.trim()) throw new Error("Introduce un origen y un destino.");
     estado("Buscando direcciones...");
     const a = origenFijo ? origenFijo.pos : await geocodificar($("origen").value);
     if (!origenFijo && !destinoFijo) await sleep(1100); // Nominatim pide máximo 1 consulta por segundo
@@ -576,59 +636,119 @@ $("calc").onclick = async () => {
     const nombresVia = $("vias").value.split(";").map(x => x.trim()).filter(Boolean).slice(0, 8);
     const minVia = num("minvia", 30), puntosVia = [];
     for (const nombre of nombresVia) { await sleep(1100); estado("Buscando " + nombre + "..."); puntosVia.push({nombre, pos: await geocodificar(nombre)}); }
-    estado("Calculando ruta...");
-    const r = await ruta(a, b, puntosVia.map(v => v.pos));
-    const acum = [0];
-    for (let i = 1; i < r.coords.length; i++) acum.push(acum[i-1] + km(r.coords[i-1], r.coords[i]));
-    const esc = r.total / acum[acum.length-1]; // ajusta a la distancia oficial de la ruta
-    for (let i = 0; i < acum.length; i++) acum[i] *= esc;
-    const vias = puntosVia.map(v => { // km de la ruta más cercano a cada parada intermedia
-      let mej = 1e9, idx = 0;
-      r.coords.forEach((q, i) => { const d = km(v.pos, q); if (d < mej) { mej = d; idx = i; } });
-      return {...v, km: acum[idx]};
+    estado("Buscando rutas alternativas...");
+    const rutas = await ruta(a, b, puntosVia.map(v => v.pos));
+
+    const sesion = {a, b, P, minVia, margen, socIni, puntosVia, total:rutas.length, opciones:[], descartes:[], salida:Date.now(),
+      origenTexto:$("origen").value, destinoTexto:$("destino").value, viasTexto:$("vias").value, dp:destinoFijo ? destinoFijo.pos : null};
+    const ops = $("ops").value.toLowerCase().split(",").map(x => x.trim()).filter(Boolean);
+    const cache = new Map(), preparadas = [];
+    let falloAltitud = false;
+    for (let i = 0; i < rutas.length; i++) {
+      estado(`Evaluando ruta ${i + 1} de ${rutas.length}...`);
+      const r = rutas[i], acum = [0];
+      for (let j = 1; j < r.coords.length; j++) acum.push(acum[j-1] + km(r.coords[j-1], r.coords[j]));
+      const distancia = acum[acum.length - 1];
+      if (!(distancia > 0)) { sesion.descartes.push(`Ruta ${i + 1}: recorrido sin distancia válida.`); continue; }
+      const esc = r.total / distancia; acum.forEach((v, j) => acum[j] = v * esc);
+      const vias = puntosVia.map(v => {
+        let mejor = Infinity, idx = 0;
+        r.coords.forEach((q, j) => { const d = km(v.pos, q); if (d < mejor) { mejor = d; idx = j; } });
+        return {...v, km:acum[idx]};
+      });
+      let perfil = energiaPlana(r.total, P.cons);
+      if ($("desn").checked) {
+        try { perfil = await perfilDesnivel(r.coords, acum, P.cons, num("masa", 1950)); }
+        catch (e) { falloAltitud = true; }
+      }
+      preparadas.push({r, acum, vias, perfil, numero:i + 1});
+    }
+    // La comparación usa la misma base: si falta altitud en una ruta, ninguna obtiene ventaja por ello.
+    for (const op of preparadas) {
+      if (falloAltitud) op.perfil = energiaPlana(op.r.total, P.cons);
+      op.notaDesnivel = falloAltitud ? "Altitud incompleta: todas las rutas se comparan sin desnivel." : op.perfil.alt ? `Desnivel estimado: +${Math.round(op.perfil.sube)} m y -${Math.round(op.perfil.baja)} m.` : "Cálculo sin desnivel.";
+      let filtrados = [];
+      // Un trayecto que no necesita cargar no depende de encontrar cargadores.
+      let plan = planificar(op.r.total, socIni, [], P, op.perfil);
+      if (!plan.ok || plan.aviso) {
+        try {
+          estado(`Ruta ${op.numero}/${rutas.length}: buscando recargas...`);
+          if (!ocmKey) throw new Error("Falta la clave de Open Charge Map; introdúcela en Ajustes para buscar recargas");
+          const cargadores = await buscarCargadores(op.r.coords, op.acum, +$("minkw").value, ocmKey, cache);
+          filtrados = ops.length ? cargadores.filter(c => ops.some(o => c.op.toLowerCase().includes(o))) : cargadores;
+          plan = planificar(op.r.total, socIni, filtrados, P, op.perfil);
+        } catch (e) { sesion.descartes.push(`Ruta ${op.numero}: no se pudo evaluar la carga (${e.message}).`); continue; }
+      }
+      if (!plan.ok) { sesion.descartes.push(`Ruta ${op.numero}: ${plan.motivo}`); continue; }
+      Object.assign(op, metricasRuta(op.r, plan, op.perfil, P, socIni, op.vias.length * minVia), {plan});
+      sesion.opciones.push(op);
+    }
+    if (!sesion.opciones.length) throw new Error("No se encontró un plan viable. " + sesion.descartes.join(" "));
+    if (falloAltitud) sesion.descartes.unshift("No se pudo completar la altitud. Todas las rutas se han comparado sin desnivel.");
+    sesion.eleccion = elegirRutas(sesion.opciones, margen);
+    guardarPrefs();
+    mostrarOpcion(sesion, sesion.eleccion.equilibrada);
+  } catch (e) { fallo(e.message); } finally { $("calc").disabled = false; }
+};
+function mostrarOpcion(sesion, op) {
+    const {a, b, P, minVia} = sesion;
+    const {r, acum, vias, perfil, plan, notaDesnivel} = op;
+    $("res").textContent = ""; capas.clearLayers();
+    sesion.opciones.forEach(otra => {
+      if (otra !== op) L.polyline(otra.r.coords.map(c => [c[1], c[0]]), {color:"#64748b", weight:4, opacity:.5}).addTo(capas);
     });
     const trazo = r.coords.map(c => [c[1], c[0]]);
-    L.polyline(trazo, {color: "#fff", weight: 10, opacity: .9}).addTo(capas);
-    const linea = L.polyline(trazo, {color: "#0284c7", weight: 6}).addTo(capas);
-    limitesRuta = linea.getBounds(); centrarRuta();
-    const cargadores = await buscarCargadores(r.coords, acum, +$("minkw").value, ocmKey);
-    const ops = $("ops").value.toLowerCase().split(",").map(x => x.trim()).filter(Boolean);
-    const filtrados = ops.length ? cargadores.filter(c => ops.some(o => c.op.toLowerCase().includes(o))) : cargadores;
-    if (!filtrados.length) throw new Error("Ningún cargador de la ruta cumple el filtro de operador.");
-    let perfil, notaDesnivel = "";
-    if ($("desn").checked) {
-      estado("Calculando desnivel...");
-      try {
-        perfil = await perfilDesnivel(r.coords, acum, P.cons, num("masa", 1950));
-        notaDesnivel = `Desnivel estimado: +${Math.round(perfil.sube)} m y -${Math.round(perfil.baja)} m.`;
-      } catch (e) { notaDesnivel = "No se pudo obtener la altitud (" + e.message + "): cálculo sin desnivel."; }
-    }
-    if (!perfil) perfil = energiaPlana(r.total, P.cons);
-    const plan = planificar(r.total, +$("soc").value, filtrados, P, perfil);
-    guardarPrefs();
-    guardarViaje({o: $("origen").value, d: $("destino").value, soc: $("soc").value, km: Math.round(r.total), p: plan.paradas.length, v: $("vias").value, dp: destinoFijo ? destinoFijo.pos : null});
+    L.polyline(trazo, {color:"#fff", weight:10, opacity:.9}).addTo(capas);
+    const linea = L.polyline(trazo, {color:"#0284c7", weight:6}).addTo(capas);
+    limitesRuta = linea.getBounds();
+    const titulo = document.createElement("h2"); titulo.textContent = "Elige tu ruta"; $("res").appendChild(titulo);
+    const intro = document.createElement("p"); intro.className = "explicacion";
+    intro.textContent = sesion.opciones.length > 1 ? explicarEquilibrio(sesion.eleccion, sesion.margen) : "Solo hay una opción viable evaluada; no podemos comparar el equilibrio entre rutas alternativas.";
+    $("res").appendChild(intro);
+    const lista = document.createElement("div"); lista.className = "comparacion"; lista.setAttribute("aria-label", "Rutas disponibles");
+    sesion.opciones.forEach((otra, i) => {
+      const boton = document.createElement("button"); boton.className = "ruta-opcion"; boton.setAttribute("aria-pressed", String(otra === op));
+      const nombre = document.createElement("strong");
+      const etiquetas = [];
+      if (otra === sesion.eleccion.equilibrada) etiquetas.push("Equilibrada · recomendada");
+      if (otra === sesion.eleccion.rapida) etiquetas.push("Más rápida");
+      if (otra === sesion.eleccion.ahorro) etiquetas.push("Menor consumo");
+      nombre.textContent = sesion.opciones.length === 1 ? "Única ruta viable evaluada" : `Ruta ${i + 1} · ${etiquetas.join(" / ") || "Alternativa"}`;
+      const datos = document.createElement("span");
+      datos.textContent = `${duracion(otra.tTotal)} · ${otra.r.total.toFixed(0)} km · ${otra.energia.toFixed(1)} kWh · ${otra.plan.paradas.length} recargas · Llegada ${otra.socFinal.toFixed(0)} %`;
+      boton.append(nombre, datos); boton.onclick = () => { mostrarOpcion(sesion, otra); const activo = $("res").querySelector('[aria-pressed="true"]'); if (activo) activo.focus({preventScroll:true}); };
+      lista.appendChild(boton);
+    });
+    $("res").appendChild(lista);
+    const limites = document.createElement("p"); limites.className = "meta";
+    limites.textContent = `${sesion.opciones.length} de ${sesion.total} rutas evaluadas tienen un plan viable. ${sesion.total === 1 ? "El servicio solo ofrece una ruta para este viaje; no hay alternativas que comparar. " : ""}${sesion.puntosVia.length ? "Con paradas intermedias se evalúa un único recorrido. " : ""}Estimaciones sin tráfico ni disponibilidad en directo. Se usa tu velocidad de referencia para el consumo de todas las rutas; el tiempo de conducción lo estima OSRM. Los accesos a cargadores no se recalculan: se aplica el extra fijo por parada. Comparación limitada a las alternativas recibidas.`;
+    const alcance = document.createElement("p"); alcance.className = "meta";
+    alcance.textContent = `${sesion.opciones.length} de ${sesion.total} rutas viables · Estimaciones sin tráfico.`;
+    if (sesion.total === 1) alcance.textContent += " Solo se ha obtenido una ruta; no hay alternativas que comparar.";
+    $("res").appendChild(alcance);
+    const metodo = document.createElement("details"), resumen = document.createElement("summary");
+    resumen.textContent = "Cómo se calcula y límites"; metodo.append(resumen, limites); $("res").appendChild(metodo);
+    sesion.descartes.forEach(texto => { const aviso = document.createElement("p"); aviso.className = "aviso"; aviso.textContent = texto; $("res").appendChild(aviso); });
+    const detalle = document.createElement("h2"); detalle.textContent = "Detalle de la ruta seleccionada"; $("res").appendChild(detalle);
     const nP = plan.paradas.length;
     const cab = document.createElement("div"); cab.className = "resumen";
     const chip = (txt, cls) => { const e = document.createElement("span"); e.className = "chip " + cls; e.textContent = txt; return e; };
-    cab.append(chip(`${r.total.toFixed(0)} km`, "km"), chip(`${Math.floor(r.min / 60)} h ${Math.round(r.min % 60)} min`, "t"),
-               chip(nP ? `${nP} ${nP === 1 ? "parada" : "paradas"}` : "Sin paradas", "n"));
+    cab.append(chip(`${r.total.toFixed(0)} km`, "km"), chip(duracion(op.tTotal) + " en total", "t"),
+               chip(nP ? `${nP} ${nP === 1 ? "parada" : "paradas"}` : "Sin recargas", "n"));
     $("res").appendChild(cab);
     const ce = document.createElement("p"); ce.className = "meta";
     ce.textContent = `Consumo ajustado por temperatura y velocidad: ${P.cons.toFixed(1)} kWh/100 km (base ${num("cons", 15.8).toFixed(1)}). Energía total del viaje: ${energiaEn(perfil, r.total).toFixed(0)} kWh. ${notaDesnivel}`;
     $("res").appendChild(ce);
-const tVias = vias.length * minVia;
-    if (nP || vias.length) {
-      const tCarga = plan.paradas.reduce((acc, p) => acc + p.minutos, 0), tTotal = r.min + tCarga + P.extra * nP + tVias;
-      const tl = document.createElement("p"); tl.className = "meta";
-      tl.textContent = (nP ? `Carga total: ${Math.round(tCarga)} min, más ${P.extra} min extra por parada. ` : "")
-        + (vias.length ? `Paradas intermedias: ${Math.round(tVias)} min. ` : "")
-        + `Tiempo total estimado: ${Math.floor(tTotal / 60)} h ${Math.round(tTotal % 60)} min.`;
-      $("res").appendChild(tl);
-    }
+    const tl = document.createElement("p"); tl.className = "meta";
+    tl.textContent = `Conducción: ${duracion(r.min)} · Recargas: ${duracion(op.tCarga)} · Extras de carga: ${duracion(P.extra * nP)} · Otras paradas: ${duracion(vias.length * minVia)}.`;
+    $("res").appendChild(tl);
+    const llegada = document.createElement("p"); llegada.className = "explicacion";
+    llegada.textContent = `Batería estimada al destino: ${op.socFinal.toFixed(0)} % · Llegada estimada si sales al calcular: ${new Date(sesion.salida + op.tTotal * 60000).toLocaleTimeString("es-ES", {hour:"2-digit", minute:"2-digit"})}.`;
+    $("res").appendChild(llegada);
     const todos = [...plan.paradas, ...vias].sort((x, y) => x.km - y.km);
     const en = enlaces(a, b, todos);
     const ex = document.createElement("div"); ex.className = "exportar";
-    const tx = document.createElement("span"); tx.className = "meta"; tx.textContent = "Abrir la ruta en:";
+    const tx = document.createElement("span"); tx.className = "meta"; tx.textContent = "Navegar (la aplicación externa puede cambiar el recorrido):";
     ex.appendChild(tx);
     [["Apple Maps", en.apple], ["Google Maps", en.google], ["Waze (destino final)", en.waze(b)]].forEach(([nombre, url]) => {
       const l = document.createElement("a"); l.href = url; l.target = "_blank"; l.rel = "noopener"; l.textContent = nombre; ex.appendChild(l);
@@ -688,8 +808,8 @@ const tVias = vias.length * minVia;
       cab.insertAdjacentElement("afterend", av);
     }
     hayDatos = true; $("datos").classList.remove("plegado"); $("plegar").textContent = "Plegar"; vista("datos"); setTimeout(centrarRuta, 80);
-  } catch (e) { fallo(e.message); } finally { $("calc").disabled = false; }
-};
+    guardarViaje({o: sesion.origenTexto, d: sesion.destinoTexto, soc: sesion.socIni, km: Math.round(r.total), p: plan.paradas.length, v: sesion.viasTexto, dp: sesion.dp});
+}
 </script>
 </body>
 </html>
