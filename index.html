@@ -19,7 +19,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 "DM Sans",syst
 #datos{left:8px;right:8px;bottom:8px;max-height:46vh;padding:10px}
 @media (min-width:900px){#formulario,#datos{left:12px;right:auto;top:12px;width:360px}#datos{bottom:auto;max-height:calc(100vh - 24px)}#formulario{max-height:calc(100vh - 24px)}}
 @media (max-width:899px){.leaflet-control-zoom{display:none}}
-.oculto{display:none!important}
+.oculto,[hidden]{display:none!important}
 header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .logo{display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:var(--grad)}
 h1{font-size:17px;margin:0;font-weight:700;letter-spacing:-.02em}
@@ -182,6 +182,7 @@ button.insignia{font:inherit;font-size:11px;letter-spacing:0;min-height:36px;cur
   .bateria-inicial input{height:26px}
   .grupo>summary{min-height:52px;padding:8px 0}
 }
+.dos-columnas:has(> [hidden]){grid-template-columns:1fr}
 </style>
 </head>
 <body>
@@ -206,20 +207,22 @@ button.insignia{font:inherit;font-size:11px;letter-spacing:0;min-height:36px;cur
     <label class="campo bateria-inicial"><span>Batería al salir <output id="socv">90 %</output></span><input id="soc" type="range" min="11" max="100" value="90"></label>
     <button id="calc">Comparar rutas <span aria-hidden="true">→</span></button>
     <p class="ayuda-principal">Menor consumo con hasta <strong id="margen-visible">10 %</strong> más de tiempo.</p>
-    <details class="grupo" id="opciones-viaje">
+    <details name="panel-principal" class="grupo" id="opciones-viaje">
       <summary><span class="icono-grupo" aria-hidden="true">↗</span><span class="texto-grupo"><strong>Opciones del viaje</strong><small id="resumen-viaje">18 °C · 100 km/h · Sin paradas</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
       <div class="contenido-grupo">
         <h2>Paradas que tú eliges</h2>
         <label class="campo"><span>Ciudades o lugares (separados por ;)</span><input id="vias" type="text" placeholder="Ej: Zaragoza; Medinaceli"></label>
-        <label class="campo"><span>Duración de cada parada (min)</span><input id="minvia" type="number" value="30"></label>
+        <input id="minvia" type="hidden" value="0"><p class="ayuda">Estos lugares se incluyen en el recorrido, sin añadir tiempo de estancia.</p>
         <h2>Condiciones del viaje</h2>
-        <div class="dos-columnas"><label class="campo"><span>Temperatura (°C)</span><input id="temp" type="number" value="18"></label> <label class="campo"><span>Velocidad media prevista (km/h)</span><input id="vel" type="number" value="100"></label></div>
+        <label class="campo"><span><input id="tempAuto" type="checkbox" checked> Temperatura automática del recorrido</span></label>
+        <p class="ayuda">Previsión de Open-Meteo en varios puntos, suponiendo salida ahora y horas de paso aproximadas sin recargas. Si falla, se usan 18 °C o tu temperatura manual de respaldo.</p>
+        <div class="dos-columnas"><label class="campo" id="temperatura-manual" hidden><span>Temperatura manual / respaldo (°C)</span><input id="temp" type="number" value="18"></label> <label class="campo"><span>Velocidad media prevista (km/h)</span><input id="vel" type="number" value="100"></label></div>
         <label class="campo"><span><input id="desn" type="checkbox" checked> Tener en cuenta el desnivel</span></label>
         <h2>Tu equilibrio</h2>
         <label class="campo"><span>Tiempo adicional que aceptas (%)</span><input id="margen" type="number" min="0" max="50" step="1" value="10"><small>10 % permite hasta 12 min más en un viaje de 2 horas.</small></label>
       </div>
     </details>
-    <details class="grupo" id="ajustes-ev">
+    <details name="panel-principal" class="grupo" id="ajustes-ev">
       <summary><span class="icono-grupo" aria-hidden="true">ϟ</span><span class="texto-grupo"><strong>Mi EV y recargas</strong><small id="resumen-ev">Cargadores 10 % · Destino 20 %</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
       <div class="contenido-grupo">
         <p class="ayuda">Estos ajustes se guardan al calcular. Solo necesitas revisarlos cuando cambien tus preferencias.</p>
@@ -227,20 +230,20 @@ button.insignia{font:inherit;font-size:11px;letter-spacing:0;min-height:36px;cur
         <div class="dos-columnas"><label class="campo"><span>Mínimo al llegar a cargadores (%)</span><input id="min" type="number" value="10"></label> <label class="campo"><span>Cargar hasta (%)</span><input id="max" type="number" value="80"></label></div>
         <label class="campo"><span>Batería mínima al destino (%)</span><input id="minDestino" type="number" min="0" max="100" step="1" value="20"><small>Independiente del mínimo de los cargadores. Por ejemplo: 10 % en cargadores y 20 % al destino.</small></label>
         <label class="campo"><span>Tiempo máximo por recarga (min)</span><input id="tmax" type="number" value="40"></label>
-        <details class="subgrupo"><summary>Más opciones de recarga</summary><div class="contenido-subgrupo">
-        <label class="campo"><span>Recarga mínima deseada (min)</span><input id="tmin" type="number" value="15"></label> <label class="campo"><span>Distancia máxima entre paradas (km, 0 = sin límite)</span><input id="maxkm" type="number" value="300"></label> <label class="campo"><span>Tiempo extra por parada (min)</span><input id="extra" type="number" value="5"></label> <label class="campo"><span>Evitar paradas cortas (0 = indiferente; más = las evita más)</span><input id="pen" type="number" value="8"></label> <label class="campo"><span>Potencia mínima (kW)</span><input id="minkw" type="number" value="50"></label> <label class="campo"><span>Operadores (separados por comas; vacío = todos)</span><input id="ops" type="text" placeholder="Ej: Iberdrola, Zunder"></label>
+        <details name="panel-ev" class="subgrupo"><summary>Más opciones de recarga</summary><div class="contenido-subgrupo">
+        <label class="campo"><span>Recarga mínima deseada (min)</span><input id="tmin" type="number" value="15"></label> <label class="campo"><span>Distancia máxima entre paradas (km, 0 = sin límite)</span><input id="maxkm" type="number" value="300"></label> <label class="campo"><span>Tiempo extra por parada (min)</span><input id="extra" type="number" value="5"></label> <input id="pen" type="hidden" value="8"> <label class="campo"><span>Potencia mínima (kW)</span><input id="minkw" type="number" value="50"></label> <label class="campo"><span>Operadores (separados por comas; vacío = todos)</span><input id="ops" type="text" placeholder="Ej: Iberdrola, Zunder"></label>
         </div></details>
-        <details class="subgrupo"><summary>Características de mi EV</summary><div class="contenido-subgrupo"><p class="ayuda">Referencia personal: 16,5 kWh/100 km a 18 °C y 100 km/h de media, incluidos picos ocasionales de 120 km/h. El desnivel se estima aparte; la referencia aún necesita contrastarse con viajes de terreno conocido.</p>
-        <label class="campo"><span>Batería útil (kWh)</span><input id="bat" type="number" value="81.4" step="0.1"></label> <label class="campo"><span>Consumo en viajes largos (kWh/100 km)</span><input id="cons" type="number" value="16.5" step="0.1"></label> <label class="campo"><span>Carga máx. DC (kW)</span><input id="maxkw" type="number" value="128"></label> <label class="campo"><span>Velocidad a la que obtuviste tu consumo base (km/h)</span><input id="velref" type="number" value="100"></label> <label class="campo"><span>Masa del coche con carga (kg). Valor aproximado, ajústalo a tu ficha técnica</span><input id="masa" type="number" value="1950"></label>
+        <details name="panel-ev" class="subgrupo"><summary>Características de mi EV</summary><div class="contenido-subgrupo"><p class="ayuda">Referencia personal: 16,5 kWh/100 km a 18 °C y 100 km/h de media, incluidos picos ocasionales de 120 km/h. El desnivel se estima aparte; la referencia aún necesita contrastarse con viajes de terreno conocido.</p>
+        <label class="campo"><span>Batería útil (kWh)</span><input id="bat" type="number" value="81.4" step="0.1"></label> <label class="campo"><span>Consumo en viajes largos (kWh/100 km)</span><input id="cons" type="number" value="16.5" step="0.1"></label> <label class="campo"><span>Carga máx. DC (kW)</span><input id="maxkw" type="number" value="128"></label> <input id="velref" type="hidden" value="100"><p class="ayuda">Velocidad media de referencia del consumo: <strong id="velref-visible">100 km/h</strong>. La velocidad media prevista se cambia en Opciones del viaje.</p> <label class="campo"><span>Masa del coche con carga (kg). Valor aproximado, ajústalo a tu ficha técnica</span><input id="masa" type="number" value="1950"></label>
         </div></details>
-        <details class="subgrupo" id="conexion-carga"><summary>Cargadores · <span id="estado-clave">Clave pendiente</span></summary><div class="contenido-subgrupo">
+        <details name="panel-ev" class="subgrupo" id="conexion-carga"><summary>Cargadores · <span id="estado-clave">Clave pendiente</span></summary><div class="contenido-subgrupo">
         <p class="ayuda">Introduce tu clave de Open Charge Map para buscar recargas. No hace falta en viajes que puedas completar sin cargar. Se guarda en este navegador al calcular.</p>
         <label class="campo"><span>Clave de Open Charge Map</span><input id="ocmKey" type="password" autocomplete="off"></label>
         </div></details>
       </div>
     </details>
   </div>
-  <details class="grupo" id="historial" hidden><summary><span class="icono-grupo" aria-hidden="true">↶</span><span class="texto-grupo"><strong>Viajes recientes</strong><small id="resumen-historial">Recuperar un viaje guardado</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><section id="viajes" class="contenido-grupo"></section></details>
+  <details name="panel-principal" class="grupo" id="historial" hidden><summary><span class="icono-grupo" aria-hidden="true">↶</span><span class="texto-grupo"><strong>Viajes recientes</strong><small id="resumen-historial">Recuperar un viaje guardado</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><section id="viajes" class="contenido-grupo"></section></details>
 </section>
 <section id="datos" class="panel oculto">
   <div id="barra"><button id="plegar">Plegar</button></div>
@@ -392,7 +395,7 @@ function minutosCarga(desde, hasta, bat, kwCargador, kwMax) {
   return m;
 }
 // Perfil de energía acumulada (kWh) a lo largo de la ruta.
-function energiaPlana(total, cons) { return {km: [0, total], kwh: [0, total * cons / 100]}; }
+function energiaPlana(total, cons) { return typeof cons === "object" ? cons : {km: [0, total], kwh: [0, total * cons / 100]}; }
 function energiaEn(perfil, x) {
   const k = perfil.km, e = perfil.kwh, n = k.length - 1;
   if (x <= 0) return 0;
@@ -426,6 +429,34 @@ function bateriaEnTramo(tramo, soc, bat) {
   const minimo = Math.min(inicial - tramo.maximo, bat - tramo.subidaMaxima);
   return {llegada: final / bat * 100, minimo: minimo / bat * 100, perdida};
 }
+function temperaturaEnHora(hourly, instante) {
+  const tiempos = hourly && hourly.time, valores = hourly && hourly.temperature_2m;
+  if (!Array.isArray(tiempos) || !Array.isArray(valores) || tiempos.length < 2 || valores.length !== tiempos.length
+    || instante < tiempos[0] || instante > tiempos[tiempos.length - 1]) throw new Error("Previsión incompleta para la hora de paso");
+  let i = 1; while (tiempos[i] < instante) i++;
+  if (!Number.isFinite(valores[i - 1]) || !Number.isFinite(valores[i])) throw new Error("Temperatura no disponible");
+  return valores[i - 1] + (valores[i] - valores[i - 1]) * (instante - tiempos[i - 1]) / (tiempos[i] - tiempos[i - 1]);
+}
+async function meteorologiaRuta(r, acum, salida, base, velocidad, velocidadBase) {
+  const n = Math.min(8, Math.max(2, Math.ceil(r.total / 80)));
+  const puntos = Array.from({length:n}, (_, i) => {
+    const x = r.total * (i + .5) / n;
+    let j = 0; while (j < acum.length - 1 && acum[j] < x) j++;
+    return r.coords[j];
+  });
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${puntos.map(p=>p[1].toFixed(4)).join(",")}&longitude=${puntos.map(p=>p[0].toFixed(4)).join(",")}&hourly=temperature_2m&forecast_days=3&timezone=GMT&timeformat=unixtime`;
+  const respuesta = await fetchConLimite(url);
+  if (!respuesta.ok) throw new Error("Meteorología no disponible");
+  const datos = await respuesta.json(), lugares = Array.isArray(datos) ? datos : [datos];
+  if (lugares.length !== n) throw new Error("Faltan puntos meteorológicos");
+  const temperaturas = lugares.map((l,i) => temperaturaEnHora(l.hourly, salida / 1000 + r.min * 60 * (i + .5) / n));
+  const perfil = {km:[0], kwh:[0]};
+  temperaturas.forEach((t,i) => {
+    perfil.km.push(r.total * (i + 1) / n);
+    perfil.kwh.push(perfil.kwh[i] + r.total / n * consumoModelo(base,t,velocidad,velocidadBase) / 100);
+  });
+  return {perfil, minima:Math.min(...temperaturas), maxima:Math.max(...temperaturas), puntos:n};
+}
 // Altitudes: Open-Meteo (sin clave, 100 puntos por consulta). Energía de subida/bajada: estimación mía
 // (subida con 85 % de rendimiento; en bajada se recupera el 60 %).
 async function perfilDesnivel(coords, acum, cons, masa) {
@@ -448,7 +479,8 @@ async function perfilDesnivel(coords, acum, cons, masa) {
     if (n > 0) {
       const d = acum[j] - acum[idx[n - 1]], dh = alt[n] - alt[n - 1];
       const pot = masa * 9.81 * Math.abs(dh) / 3.6e6;
-      acc += d * cons / 100 + (dh > 0 ? pot / 0.85 : -pot * 0.6);
+      const base = typeof cons === "object" ? energiaEn(cons, acum[j]) - energiaEn(cons, acum[idx[n - 1]]) : d * cons / 100;
+      acc += base + (dh > 0 ? pot / 0.85 : -pot * 0.6);
       if (dh > 0) sube += dh; else baja -= dh;
     }
     km.push(acum[j]); kwh.push(acc);
@@ -648,7 +680,7 @@ function enlaces(origen, destino, paradas) {
 }
 function pintaSoc() { $("socv").textContent = $("soc").value + " %"; }
 $("soc").addEventListener("input", pintaSoc);
-const PREFS = ["bat", "cons", "maxkw", "min", "max", "minDestino", "minkw", "ops", "velref", "masa", "minvia", "tmin", "pen", "tmax", "maxkm", "extra", "margen"];
+const PREFS = ["temp", "vel", "bat", "cons", "maxkw", "min", "max", "minDestino", "minkw", "ops", "velref", "masa", "tmin", "pen", "tmax", "maxkm", "extra", "margen"];
 const num = (id, def) => { const v = parseFloat($(id).value); return isNaN(v) ? def : v; };
 // Factor por temperatura. DATOS: Geotab (4.200 EV): ~100 % de autonomía entre 10 y 30 °C, ~54 % a -15 °C.
 // ESTIMACIÓN MÍA: interpolación lineal entre esos puntos y +10 % de consumo a 40 °C.
@@ -669,21 +701,30 @@ function consumoAjustado() {
 }
 function actualizarResumenes() {
   const paradas = $("vias").value.split(";").filter(v => v.trim()).length;
-  $("resumen-viaje").textContent = `${num("temp",18)} °C · ${num("vel",100)} km/h · ${paradas ? paradas + (paradas === 1 ? " parada" : " paradas") : "Sin paradas"}`;
+  $("resumen-viaje").textContent = `${$("tempAuto").checked ? "Meteo automática" : num("temp",18) + " °C"} · ${num("vel",100)} km/h · ${paradas ? paradas + (paradas === 1 ? " parada" : " paradas") : "Sin paradas"}`;
+  $("temperatura-manual").hidden = $("tempAuto").checked;
+  $("velref-visible").textContent = num("velref",100) + " km/h";
   $("margen-visible").textContent = num("margen",10) + " %";
   $("resumen-ev").textContent = `Cargadores ${num("min",10)} % · Destino ${num("minDestino",20)} %`;
   $("estado-clave").textContent = $("ocmKey").value.trim() ? "Clave introducida" : "Clave pendiente";
 }
 $("formulario").addEventListener("input", actualizarResumenes);
+$("formulario").addEventListener("toggle", ev => {
+  const elegido = ev.target;
+  if (!elegido.open || !elegido.matches("details")) return;
+  const selector = elegido.classList.contains("grupo") ? "details.grupo" : "details.subgrupo";
+  $("formulario").querySelectorAll(selector).forEach(d => { if (d !== elegido) d.open = false; });
+}, true);
 function cargarPrefs() {
   try { const p = JSON.parse(localStorage.getItem("rutaev:prefs") || "{}"); PREFS.forEach(i => { if (p[i] !== undefined) $(i).value = p[i]; });
+    $("tempAuto").checked = p.tempAuto !== false;
     // Conservar el requisito de llegada de las preferencias anteriores.
     if (p.minDestino === undefined && p.min !== undefined) $("minDestino").value = p.min;
     // Adoptar una vez la nueva referencia acordada, aunque haya preferencias antiguas.
     if (p.perfilConsumo !== "largos-165-v1") { $("cons").value = "16.5"; $("velref").value = "100"; } } catch (e) {}
 }
 function guardarPrefs() {
-  try { const p = {perfilConsumo:"largos-165-v1"}; PREFS.forEach(i => p[i] = $(i).value); localStorage.setItem("rutaev:prefs", JSON.stringify(p)); } catch (e) {}
+  try { const p = {perfilConsumo:"largos-165-v1", tempAuto:$("tempAuto").checked}; PREFS.forEach(i => p[i] = $(i).value); localStorage.setItem("rutaev:prefs", JSON.stringify(p)); } catch (e) {}
 }
 function leerViajes() {
   try { return JSON.parse(localStorage.getItem("rutaev:viajes") || "[]"); } catch (e) { return []; }
@@ -781,7 +822,7 @@ $("calc").onclick = async () => {
     const P = {bat: +$("bat").value, cons: consumoAjustado(), maxkw: +$("maxkw").value,
                min: +$("min").value, minDestino: +$("minDestino").value, max: +$("max").value,
                tmin: num("tmin", 15), pen: num("pen", 8), tmax: num("tmax", 40), maxkm: num("maxkm", 300) || Infinity, extra: num("extra", 5)};
-    if (!(P.bat > 0 && P.cons > 0 && P.maxkw > 0 && P.min >= 0 && Number.isFinite(P.minDestino) && P.minDestino >= 0 && P.minDestino <= 100 && P.max > P.min && P.max <= 100 && P.tmax > 0 && P.extra >= 0 && P.tmin >= 0 && P.pen >= 0 && P.maxkm > 0 && num("minkw", 50) > 0 && num("velref", 100) > 0 && num("vel", 100) > 0 && num("masa", 1950) > 0 && num("minvia", 30) >= 0)) throw new Error("Revisa los ajustes: batería, consumo, potencias y tiempos deben ser válidos; el máximo de batería debe superar al mínimo.");
+    if (!(P.bat > 0 && P.cons > 0 && P.maxkw > 0 && P.min >= 0 && Number.isFinite(P.minDestino) && P.minDestino >= 0 && P.minDestino <= 100 && P.max > P.min && P.max <= 100 && P.tmax > 0 && P.extra >= 0 && P.tmin >= 0 && P.pen >= 0 && P.maxkm > 0 && num("minkw", 50) > 0 && num("velref", 100) > 0 && num("vel", 100) > 0 && num("masa", 1950) > 0)) throw new Error("Revisa los ajustes: batería, consumo, potencias y tiempos deben ser válidos; el máximo de batería debe superar al mínimo.");
     $("res").textContent = ""; capas.clearLayers(); hayDatos = false;
     const margen = num("margen", 10), socIni = +$("soc").value;
     if (margen < 0 || margen > 50) throw new Error("El margen de tiempo debe estar entre 0 y 50 %.");
@@ -791,7 +832,7 @@ $("calc").onclick = async () => {
     if (!origenFijo && !destinoFijo) await sleep(1100); // Nominatim pide máximo 1 consulta por segundo
     const b = destinoFijo ? destinoFijo.pos : await geocodificar($("destino").value);
     const nombresVia = $("vias").value.split(";").map(x => x.trim()).filter(Boolean).slice(0, 8);
-    const minVia = num("minvia", 30), puntosVia = [];
+    const minVia = 0, puntosVia = [];
     for (const nombre of nombresVia) { await sleep(1100); estado("Buscando " + nombre + "..."); puntosVia.push({nombre, pos: await geocodificar(nombre)}); }
     estado("Buscando rutas alternativas...");
     const rutas = await ruta(a, b, puntosVia.map(v => v.pos));
@@ -813,16 +854,31 @@ $("calc").onclick = async () => {
         r.coords.forEach((q, j) => { const d = km(v.pos, q); if (d < mejor) { mejor = d; idx = j; } });
         return {...v, km:acum[idx]};
       });
-      let perfil = energiaPlana(r.total, P.cons);
+      preparadas.push({r, acum, vias, numero:i + 1});
+    }
+    let falloMeteo = false;
+    for (const op of preparadas) {
+      op.base = energiaPlana(op.r.total, P.cons);
+      if ($("tempAuto").checked) {
+        estado(`Consultando temperatura de ruta ${op.numero}/${rutas.length}...`);
+        try {
+          op.meteo = await meteorologiaRuta(op.r, op.acum, sesion.salida, num("cons",16.5), num("vel",100), num("velref",100));
+          op.base = op.meteo.perfil;
+        } catch (e) { falloMeteo = true; }
+      }
+    }
+    if (falloMeteo) sesion.descartes.push(`No se pudo completar la meteorología. Todas las rutas usan ${num("temp",18)} °C de respaldo.`);
+    for (const op of preparadas) {
+      if (falloMeteo) { op.base = energiaPlana(op.r.total, P.cons); op.meteo = null; }
+      op.perfil = op.base;
       if ($("desn").checked) {
-        try { perfil = await perfilDesnivel(r.coords, acum, P.cons, num("masa", 1950)); }
+        try { op.perfil = await perfilDesnivel(op.r.coords, op.acum, op.base, num("masa",1950)); }
         catch (e) { falloAltitud = true; }
       }
-      preparadas.push({r, acum, vias, perfil, numero:i + 1});
     }
     // La comparación usa la misma base: si falta altitud en una ruta, ninguna obtiene ventaja por ello.
     for (const op of preparadas) {
-      if (falloAltitud) op.perfil = energiaPlana(op.r.total, P.cons);
+      if (falloAltitud) op.perfil = op.base;
       op.notaDesnivel = falloAltitud ? "Altitud incompleta: todas las rutas se comparan sin desnivel." : op.perfil.alt ? `Desnivel estimado: +${Math.round(op.perfil.sube)} m y -${Math.round(op.perfil.baja)} m.` : "Cálculo sin desnivel.";
       let filtrados = [];
       // Un trayecto que no necesita cargar no depende de encontrar cargadores.
@@ -894,10 +950,15 @@ function mostrarOpcion(sesion, op) {
                chip(nP ? `${nP} ${nP === 1 ? "parada" : "paradas"}` : "Sin recargas", "n"));
     $("res").appendChild(cab);
     const ce = document.createElement("p"); ce.className = "meta";
-    ce.textContent = `Consumo ajustado por temperatura y velocidad: ${P.cons.toFixed(1)} kWh/100 km (base ${num("cons", 16.5).toFixed(1)} a 18 °C y ${num("velref",100)} km/h de media). Energía total del viaje: ${op.energia.toFixed(1)} kWh. ${notaDesnivel}${op.regeneracionPerdida > 0.05 ? ` Recuperación no aprovechable por batería llena: ${op.regeneracionPerdida.toFixed(1)} kWh.` : ""}`;
+    const consumoRuta = energiaEn(op.base, r.total) / r.total * 100;
+    ce.textContent = `Consumo ajustado por temperatura y velocidad: ${consumoRuta.toFixed(1)} kWh/100 km (base ${num("cons", 16.5).toFixed(1)} a 18 °C y ${num("velref",100)} km/h de media). Energía total del viaje: ${op.energia.toFixed(1)} kWh. ${notaDesnivel}${op.regeneracionPerdida > 0.05 ? ` Recuperación no aprovechable por batería llena: ${op.regeneracionPerdida.toFixed(1)} kWh.` : ""}`;
     $("res").appendChild(ce);
+    const meteoTexto = document.createElement("p"); meteoTexto.className = "meta";
+    meteoTexto.textContent = op.meteo ? `Temperatura prevista en ${op.meteo.puntos} puntos: ${op.meteo.minima.toFixed(1)}–${op.meteo.maxima.toFixed(1)} °C. Horas aproximadas de paso según conducción, sin retrasos de carga.` : `Temperatura manual o de respaldo: ${num("temp",18)} °C.`;
+    if (op.meteo) { const fuente = document.createElement("a"); fuente.href = "https://open-meteo.com/"; fuente.textContent = " Fuente: Open-Meteo (CC BY 4.0)"; fuente.target = "_blank"; fuente.rel = "noopener"; meteoTexto.appendChild(fuente); }
+    $("res").appendChild(meteoTexto);
     const tl = document.createElement("p"); tl.className = "meta";
-    tl.textContent = `Conducción: ${duracion(r.min)} · Recargas: ${duracion(op.tCarga)} · Extras de carga: ${duracion(P.extra * nP)} · Otras paradas: ${duracion(vias.length * minVia)}.`;
+    tl.textContent = `Conducción: ${duracion(r.min)} · Recargas: ${duracion(op.tCarga)} · Extras de carga: ${duracion(P.extra * nP)}.`;
     $("res").appendChild(tl);
     const llegada = document.createElement("p"); llegada.className = "explicacion";
     llegada.textContent = `Batería estimada al destino: ${op.socFinal.toFixed(0)} % (mínimo pedido: ${P.minDestino} %) · Mínimo estimado en ruta: ${Math.floor(op.socMinimo + 1e-9)} % · Llegada estimada si sales al calcular: ${new Date(sesion.salida + op.tTotal * 60000).toLocaleTimeString("es-ES", {hour:"2-digit", minute:"2-digit"})}.`;
@@ -953,7 +1014,7 @@ function mostrarOpcion(sesion, op) {
       L.marker([v.pos[1], v.pos[0]], {icon: L.divIcon({className: "", html: '<div class="pin via">★</div>', iconSize: [30, 30], iconAnchor: [15, 15]})}).addTo(capas).bindPopup("Parada: " + v.nombre);
       const li = document.createElement("li"); li.className = "via";
       const t = document.createElement("strong"); t.textContent = v.nombre;
-      const m = document.createElement("span"); m.className = "meta"; m.textContent = `Km ${v.km.toFixed(0)}, parada de ${minVia} min`;
+      const m = document.createElement("span"); m.className = "meta"; m.textContent = `Km ${v.km.toFixed(0)}, parada elegida, sin tiempo de estancia añadido`;
       const w = document.createElement("a"); w.className = "wz"; w.href = en.waze(v.pos); w.target = "_blank"; w.rel = "noopener"; w.textContent = "Ir a esta parada con Waze";
       li.append(t, m, w); items.push({km: v.km, li});
     });
