@@ -187,6 +187,7 @@ button.insignia{font:inherit;font-size:11px;letter-spacing:0;min-height:36px;cur
 #comprobar-ocm:disabled{opacity:.6;cursor:wait}
 #resultado-ocm{margin-top:8px}
 #estado.error{border-radius:14px;max-height:24dvh;overflow:auto;bottom:max(10px,env(safe-area-inset-bottom))}
+#modoTiempo{width:100%;min-height:44px;font:inherit;font-size:16px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:10px;padding:8px}
 </style>
 </head>
 <body>
@@ -221,6 +222,8 @@ button.insignia{font:inherit;font-size:11px;letter-spacing:0;min-height:36px;cur
         <label class="campo"><span><input id="tempAuto" type="checkbox" checked> Temperatura automática del recorrido</span></label>
         <p class="ayuda">Previsión de Open-Meteo en varios puntos, suponiendo salida ahora y horas de paso aproximadas sin recargas. Si falla, se usan 18 °C o tu temperatura manual de respaldo.</p>
         <div class="dos-columnas"><label class="campo" id="temperatura-manual" hidden><span>Temperatura manual / respaldo (°C)</span><input id="temp" type="number" value="18"></label> <label class="campo"><span>Velocidad media prevista (km/h)</span><input id="vel" type="number" value="100"></label></div>
+        <label class="campo"><span>Tiempo de conducción</span><select id="modoTiempo"><option value="osrm">Estimación de OSRM</option><option value="media">Según mi velocidad media</option></select></label>
+        <p id="ayuda-tiempo" class="ayuda">OSRM estima el tiempo con su perfil de velocidades. No incluye tráfico en directo.</p>
         <label class="campo"><span><input id="desn" type="checkbox" checked> Tener en cuenta el desnivel</span></label>
         <h2>Tu equilibrio</h2>
         <label class="campo"><span>Tiempo adicional que aceptas (%)</span><input id="margen" type="number" min="0" max="50" step="1" value="10"><small>10 % permite hasta 12 min más en un viaje de 2 horas.</small></label>
@@ -344,7 +347,7 @@ async function ruta(a, b, vias = []) {
   const j = await r.json();
   if (j.code !== "Ok") throw new Error("No se pudo calcular la ruta: " + j.code);
   if (!j.routes || !j.routes.length) throw new Error("El servicio no devolvió rutas.");
-  return j.routes.slice(0, 3).map(f => ({coords: f.geometry.coordinates, total: f.distance/1000, min: f.duration/60}));
+  return j.routes.slice(0, 3).map(f => aplicarTiempo({coords: f.geometry.coordinates, total: f.distance/1000, min: f.duration/60}, $("modoTiempo").value, num("vel",100)));
 }
 
 function errorAccesoOCM(status) {
@@ -708,7 +711,7 @@ function enlaces(origen, destino, paradas) {
 }
 function pintaSoc() { $("socv").textContent = $("soc").value + " %"; }
 $("soc").addEventListener("input", pintaSoc);
-const PREFS = ["temp", "vel", "bat", "cons", "maxkw", "min", "max", "minDestino", "minkw", "ops", "velref", "masa", "tmin", "pen", "tmax", "maxkm", "extra", "margen"];
+const PREFS = ["modoTiempo", "temp", "vel", "bat", "cons", "maxkw", "min", "max", "minDestino", "minkw", "ops", "velref", "masa", "tmin", "pen", "tmax", "maxkm", "extra", "margen"];
 const num = (id, def) => { const v = parseFloat($(id).value); return isNaN(v) ? def : v; };
 // Factor por temperatura. DATOS: Geotab (4.200 EV): ~100 % de autonomía entre 10 y 30 °C, ~54 % a -15 °C.
 // ESTIMACIÓN MÍA: interpolación lineal entre esos puntos y +10 % de consumo a 40 °C.
@@ -730,6 +733,9 @@ function consumoAjustado() {
 function actualizarResumenes() {
   const paradas = $("vias").value.split(";").filter(v => v.trim()).length;
   $("resumen-viaje").textContent = `${$("tempAuto").checked ? "Meteo automática" : num("temp",18) + " °C"} · ${num("vel",100)} km/h · ${paradas ? paradas + (paradas === 1 ? " parada" : " paradas") : "Sin paradas"}`;
+  $("ayuda-tiempo").textContent = $("modoTiempo").value === "media"
+    ? `Tiempo calculado con ${num("vel",100)} km/h de media en todo el recorrido, sin recargas. Es una hipótesis personal: no incorpora tráfico ni velocidades por carretera.`
+    : "OSRM estima el tiempo con su perfil de velocidades. No incluye tráfico en directo. La velocidad media prevista se usa para el consumo.";
   $("temperatura-manual").hidden = $("tempAuto").checked;
   $("velref-visible").textContent = num("velref",100) + " km/h";
   $("margen-visible").textContent = num("margen",10) + " %";
@@ -745,6 +751,7 @@ $("formulario").addEventListener("toggle", ev => {
 }, true);
 function cargarPrefs() {
   try { const p = JSON.parse(localStorage.getItem("rutaev:prefs") || "{}"); PREFS.forEach(i => { if (p[i] !== undefined) $(i).value = p[i]; });
+    if (!["osrm","media"].includes($("modoTiempo").value)) $("modoTiempo").value = "osrm";
     $("tempAuto").checked = p.tempAuto !== false;
     if (p.perfilBateria !== "util-78-v1") $("bat").value = "78";
     // Conservar el requisito de llegada de las preferencias anteriores.
@@ -812,6 +819,13 @@ $("ver-mapa").onclick = () => vista("explorar");
 $("preparar").onclick = () => vista("form");
 $("cerrar").onclick = () => { vista("datos"); setTimeout(centrarRuta, 80); };
 $("plegar").onclick = () => { const p = $("datos").classList.toggle("plegado"); $("plegar").textContent = p ? "Desplegar" : "Plegar"; setTimeout(centrarRuta, 80); };
+function aplicarTiempo(r, modo, media) {
+  const osrmMin = r.osrmMin ?? r.min;
+  if (!Number.isFinite(media) || media <= 0 || !Number.isFinite(osrmMin) || osrmMin < 0 || !Number.isFinite(r.total) || r.total < 0) throw new Error("No se puede estimar el tiempo con esos datos.");
+  const minMedia = r.total / media * 60;
+  return {...r, osrmMin, minMedia, mediaPrevista:media, mediaOSRM:osrmMin > 0 ? r.total / osrmMin * 60 : 0,
+    modoTiempo:modo === "media" ? "media" : "osrm", min:modo === "media" ? minMedia : osrmMin};
+}
 function duracion(minutos) {
   const m = Math.round(minutos); return `${Math.floor(m / 60)} h ${m % 60} min`;
 }
@@ -967,9 +981,9 @@ function mostrarOpcion(sesion, op) {
     });
     $("res").appendChild(lista);
     const limites = document.createElement("p"); limites.className = "meta";
-    limites.textContent = `${sesion.opciones.length} de ${sesion.total} rutas evaluadas tienen un plan viable. ${sesion.total === 1 ? "El servicio solo ofrece una ruta para este viaje; no hay alternativas que comparar. " : ""}${sesion.puntosVia.length ? "Con paradas intermedias se evalúa un único recorrido. " : ""}Estimaciones sin tráfico ni disponibilidad en directo. Se usa tu velocidad de referencia para el consumo de todas las rutas; el tiempo de conducción lo estima OSRM. Los accesos a cargadores no se recalculan: se aplica el extra fijo por parada. Comparación limitada a las alternativas recibidas.`;
+    limites.textContent = `${sesion.opciones.length} de ${sesion.total} rutas evaluadas tienen un plan viable. ${sesion.total === 1 ? "El servicio solo ofrece una ruta para este viaje; no hay alternativas que comparar. " : ""}${sesion.puntosVia.length ? "Con paradas intermedias se evalúa un único recorrido. " : ""}Estimaciones sin tráfico ni disponibilidad en directo. Se usa tu velocidad media prevista para el consumo de todas las rutas. El tiempo usa el modo elegido: OSRM o distancia dividida por tu media; ninguna opción incorpora tráfico en directo. Los accesos a cargadores no se recalculan: se aplica el extra fijo por parada. Comparación limitada a las alternativas recibidas.`;
     const alcance = document.createElement("p"); alcance.className = "meta";
-    alcance.textContent = `${sesion.opciones.length} de ${sesion.total} rutas viables · Estimaciones sin tráfico.`;
+    alcance.textContent = `${sesion.opciones.length} de ${sesion.total} rutas viables · Sin tráfico · Tiempo ${r.modoTiempo === "media" ? "según tu media" : "OSRM"}.`;
     if (sesion.total === 1) alcance.textContent += " Solo se ha obtenido una ruta; no hay alternativas que comparar.";
     $("res").appendChild(alcance);
     const metodo = document.createElement("details"), resumen = document.createElement("summary");
@@ -991,8 +1005,13 @@ function mostrarOpcion(sesion, op) {
     if (op.meteo) { const fuente = document.createElement("a"); fuente.href = "https://open-meteo.com/"; fuente.textContent = " Fuente: Open-Meteo (CC BY 4.0)"; fuente.target = "_blank"; fuente.rel = "noopener"; meteoTexto.appendChild(fuente); }
     $("res").appendChild(meteoTexto);
     const tl = document.createElement("p"); tl.className = "meta";
-    tl.textContent = `Conducción: ${duracion(r.min)} · Recargas: ${duracion(op.tCarga)} · Extras de carga: ${duracion(P.extra * nP)}.`;
+    tl.textContent = `Conducción: ${duracion(r.min)} (${r.modoTiempo === "media" ? "tu media de " + r.mediaPrevista + " km/h" : "OSRM"}) · Recargas: ${duracion(op.tCarga)} · Extras de carga: ${duracion(P.extra * nP)}.`;
     $("res").appendChild(tl);
+    if (Number.isFinite(r.osrmMin)) {
+      const contraste = document.createElement("p"); contraste.className = "meta";
+      contraste.textContent = `Referencia de conducción: OSRM ${duracion(r.osrmMin)} (media ${r.mediaOSRM.toFixed(0)} km/h). A ${r.mediaPrevista} km/h de media: ${duracion(r.minMedia)}. Cambia el criterio en Opciones del viaje y vuelve a calcular.`;
+      $("res").appendChild(contraste);
+    }
     const llegada = document.createElement("p"); llegada.className = "explicacion";
     llegada.textContent = `Batería estimada al destino: ${op.socFinal.toFixed(0)} % (mínimo pedido: ${P.minDestino} %) · Mínimo estimado en ruta: ${Math.floor(op.socMinimo + 1e-9)} % · Llegada estimada si sales al calcular: ${new Date(sesion.salida + op.tTotal * 60000).toLocaleTimeString("es-ES", {hour:"2-digit", minute:"2-digit"})}.`;
     $("res").appendChild(llegada);
