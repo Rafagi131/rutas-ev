@@ -288,12 +288,26 @@ input[type=range]{accent-color:var(--acc)}
 @media(max-width:899px){#formulario{padding:18px}.cabecera-viaje h1{font-size:36px}.cabecera-viaje{margin-bottom:18px}.form{gap:10px}}
 @media(max-width:359px){.cabecera-viaje h1{font-size:30px}.marca-nombre{font-size:17px}.marca-simbolo{width:34px;height:34px}#formulario{padding:14px}}
 @media(prefers-color-scheme:dark){:root{--bg:#14161b;--solid:#1c2028;--card:#1c2028;--field:#292e38;--ink:#f1f3f8;--mute:#b0b8c6;--line:#414958;--acc:#8ab6ff;--acc2:#8ab6ff;--accsoft:#253955;--grad:linear-gradient(100deg,#145bda,#145bda)}#map .leaflet-tile-pane{filter:grayscale(1) brightness(.75)}.panel{box-shadow:0 8px 30px #0003}.destino-lugar::before{background:#145bda}}
+
+/* Trayecto compacto: las acciones comparten la altura del campo. */
+.lugar{display:grid;grid-template-columns:minmax(0,1fr) 88px;column-gap:6px;padding:6px 0}
+.etiqueta-lugar{display:contents}
+.etiqueta-lugar label{grid-column:1;grid-row:1;align-self:end;padding-top:3px}
+.lugar input[type=text]{grid-column:1;grid-row:2;min-width:0;min-height:40px;padding:4px 0;font-size:16px}
+.etiqueta-lugar .mini{grid-column:2;grid-row:1 / span 2;align-self:center;justify-content:center;padding:4px 2px;line-height:1.35;text-align:center;white-space:normal;min-height:44px}
+.lugar::before{top:26px}
+.trayecto::before{top:35px;bottom:35px}
+.punto-lugar::before{content:"02";background:var(--accsoft);color:var(--acc)}
+.trayecto:has(.punto-lugar:not([hidden])) .destino-lugar::before{content:"03"}
+#anadir-punto{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border:1px dashed var(--line);border-radius:2px;background:transparent;color:var(--acc);font:600 12px "DM Sans",system-ui,sans-serif;cursor:pointer}
+#anadir-punto:hover{background:var(--accsoft)}
+#ayuda-punto{margin:0;font-size:11px}
 </style>
 </head>
 <body>
 <header class="marca-app" aria-label="Ruta EV">
   <button class="marca-inicio" id="marca-inicio" type="button" aria-label="Ruta EV · Abrir planificación">
-    <svg class="marca-simbolo" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path d="M3 8h22L13 20H3Z" fill="#f0f4ff"/><path d="M23 8h22L14 40H3Z" fill="#438aff"/><path d="M34 28h11v12H22Z" fill="#f0f4ff"/></svg>
+    <svg class="marca-simbolo" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path d="M12 34C12 13 36 35 36 14" fill="none" stroke="#6aa3ff" stroke-width="4" stroke-linecap="round"/><circle cx="36" cy="14" r="5" fill="#f0f4ff"/><circle cx="12" cy="34" r="5" fill="#438aff"/><circle cx="12" cy="34" r="2" fill="#171b23"/></svg>
     <span><strong class="marca-nombre">Ruta EV</strong><span class="marca-descripcion">Planificador eléctrico</span></span>
   </button>
   <span class="marca-vehiculo">Kia EV3</span>
@@ -314,17 +328,18 @@ input[type=range]{accent-color:var(--acc)}
     <p class="proposito">Tu próximo viaje, con menos energía y tiempo.</p>
     <div class="trayecto">
       <div class="lugar origen-lugar"><div class="etiqueta-lugar"><label for="origen">Desde</label><button type="button" id="miub" class="mini">Mi ubicación</button></div><input id="origen" type="text" placeholder="Ciudad o dirección" autocomplete="off"></div>
+      <div id="punto-ruta" class="lugar punto-lugar" hidden><div class="etiqueta-lugar"><label for="vias">Punto en la ruta</label><button type="button" id="quitar-punto" class="mini" aria-label="Quitar punto de la ruta">Quitar</button></div><input id="vias" type="text" placeholder="Ciudad o dirección intermedia" aria-describedby="ayuda-punto" autocomplete="off"></div>
       <div class="lugar destino-lugar"><div class="etiqueta-lugar"><label for="destino">Hasta</label><button type="button" id="elegirdest" class="mini">Elegir en el mapa</button></div><input id="destino" type="text" placeholder="¿Adónde vamos?" autocomplete="off"></div>
     </div>
+    <button type="button" id="anadir-punto" aria-controls="punto-ruta" aria-expanded="false">＋ Añadir punto en la ruta</button>
+    <p id="ayuda-punto" class="ayuda" hidden>Paso intermedio, sin tiempo de estancia. Para varios puntos, sepáralos con ; en el orden del viaje.</p>
     <label class="campo bateria-inicial"><span>Batería al salir <output id="socv">90 %</output></span><input id="soc" type="range" min="11" max="100" value="90"></label>
-    <button id="calc">Comparar rutas <span aria-hidden="true">→</span></button>
+    <button id="calc">Buscar ruta <span aria-hidden="true">→</span></button>
     <p class="ayuda-principal">Menor consumo con hasta <strong id="margen-visible">10 %</strong> más de tiempo.</p>
     <details name="panel-principal" class="grupo" id="opciones-viaje">
       <summary><span class="icono-grupo" aria-hidden="true">↗</span><span class="texto-grupo"><strong>Opciones del viaje</strong><small id="resumen-viaje">18 °C · 100 km/h · Sin paradas</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
       <div class="contenido-grupo">
-        <h2>Paradas que tú eliges</h2>
-        <label class="campo"><span>Ciudades o lugares (separados por ;)</span><input id="vias" type="text" placeholder="Ej: Zaragoza; Medinaceli"></label>
-        <input id="minvia" type="hidden" value="0"><p class="ayuda">Estos lugares se incluyen en el recorrido, sin añadir tiempo de estancia.</p>
+        <input id="minvia" type="hidden" value="0">
         <h2>Condiciones del viaje</h2>
         <label class="campo"><span><input id="tempAuto" type="checkbox" checked> Temperatura automática del recorrido</span></label>
         <p class="ayuda">Previsión de Open-Meteo en varios puntos, suponiendo salida ahora y horas de paso aproximadas sin recargas. Si falla, se usan 18 °C o tu temperatura manual de respaldo.</p>
@@ -840,7 +855,17 @@ function consumoModelo(base, temperatura, velocidad, velocidadBase) {
 function consumoAjustado() {
   return consumoModelo(num("cons", 16.5), num("temp", 18), num("vel", 100), num("velref", 100));
 }
+function sincronizarPuntoRuta(forzar = false) {
+  const mostrar = Boolean($("vias").value.trim()) || (!forzar && !$("punto-ruta").hidden);
+  $("punto-ruta").hidden = !mostrar;
+  $("ayuda-punto").hidden = !mostrar;
+  $("anadir-punto").hidden = mostrar;
+  $("anadir-punto").setAttribute("aria-expanded", String(mostrar));
+}
+$("anadir-punto").onclick = () => { $("punto-ruta").hidden = false; sincronizarPuntoRuta(); $("vias").focus(); };
+$("quitar-punto").onclick = () => { $("vias").value = ""; sincronizarPuntoRuta(true); actualizarResumenes(); $("anadir-punto").focus(); };
 function actualizarResumenes() {
+  sincronizarPuntoRuta();
   const paradas = $("vias").value.split(";").filter(v => v.trim()).length;
   $("resumen-viaje").textContent = `${$("tempAuto").checked ? "Meteo automática" : num("temp",18) + " °C"} · ${num("vel",100)} km/h · ${paradas ? paradas + (paradas === 1 ? " parada" : " paradas") : "Sin paradas"}`;
   $("ayuda-tiempo").textContent = $("modoTiempo").value === "media"
@@ -890,7 +915,7 @@ function pintarViajes() {
     const b = document.createElement("button");
     b.textContent = `${v.o} → ${v.d} (${v.km} km, ${v.p} paradas)`;
     b.onclick = () => { origenFijo = null; $("origen").value = v.o === "Mi ubicación actual" ? "" : v.o; // la ubicación actual hay que volver a pedirla
-    destinoFijo = v.dp ? {pos: v.dp, texto: v.d} : null; $("destino").value = v.d; pintarPuntos(); $("soc").value = v.soc; $("vias").value = v.v || ""; pintaSoc(); actualizarResumenes(); };
+    destinoFijo = v.dp ? {pos: v.dp, texto: v.d} : null; $("destino").value = v.d; pintarPuntos(); $("soc").value = v.soc; $("vias").value = v.v || ""; sincronizarPuntoRuta(true); pintaSoc(); actualizarResumenes(); };
     c.appendChild(b);
   });
   const x = document.createElement("button"); x.textContent = "Borrar viajes guardados";
