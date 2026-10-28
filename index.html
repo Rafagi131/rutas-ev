@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="rutaev-version" content="2026-10-28-cabecera-v1">
+<meta name="rutaev-version" content="2026-10-28-mapa-previo-v1">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ruta EV · Planificador</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -1298,7 +1298,7 @@ $("calc").onclick = async () => {
                min: +$("min").value, minDestino: +$("minDestino").value, max: +$("max").value,
                tmin: num("tmin", 15), pen: num("pen", 8), tmax: num("tmax", 40), maxkm: num("maxkm", 300) || Infinity, extra: num("extra", 5)};
     if (!(P.bat > 0 && P.cons > 0 && P.maxkw > 0 && P.maxkw <= LIMITE_DC_EV3 && P.margenCarga >= 0 && P.margenCarga <= 100 && P.min >= 0 && Number.isFinite(P.minDestino) && P.minDestino >= 0 && P.minDestino <= 100 && P.max > P.min && P.max <= 100 && P.tmax > 0 && P.extra >= 0 && P.tmin >= 0 && P.pen >= 0 && P.maxkm > 0 && num("minkw", 50) > 0 && num("velref", 100) > 0 && num("vel", 100) > 0 && num("masa", 1950) > 0)) throw new Error("Revisa los ajustes: batería, consumo, potencias y tiempos deben ser válidos; el máximo de batería debe superar al mínimo.");
-    $("res").textContent = ""; capas.clearLayers(); hayDatos = false;
+    $("res").textContent = ""; capas.clearLayers(); limitesRuta = null; hayDatos = false;
     const margen = num("margen", 10), socIni = +$("soc").value;
     if (margen < 0 || margen > 50) throw new Error("El margen de tiempo debe estar entre 0 y 50 %.");
     if (!$("origen").value.trim() || !$("destino").value.trim()) throw new Error("Introduce un origen y un destino.");
@@ -1314,6 +1314,7 @@ $("calc").onclick = async () => {
     }
     estado("Buscando rutas alternativas...");
     const rutas = await ruta(a, b, puntosVia.map(v => v.pos));
+    await mostrarTrazadoPrevio(rutas);
 
     const sesion = {a, b, P, minVia, margen, socIni, puntosVia, total:rutas.length, opciones:[], descartes:[], salida:Date.now(),
       origenTexto:$("origen").value, destinoTexto:$("destino").value, viasTexto:$("vias").value, puntosTexto:puntosGuardados(), op:origenFijo ? origenFijo.pos : null, dp:destinoFijo ? destinoFijo.pos : null};
@@ -1385,6 +1386,19 @@ $("calc").onclick = async () => {
     mostrarOpcion(sesion, sesion.eleccion.equilibrada);
   } catch (e) { fallo(e.message); } finally { $("calc").disabled = false; }
 };
+// Primer trazado disponible; la recomendación se decide al terminar la evaluación.
+async function mostrarTrazadoPrevio(rutas) {
+  capas.clearLayers();
+  const trazo = rutas[0].coords.map(c => [c[1], c[0]]);
+  L.polyline(trazo, {color:"#fff", weight:10, opacity:.9}).addTo(capas);
+  const linea = L.polyline(trazo, {color:"#0284c7", weight:6, dashArray:"10 7"}).addTo(capas);
+  limitesRuta = linea.getBounds();
+  vista("calculando");
+  estado("Trazado provisional · Calculando consumo, recargas y alternativas…");
+  centrarRuta();
+  // Dos fotogramas permiten pintar el mapa antes de continuar con los cálculos.
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+}
 function mostrarOpcion(sesion, op) {
     const {a, b, P, minVia} = sesion;
     const {r, acum, vias, perfil, plan, notaDesnivel} = op;
