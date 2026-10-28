@@ -55,3 +55,9 @@ Salida asumida al 100 % en cada sentido y llegada objetivo al 20 %. Con 16,5 kWh
 Para destinos que contienen Vilanova i la Geltrú, con código 08800 si aparece un código postal, se usa una reserva doméstica del 15 %, seleccionable al 10 % o desactivable con «Usar reserva general». Se guarda con las preferencias de v2 al calcular. La reserva general y la de cargadores no se sobrescriben. El resumen indica «Casa» y la cifra efectiva; el cálculo usa esa misma cifra. La regla identifica la localidad, no verifica una vivienda concreta.
 
 El estudio local de Migjorn usa ahora 15 % de reserva en la vuelta (20 % en ida). Con consumo plano de 16,5 kWh/100 km requiere salir de la estación al 67,1 %, unos 7,1 min de carga; a 20 kWh/100 km, 78,2 %, unos 20,7 min. El estudio guardado usa estos supuestos fijos y no recalcula al elegir 10 % en el formulario.
+
+## Estaciones favoritas
+
+Se guardan en `rutaev:v2:favoritos`, exclusivamente en el navegador de v2: nombre, identificador de origen, coordenadas, operador y potencia declarada, sin tarifas. Botones de guardar/quitar en paradas calculadas y estaciones contrastadas. La sección «Estaciones favoritas» permite añadirlas al recorrido o eliminarlas. Incluye acceso para guardar Migjorn 4, sin guardarla automáticamente.
+
+«Añadir al recorrido» crea un punto intermedio con coordenadas conservadas, evita duplicarlo y respeta el máximo de ocho puntos. Al buscar se vuelve a calcular el trayecto; pasar por la estación no obliga al motor a recargar allí. La preferencia automática como estación de carga aún no está conectada al optimizador. No se sincronizan favoritos entre dispositivos y se mantienen al recargar la página.
