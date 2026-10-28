@@ -37,7 +37,81 @@
         }
       ],
       "price": null,
-      "status": "Estación identificada. Tarifa, disponibilidad y desvío pendientes de verificar."
+      "status": "Estación identificada. Tarifa, disponibilidad y desvío pendientes de verificar.",
+      "updatedAt": "2026-10-28T15:10:25.701Z"
+    },
+    {
+      "id": "09a7e39c-3edb-450a-9d99-7bb88e4bbc70",
+      "name": "Supermercado Consum Paiporta",
+      "address": "Ctra. d'Albal, 37",
+      "coordinates": {
+        "latitude": "39.424255",
+        "longitude": "-0.42097"
+      },
+      "connectors": [
+        {
+          "id": "05914fb4-6a4b-4cc5-a76a-85a8ec768ab5",
+          "kw": 100.0
+        },
+        {
+          "id": "db532009-c17e-4fa0-b872-0aafe0bf33ce",
+          "kw": 100.0
+        }
+      ],
+      "price": null,
+      "status": "Candidata: +1 km y +7,6 min de conducción frente a Torrent dirección Alicante según OSRM. Horario, tarifa y acceso pendientes.",
+      "updatedAt": "2026-10-28T15:24:39.753Z"
     }
-  ]
+  ],
+  "comparison": {
+    "updatedAt": "2026-10-28T15:28:17.027Z",
+    "source": "OSRM, sin tráfico en directo",
+    "results": [
+      {
+        "id": "cd7b5c40-d28f-4259-b31b-15dc25f15c94",
+        "name": "ZUNDER Dir. Alicante | Torrent",
+        "km": 484.31579999999997,
+        "min": 327.27333333333337,
+        "legs": [
+          {
+            "km": 319.4017,
+            "min": 215.76166666666668
+          },
+          {
+            "km": 164.91410000000002,
+            "min": 111.51166666666667
+          }
+        ],
+        "socLlegada": 32.434255769230774,
+        "socSalida": 54.885675000000006,
+        "kwhRecarga": 17.512107,
+        "kw": 340,
+        "minutosRecarga": 11.031340468983203,
+        "minutosTotales": 343.3046738023166
+      },
+      {
+        "id": "09a7e39c-3edb-450a-9d99-7bb88e4bbc70",
+        "name": "Supermercado Consum Paiporta",
+        "km": 485.3051,
+        "min": 334.82666666666665,
+        "legs": [
+          {
+            "km": 316.2301,
+            "min": 217.48166666666665
+          },
+          {
+            "km": 169.075,
+            "min": 117.345
+          }
+        ],
+        "socLlegada": 33.10517115384614,
+        "socSalida": 55.76586538461539,
+        "kwhRecarga": 17.675341500000012,
+        "kw": 100,
+        "minutosRecarga": 12.72624588000001,
+        "minutosTotales": 352.5529125466667
+      }
+    ],
+    "assumptions": "Estimación preliminar: salida 100 %, llegada 20 %, 78 kWh útiles, consumo plano 16,5 kWh/100 km a 18 °C, curva EV3 con margen 20 %, 5 min por parada; sin orografía ni meteorología real. Destino geocodificado a nivel de calle, portal 7 pendiente."
+  }
 }
