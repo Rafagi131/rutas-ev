@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="rutaev-version" content="2026-10-28-ajustes-v1">
+<meta name="rutaev-version" content="2026-10-28-compacto-v1">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ruta EV · Planificador eléctrico</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -332,6 +332,80 @@ input[type=range]{accent-color:var(--acc)}
 .creditos-app{border-top:1px solid var(--line);margin-top:8px;color:var(--mute)}
 .creditos-app>summary{min-height:44px;font-size:11px;color:var(--mute)}
 .creditos-app p{font-size:11px;line-height:1.6;margin:0 0 12px}.creditos-app a{color:inherit}
+
+/* Ritmo compacto: texto sin alturas fijas y controles táctiles de al menos 44 px. */
+:root{--alto-marca:calc(64px + env(safe-area-inset-top,0px));--interlineado:1.35;--interlineado-ayuda:1.4}
+body{line-height:var(--interlineado)}
+.marca-simbolo{width:36px;height:36px}
+.marca-nombre{font-size:19px;line-height:1.1}
+.marca-descripcion{line-height:1.2;margin-top:3px}
+.marca-vehiculo{line-height:1.2;padding:8px 10px}
+#formulario{padding:16px;scroll-padding:12px}
+.cabecera-viaje{margin-bottom:10px;gap:8px}
+.sobre-titulo{line-height:1.2;margin-bottom:6px}
+.cabecera-viaje h1{font-size:34px;line-height:1.05}
+.form{gap:8px}
+.panel input:is([type=text],[type=number],[type=password]),.panel select{min-height:44px;font-size:16px;line-height:1.25;padding:6px 9px;min-width:0}
+.campo>span{line-height:1.25;margin-bottom:3px}
+.contenido-grupo .campo{margin-bottom:8px}
+.contenido-grupo h2{font-size:13px;line-height:1.25;margin:10px 0 7px}
+.contenido-grupo h2:first-child{margin-top:0}
+.contenido-grupo small,.contenido-grupo .ayuda,.ayuda{font-size:12px;line-height:var(--interlineado-ayuda)}
+.ayuda{margin:0 0 8px}
+.contenido-grupo{padding:2px 0 8px}
+.contenido-subgrupo{padding:6px 0}
+.subgrupo{margin-top:7px}
+.subgrupo>summary{line-height:1.3;min-height:44px;padding:4px 0}
+.dos-columnas{gap:8px}
+.contenido-grupo .campo:has(>input[type=number]){display:grid;grid-template-columns:minmax(0,1fr) 88px;gap:4px 8px;align-items:center}
+.contenido-grupo .campo:has(>input[type=number])>span{margin:0}
+.contenido-grupo .campo:has(>input[type=number])>small{grid-column:1/-1}
+.contenido-grupo input[type=number]{text-align:right}
+.dos-columnas>.campo:has(>input[type=number]){grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;align-content:stretch}
+.dos-columnas>.campo:has(>input[type=number])>span{min-height:2.5em}
+.dos-columnas:has(>[hidden])>.campo:not([hidden]):has(>input[type=number]){grid-template-columns:minmax(0,1fr) 88px;grid-template-rows:auto}
+.dos-columnas:has(>[hidden])>.campo:not([hidden]):has(>input[type=number])>span{min-height:0}
+.trayecto{padding:0 10px 0 36px}
+.lugar{grid-template-columns:minmax(0,1fr) 68px;column-gap:4px;padding:2px 0}
+.etiqueta-lugar label{font-size:11px;line-height:1.15;padding-top:2px;letter-spacing:.07em}
+.lugar input[type=text]{grid-column:1;grid-row:2;min-height:44px;padding:2px 0;line-height:1.25}
+.etiqueta-lugar .mini{line-height:1.2;min-height:44px;padding:3px 0}
+.lugar::before{left:-27px;top:26px;width:18px;height:18px;line-height:18px}
+.trayecto::before{left:18px;top:35px;bottom:25px}
+.acciones-trayecto{gap:6px}
+#anadir-punto,#invertir-trayecto{line-height:1.2;min-height:44px;padding:6px;min-width:0}
+#ayuda-punto,.estado-sugerencias{line-height:1.35;font-size:11px}
+.estado-sugerencias{margin:3px 0 5px}
+.sugerencias{margin:3px 0;max-height:210px}
+.sugerencias button{line-height:1.35;min-height:44px;padding:7px 8px;overflow-wrap:anywhere}
+.controles-punto{gap:6px;margin-bottom:2px}.controles-punto button{line-height:1.2;padding:6px 10px}
+.bateria-inicial{padding:1px 0 7px;margin-bottom:0}
+.bateria-inicial>span:first-child{line-height:1.2}
+.bateria-inicial output{font-size:28px;line-height:1.1}
+#calc{min-height:48px;padding:11px 14px;line-height:1.2}
+.ayuda-principal{font-size:11px;line-height:1.35;margin:1px 0 4px;padding-left:8px}
+.grupo>summary{min-height:52px;padding:7px 0;gap:8px;line-height:1.2}
+.texto-grupo{gap:2px}.texto-grupo strong{line-height:1.2}.texto-grupo small{line-height:1.3}
+.icono-grupo{width:26px;height:28px;font-size:20px}
+#viajes button{padding:8px 10px;line-height:1.35}
+.creditos-app{margin-top:4px}.creditos-app>summary{min-height:44px;line-height:1.25}.creditos-app p{line-height:var(--interlineado-ayuda);margin:0 0 8px}
+#datos{padding:14px;scroll-padding:12px}
+#res h2{font-size:20px;line-height:1.2;margin:8px 0 5px}
+.explicacion{font-size:13px;line-height:1.4;margin:7px 0}
+.meta,.carga,.alt{font-size:12px;line-height:var(--interlineado-ayuda)}
+.aviso{line-height:1.4}
+.ruta-opcion{padding:10px 12px;line-height:1.3}.ruta-opcion span{font-size:12px;line-height:1.35;margin-top:3px}
+.comparacion{gap:6px;margin:8px 0}
+.resumen-principal{margin:9px 0}.resumen-principal>div{padding:10px}
+.resumen-principal strong{font-size:23px;line-height:1.15}.resumen-principal span{line-height:1.25;margin-top:4px}
+.detalle-resultados{margin-top:9px;padding:2px 0}.detalle-resultados>summary{min-height:44px;line-height:1.25}
+.paradas{margin-top:8px}.paradas li{padding-bottom:12px;gap:3px}.paradas strong{font-size:14px;line-height:1.25}
+.chip{line-height:1.25;padding:3px 8px}.fila-chips{flex-wrap:wrap;gap:5px;margin:2px 0}
+.exportar{gap:6px;margin:6px 0}.exportar a,.wz{line-height:1.25;padding:6px 10px}
+#estado{line-height:1.35}
+@media(min-width:900px){#formulario,#datos{top:calc(var(--alto-marca) + 16px);max-height:calc(100dvh - var(--alto-marca) - 32px)}}
+@media(max-width:899px){#formulario{padding:14px;left:8px;right:8px;top:calc(var(--alto-marca) + 8px);max-height:calc(100dvh - var(--alto-marca) - 16px - env(safe-area-inset-bottom))}#datos{left:8px;right:8px}.cabecera-viaje{margin-bottom:10px}.cabecera-viaje h1{font-size:34px}.form{gap:8px}}
+@media(max-width:359px){#formulario{padding:12px}.cabecera-viaje h1{font-size:30px}.marca-nombre{font-size:17px}.marca-simbolo{width:32px;height:32px}.contenido-grupo .campo:has(>input[type=number]){grid-template-columns:minmax(0,1fr) 80px}.dos-columnas>.campo:has(>input[type=number]){grid-template-columns:minmax(0,1fr)}.dos-columnas:has(>[hidden])>.campo:not([hidden]):has(>input[type=number]){grid-template-columns:minmax(0,1fr) 80px}}
 </style>
 </head>
 <body>
