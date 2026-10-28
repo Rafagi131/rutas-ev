@@ -43,3 +43,9 @@ Este módulo tiene pruebas sintéticas y todavía no está conectado al resultad
 El laboratorio incluye «Ver estaciones contrastadas»: muestra la estación Torrent dirección Alicante identificada en REVE, con sus conectores y fecha de consulta. No consume API. El servidor admite `/api/reve/locations?party_id=ZUN&page=4` y `/api/reve/tariffs?page=1`; los filtros están cerrados y todas las páginas comparten cuota y caché persistente. Una página completa de 100 registros se marca como posiblemente incompleta, nunca como catálogo nacional completo.
 
 `tarifas-reve.mjs` interpreta únicamente tarifas simples de energía y cargo fijo sin restricciones, con IVA explícito y bloques de facturación. Las condiciones horarias y de ocupación se dejan pendientes. Esta interpretación todavía no está vinculada a un precio confirmado para Torrent ni al cálculo visible de rutas.
+
+## Estudio local de Migjorn 4
+
+En el laboratorio, «Migjorn 4 · Ver ida» y «Ver vuelta» muestran mapas OSRM y escenarios de batería a 16,5 y 20 kWh/100 km. Datos de trazado en `.cache/alquerias-study.json`, excluidos de Git; contienen extremos personales del recorrido y se sirven solo en localhost. La interfaz y el servidor sí se versionan; otra instalación sin ese archivo muestra «estudio no disponible».
+
+Salida asumida al 100 % en cada sentido y llegada objetivo al 20 %. Con 16,5 kWh/100 km la carga objetivo es 71–72 %; a 20 kWh/100 km sube al 82–83 %, superando el objetivo habitual del 80 %. No es una garantía de autonomía ni una validación de tarifa. Acceso calculado por OSRM a las coordenadas de la estación; horario/acceso físico y portal exacto del destino siguen pendientes. No se consumen consultas REVE al abrir estos mapas.
