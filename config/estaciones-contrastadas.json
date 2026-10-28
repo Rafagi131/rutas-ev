@@ -1,0 +1,43 @@
+{
+  "updatedAt": "2026-10-28T15:10:25.701Z",
+  "source": "REVE",
+  "stations": [
+    {
+      "id": "cd7b5c40-d28f-4259-b31b-15dc25f15c94",
+      "name": "ZUNDER Dir. Alicante | Torrent",
+      "address": "AP-7 km 345 dirección Alicante",
+      "coordinates": {
+        "latitude": "39.4005758",
+        "longitude": "-0.4929775"
+      },
+      "connectors": [
+        {
+          "id": "e8f0a359-c437-4613-b4b8-d1a0ddead3f0",
+          "kw": 90.0
+        },
+        {
+          "id": "41ebbc6c-66d3-444f-a05c-d32fea1b0968",
+          "kw": 90.0
+        },
+        {
+          "id": "0ee90c66-72c5-4f3c-ac52-c422affa46b5",
+          "kw": 340.0
+        },
+        {
+          "id": "3255fe09-5b46-4865-9926-1f71768e21db",
+          "kw": 340.0
+        },
+        {
+          "id": "eb702465-e44f-44b3-8303-3813594eebe6",
+          "kw": 340.0
+        },
+        {
+          "id": "886f386e-c653-4d3f-bcb1-69f3c2399309",
+          "kw": 340.0
+        }
+      ],
+      "price": null,
+      "status": "Estación identificada. Tarifa, disponibilidad y desvío pendientes de verificar."
+    }
+  ]
+}
