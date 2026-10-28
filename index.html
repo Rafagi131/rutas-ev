@@ -460,7 +460,8 @@ body{line-height:var(--interlineado)}
       <summary><span class="icono-grupo" aria-hidden="true">↗</span><span class="texto-grupo"><strong>Para este viaje</strong><small id="resumen-viaje">18 °C · 100 km/h · Sin paradas</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
       <div class="contenido-grupo">
         <input id="minvia" type="hidden" value="0">
-        <label class="campo"><span>Batería mínima al destino (%)</span><input id="minDestino" type="number" min="0" max="100" step="1" value="20"><small>Independiente del mínimo de los cargadores. Por ejemplo: 10 % en cargadores y 20 % al destino.</small></label>
+        <label class="campo"><span>Al llegar a casa · Vilanova (%)</span><select id="reservaCasa"><option value="15">15 % · Recomendado</option><option value="10">10 %</option><option value="general">Usar reserva general</option></select><small>Se aplica cuando el destino es Vilanova i la Geltrú (08800), donde tienes carga particular. No cambia la reserva en cargadores.</small></label>
+        <label class="campo"><span>Reserva general al destino (%)</span><input id="minDestino" type="number" min="0" max="100" step="1" value="20"><small>Para otros destinos. En Vilanova se usa la reserva de casa seleccionada arriba. Independiente de la reserva en cargadores.</small></label>
 
         <h2>Condiciones del viaje</h2>
         <label class="campo"><span><input id="tempAuto" type="checkbox" checked> Temperatura automática del recorrido</span></label>
@@ -981,7 +982,7 @@ function enlaces(origen, destino, paradas) {
 }
 function pintaSoc() { $("socv").textContent = $("soc").value + " %"; }
 $("soc").addEventListener("input", pintaSoc);
-const PREFS = ["margenCarga", "modoTiempo", "temp", "vel", "bat", "cons", "maxkw", "min", "max", "minDestino", "minkw", "ops", "velref", "masa", "tmin", "pen", "tmax", "maxkm", "extra", "margen"];
+const PREFS = ["reservaCasa", "margenCarga", "modoTiempo", "temp", "vel", "bat", "cons", "maxkw", "min", "max", "minDestino", "minkw", "ops", "velref", "masa", "tmin", "pen", "tmax", "maxkm", "extra", "margen"];
 const num = (id, def) => { const v = parseFloat($(id).value); return isNaN(v) ? def : v; };
 // Factor por temperatura. DATOS: Geotab (4.200 EV): ~100 % de autonomía entre 10 y 30 °C, ~54 % a -15 °C.
 // ESTIMACIÓN MÍA: interpolación lineal entre esos puntos y +10 % de consumo a 40 °C.
@@ -1150,11 +1151,20 @@ $("anadir-punto").onclick = () => agregarPunto();
 registrarSugerencias($("origen"), p => { origenFijo = p; pintarPuntos(); });
 registrarSugerencias($("destino"), p => { destinoFijo = p; pintarPuntos(); });
 
+function esDestinoCasa(texto) {
+  const t = String(texto).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  const postales = t.match(/\b\d{5}\b/g) || [];
+  return /\bvilanova\s+i\s+la\s+geltru\b/.test(t) && (!postales.length || postales.every(p=>p==='08800'));
+}
+function reservaDestinoActual() {
+  const general = num('minDestino',20), casa = $('reservaCasa').value;
+  return esDestinoCasa($('destino').value) && ['10','15'].includes(casa) ? +casa : general;
+}
 function actualizarResumenes() {
   actualizarPuntos();
   const paradas = puntosGuardados().length;
   $("invertir-trayecto").disabled = !$("origen").value.trim() && !$("destino").value.trim() && !paradas;
-  $("resumen-viaje").textContent = `${$("tempAuto").checked ? "Meteo automática" : num("temp",18) + " °C"} · ${num("vel",100)} km/h · ${paradas ? paradas + (paradas === 1 ? " punto" : " puntos") + " · " : ""}Llegada ≥ ${num("minDestino",20)} %`;
+  $("resumen-viaje").textContent = `${$("tempAuto").checked ? "Meteo automática" : num("temp",18) + " °C"} · ${num("vel",100)} km/h · ${paradas ? paradas + (paradas === 1 ? " punto" : " puntos") + " · " : ""}Llegada ≥ ${reservaDestinoActual()} %${esDestinoCasa($("destino").value) && $("reservaCasa").value !== "general" ? " · Casa" : ""}`;
   $("ayuda-tiempo").textContent = $("modoTiempo").value === "media"
     ? `Tiempo calculado con ${num("vel",100)} km/h de media en todo el recorrido, sin recargas. Es una hipótesis personal: no incorpora tráfico ni velocidades por carretera.`
     : "OSRM estima el tiempo con su perfil de velocidades. No incluye tráfico en directo. La velocidad media prevista se usa para el consumo.";
@@ -1173,6 +1183,7 @@ $("formulario").addEventListener("toggle", ev => {
 }, true);
 function cargarPrefs() {
   try { const p = JSON.parse(localStorage.getItem("rutaev:v2:prefs") || "{}"); PREFS.forEach(i => { if (p[i] !== undefined) $(i).value = p[i]; });
+    if (!["10","15","general"].includes($("reservaCasa").value)) $("reservaCasa").value = "15";
     if (!["osrm","media"].includes($("modoTiempo").value)) $("modoTiempo").value = "osrm";
     $("tempAuto").checked = p.tempAuto !== false;
     if (p.perfilBateria !== "util-78-v1") $("bat").value = "78";
@@ -1307,7 +1318,7 @@ $("calc").onclick = async () => {
 
     try { localStorage.setItem("rutaev:v2:ocmKey", ocmKey); } catch (e) {}
     const P = {bat: +$("bat").value, cons: consumoAjustado(), maxkw: +$("maxkw").value, margenCarga: num("margenCarga", MARGEN_CARGA_DEF),
-               min: +$("min").value, minDestino: +$("minDestino").value, max: +$("max").value,
+               min: +$("min").value, minDestino: reservaDestinoActual(), max: +$("max").value,
                tmin: num("tmin", 15), pen: num("pen", 8), tmax: num("tmax", 40), maxkm: num("maxkm", 300) || Infinity, extra: num("extra", 5)};
     if (!(P.bat > 0 && P.cons > 0 && P.maxkw > 0 && P.maxkw <= LIMITE_DC_EV3 && P.margenCarga >= 0 && P.margenCarga <= 100 && P.min >= 0 && Number.isFinite(P.minDestino) && P.minDestino >= 0 && P.minDestino <= 100 && P.max > P.min && P.max <= 100 && P.tmax > 0 && P.extra >= 0 && P.tmin >= 0 && P.pen >= 0 && P.maxkm > 0 && num("minkw", 50) > 0 && num("velref", 100) > 0 && num("vel", 100) > 0 && num("masa", 1950) > 0)) throw new Error("Revisa los ajustes: batería, consumo, potencias y tiempos deben ser válidos; el máximo de batería debe superar al mínimo.");
     $("res").textContent = ""; capas.clearLayers(); limitesRuta = null; hayDatos = false;
@@ -1589,7 +1600,7 @@ function mostrarOpcion(sesion, op) {
       const distance = document.createElement('p');distance.textContent = 'Hasta la parada: '+route.legs[0].km.toFixed(1)+' km. Después: '+route.legs[1].km.toFixed(1)+' km.';target.append(distance);
       for (const scenario of route.scenarios) {
         const text = document.createElement('p');
-        text.textContent = scenario.cons+' kWh/100 km: llegas con '+scenario.socLlegada.toFixed(0)+' %, cargas hasta '+scenario.socSalidaNecesaria.toFixed(0)+' % para terminar al 20 %. Recarga estimada: '+scenario.minutosCarga.toFixed(0)+' min. '+(scenario.viableConMax80?'Dentro del objetivo de carga hasta el 80 %.':'Supera el objetivo habitual del 80 %; requiere más carga.');target.append(text);
+        text.textContent = scenario.cons+' kWh/100 km: llegas con '+scenario.socLlegada.toFixed(0)+' %, cargas hasta '+scenario.socSalidaNecesaria.toFixed(0)+' % para terminar al '+(scenario.reservaDestino ?? 20)+' %. Recarga estimada: '+scenario.minutosCarga.toFixed(0)+' min. '+(scenario.viableConMax80?'Dentro del objetivo de carga hasta el 80 %.':'Supera el objetivo habitual del 80 %; requiere más carga.');target.append(text);
       }
       const note = document.createElement('p');note.textContent = data.assumptions;target.append(note);
     } catch(e) {target.textContent = e.message;}
