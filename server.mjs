@@ -1,4 +1,5 @@
 import http from 'node:http';
+import {crearConsultaServicios} from './servicios.mjs';
 import {readFile,writeFile,mkdir,rename} from 'node:fs/promises';
 import {dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -7,6 +8,7 @@ const HOUR = 3600000;
 // Destino fijo: el navegador no puede elegir URLs ni enviar la clave.
 const LOCATIONS = 'https://www.mapareve.es/api/external/v1/locations';
 export function createApp({key = '', fetcher = fetch, now = Date.now, stateFile = null} = {}) {
+  const servicios = crearConsultaServicios();
   let cached = null, calls = [], blockedUntil = 0;
   let records = {}, queue = Promise.resolve();
   const pending = new Map();
@@ -69,7 +71,14 @@ export function createApp({key = '', fetcher = fetch, now = Date.now, stateFile 
       // Solo mismo origen. El servicio inicial se ejecuta en localhost.
       if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}` && req.headers.origin !== `https://${req.headers.host}`) return json(res,403,{error:'Origen no permitido.'});
       const isCatalog = ['/api/reve/locations','/api/reve/tariffs'].includes(url.pathname);
-      if (url.search && !isCatalog) return json(res,400,{error:'Esta consulta no admite parámetros.'});
+      if (url.search && !isCatalog && url.pathname !== '/api/services') return json(res,400,{error:'Esta consulta no admite parámetros.'});
+      if (url.pathname === '/api/services') {
+        const p = url.searchParams;
+        if ([...p.keys()].some(k=>!['lat','lon'].includes(k)||p.getAll(k).length!==1) || !p.get('lat') || !p.get('lon')) return json(res,400,{error:'Coordenadas no válidas.'});
+        const lat=Number(p.get('lat')),lon=Number(p.get('lon'));
+        if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)return json(res,400,{error:'Coordenadas no válidas.'});
+        try{return json(res,200,await servicios(lat,lon));}catch{return json(res,502,{error:'Servicios no disponibles ahora. No significa que no existan.'});}
+      }
       if (url.pathname === '/api/reve/health') return json(res,200,{configured:Boolean(key),provider:'REVE',version:2});
       if (url.pathname === '/api/reve/route-study') {
         try {
