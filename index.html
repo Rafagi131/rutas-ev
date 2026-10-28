@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="rutaev-version" content="2026-10-28-v2-reve-base">
+<meta name="rutaev-version" content="2026-10-28-v2-reve-laboratorio">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ruta EV v2 · Desarrollo REVE</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -422,13 +422,14 @@ body{line-height:var(--interlineado)}
 #estado,#estado.error{left:0;right:0;bottom:0;transform:none;width:100%;max-width:none;margin:0;border:0;border-top:2px solid var(--acc);border-radius:0;padding:12px max(16px,env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));background:var(--solid);box-shadow:0 -4px 18px #0002;text-align:left;font-size:14px;line-height:1.4;max-height:35dvh;overflow:auto;overflow-wrap:anywhere}
 #estado.error{border-top-color:var(--err);color:var(--err)}
 @media(max-width:359px){.marca-app{gap:8px}.marca-inicio{gap:8px}.marca-simbolo{width:32px;height:32px}.acciones-cabecera{gap:4px}.acciones-cabecera #ver-mapa,.acciones-cabecera #cerrar{padding:6px 7px}.cabecera-viaje h1{font-size:29px}}
+#laboratorio-reve button{display:block;width:100%;min-height:44px;padding:10px 12px;margin:8px 0;border:1px solid var(--line);border-radius:2px;background:var(--field);color:var(--ink);font:600 14px/1.3 "DM Sans",system-ui,sans-serif;text-align:left}#laboratorio-reve button:disabled{opacity:.5}
 </style>
 </head>
 <body>
 <header class="marca-app" aria-label="Ruta EV">
   <button class="marca-inicio" id="marca-inicio" type="button" aria-label="Ruta EV · Abrir planificación">
     <svg class="marca-simbolo" viewBox="0 0 36 36" aria-hidden="true" focusable="false"><rect x="0" y="0" width="10" height="10" fill="#397fff"/><rect x="13" y="0" width="10" height="10" fill="#ffffff"/><rect x="26" y="0" width="10" height="10" fill="#ffffff"/><rect x="0" y="13" width="10" height="10" fill="#ffffff"/><rect x="13" y="13" width="10" height="10" fill="#ffffff"/><rect x="26" y="13" width="10" height="10" fill="#ffffff"/><rect x="0" y="26" width="10" height="10" fill="#ffffff"/><rect x="13" y="26" width="10" height="10" fill="#ffffff"/><rect x="26" y="26" width="10" height="10" fill="#ffffff"/></svg>
-    <span><strong class="marca-nombre">RUTA EV</strong><span class="marca-descripcion">planificador</span></span>
+    <span><strong class="marca-nombre">RUTA EV</strong><span class="marca-descripcion">planificador · v2</span></span>
   </button>
   <span class="marca-vehiculo">KIA EV3</span>
 </header>
@@ -497,6 +498,16 @@ body{line-height:var(--interlineado)}
       </div>
     </details>
   </div>
+  <details name="panel-principal" class="grupo" id="laboratorio-reve">
+    <summary><span class="icono-grupo" aria-hidden="true">＋</span><span class="texto-grupo"><strong>REVE · En pruebas</strong><small>Conexión y datos de cargadores</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
+    <div class="contenido-grupo">
+      <p class="ayuda">La v2 tiene sus propios ajustes e historial. Las rutas siguen usando Open Charge Map mientras validamos REVE.</p>
+      <button type="button" id="reve-comprobar">Comprobar servicio REVE</button>
+      <button type="button" id="reve-catalogo" disabled>Consultar catálogo REVE</button>
+      <p id="reve-estado" class="ayuda" role="status">Pendiente de comprobar. La clave se configura solo en el servidor.</p>
+      <p class="ayuda">Los precios y la comparación con Kia Charge todavía no están integrados.</p>
+    </div>
+  </details>
   <details name="panel-principal" class="grupo" id="historial" hidden><summary><span class="icono-grupo" aria-hidden="true">↶</span><span class="texto-grupo"><strong>Viajes recientes</strong><small id="resumen-historial">Recuperar un viaje guardado</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><section id="viajes" class="contenido-grupo"></section></details>
   <details name="panel-principal" class="grupo creditos-app"><summary>Información y créditos</summary><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p></details>
 </section>
@@ -1544,6 +1555,36 @@ function mostrarOpcion(sesion, op) {
     hayDatos = true; $("datos").classList.remove("plegado"); $("plegar").textContent = "Plegar"; vista("datos"); setTimeout(centrarRuta, 80);
     guardarViaje({o: sesion.origenTexto, d: sesion.destinoTexto, soc: sesion.socIni, km: Math.round(r.total), p: plan.paradas.length, v: sesion.viasTexto, vp:sesion.puntosTexto, op:sesion.op, dp: sesion.dp});
 }
+</script>
+<script>
+(() => {
+  const status = document.getElementById('reve-estado');
+  const check = document.getElementById('reve-comprobar');
+  const catalog = document.getElementById('reve-catalogo');
+  async function request(path) {
+    const res = await fetch(path,{signal:AbortSignal.timeout(35000)});
+    if (!(res.headers.get('content-type') || '').includes('application/json')) throw new Error('Abre la v2 desde su servidor de desarrollo para conectar REVE.');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'No se pudo completar la consulta.');
+    return data;
+  }
+  check.onclick = async () => {
+    check.disabled = true; catalog.disabled = true; status.textContent = 'Comprobando servicio…';
+    try {
+      const data = await request('/api/reve/health');
+      if (data.version !== 2 || data.provider !== 'REVE') throw new Error('El servicio no corresponde a la v2.');
+      catalog.disabled = !data.configured;
+      status.textContent = data.configured ? 'Servicio preparado. Clave configurada; pendiente de validarla consultando REVE.' : 'Servicio disponible. Falta configurar la clave REVE en el servidor.';
+    } catch(e) { status.textContent = e.message; } finally { check.disabled = false; }
+  };
+  catalog.onclick = async () => {
+    check.disabled = true; catalog.disabled = true; status.textContent = 'Consultando catálogo REVE…';
+    try {
+      const data = await request('/api/reve/locations');
+      status.textContent = 'Catálogo recibido de REVE. Actualización: ' + new Date(data.updatedAt).toLocaleString('es-ES') + (data.cached ? ' · Copia guardada.' : ' · Consulta nueva.') + ' Pendiente de validar su contenido antes de incorporarlo a las rutas.';
+    } catch(e) { status.textContent = e.message; } finally { check.disabled = false; catalog.disabled = false; }
+  };
+})();
 </script>
 </body>
 </html>
