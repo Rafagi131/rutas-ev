@@ -504,6 +504,7 @@ body{line-height:var(--interlineado)}
       <p class="ayuda">La v2 tiene sus propios ajustes e historial. Las rutas siguen usando Open Charge Map mientras validamos REVE.</p>
       <button type="button" id="reve-comprobar">Comprobar servicio REVE</button>
       <button type="button" id="reve-catalogo" disabled>Consultar catálogo REVE</button>
+      <button type="button" id="reve-validacion">Ver estaciones contrastadas</button><div id="reve-estaciones" class="ayuda" aria-live="polite"></div>
       <p id="reve-estado" class="ayuda" role="status">Pendiente de comprobar. La clave se configura solo en el servidor.</p>
       <p class="ayuda">Los precios y la comparación con Kia Charge todavía no están integrados.</p>
     </div>
@@ -1568,6 +1569,21 @@ function mostrarOpcion(sesion, op) {
     if (!res.ok) throw new Error(data.error || 'No se pudo completar la consulta.');
     return data;
   }
+  document.getElementById('reve-validacion').onclick = async () => {
+    const target = document.getElementById('reve-estaciones');
+    target.textContent = 'Leyendo estaciones contrastadas…';
+    try {
+      const data = await request('/api/reve/validation');
+      target.textContent = '';
+      for (const station of data.stations) {
+        const title = document.createElement('strong'); title.textContent = station.name;
+        const detail = document.createElement('p');
+        detail.textContent = station.address + ' · CCS: ' + station.connectors.map(c=>c.kw+' kW').join(', ') + '. ' + station.status;
+        const date = document.createElement('p'); date.textContent = 'Fuente: '+data.source+' · Consulta: '+new Date(data.updatedAt).toLocaleString('es-ES');
+        target.append(title,detail,date);
+      }
+    } catch(e) { target.textContent = e.message; }
+  };
   check.onclick = async () => {
     check.disabled = true; catalog.disabled = true; status.textContent = 'Comprobando servicio…';
     try {
