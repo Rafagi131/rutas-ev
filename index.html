@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="rutaev-version" content="2026-10-28-mapa-previo-v1">
+<meta name="rutaev-version" content="2026-10-28-v2-reve-base">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ruta EV · Planificador</title>
+<title>Ruta EV v2 · Desarrollo REVE</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap">
 <style>
@@ -515,7 +515,7 @@ async function fetchConLimite(url, timeout = 30000) {
   finally { clearTimeout(timer); }
 }
 for (const id of ["ocmKey"]) {
-  try { $(id).value = localStorage.getItem("rutaev:" + id) || ""; } catch (e) {}
+  try { $(id).value = localStorage.getItem("rutaev:v2:" + id) || ""; } catch (e) {}
 }
 const map = L.map("map", {zoomControl: false}).setView([41.4, 2.0], 7);
 L.control.zoom({position: "bottomright"}).addTo(map);
@@ -624,7 +624,7 @@ $("comprobar-ocm").onclick = async () => {
   try {
     await consultarOCM("https://api.openchargemap.io/v3/poi/?output=json&countrycode=ES&maxresults=1&verbose=false&key=" + encodeURIComponent(clave));
     salida.textContent = "Conexión correcta: Open Charge Map acepta la consulta. Puedes calcular el viaje.";
-    try { localStorage.setItem("rutaev:ocmKey", clave); } catch (e) {}
+    try { localStorage.setItem("rutaev:v2:ocmKey", clave); } catch (e) {}
   } catch (e) { salida.textContent = e.codigo === "OCM_ACCESO" ? "Acceso rechazado (401/403). Revisa la clave en My Apps y vuelve a pegarla aquí. Si persiste con una clave válida, puede ser una restricción del servicio." : "No se pudo comprobar la conexión. " + e.message; }
   finally { boton.disabled = false; }
 };
@@ -1160,7 +1160,7 @@ $("formulario").addEventListener("toggle", ev => {
   $("formulario").querySelectorAll(selector).forEach(d => { if (d !== elegido) d.open = false; });
 }, true);
 function cargarPrefs() {
-  try { const p = JSON.parse(localStorage.getItem("rutaev:prefs") || "{}"); PREFS.forEach(i => { if (p[i] !== undefined) $(i).value = p[i]; });
+  try { const p = JSON.parse(localStorage.getItem("rutaev:v2:prefs") || "{}"); PREFS.forEach(i => { if (p[i] !== undefined) $(i).value = p[i]; });
     if (!["osrm","media"].includes($("modoTiempo").value)) $("modoTiempo").value = "osrm";
     $("tempAuto").checked = p.tempAuto !== false;
     if (p.perfilBateria !== "util-78-v1") $("bat").value = "78";
@@ -1170,7 +1170,7 @@ function cargarPrefs() {
     if (p.perfilConsumo !== "largos-165-v1") { $("cons").value = "16.5"; $("velref").value = "100"; } } catch (e) {}
 }
 function guardarPrefs() {
-  try { const p = {perfilBateria:"util-78-v1", perfilConsumo:"largos-165-v1", tempAuto:$("tempAuto").checked}; PREFS.forEach(i => p[i] = $(i).value); localStorage.setItem("rutaev:prefs", JSON.stringify(p)); } catch (e) {}
+  try { const p = {perfilBateria:"util-78-v1", perfilConsumo:"largos-165-v1", tempAuto:$("tempAuto").checked}; PREFS.forEach(i => p[i] = $(i).value); localStorage.setItem("rutaev:v2:prefs", JSON.stringify(p)); } catch (e) {}
 }
 function guardarPerfilEV() {
   const ids = ["bat","cons","maxkw","masa","velref"];
@@ -1178,20 +1178,20 @@ function guardarPerfilEV() {
     $("estado-perfil").textContent = "Revisa los datos del vehículo para guardarlos."; return;
   }
   let preferencias = {};
-  try { preferencias = JSON.parse(localStorage.getItem("rutaev:prefs") || "{}"); } catch (e) {}
+  try { preferencias = JSON.parse(localStorage.getItem("rutaev:v2:prefs") || "{}"); } catch (e) {}
   if (!preferencias || typeof preferencias !== "object" || Array.isArray(preferencias)) preferencias = {};
   ids.forEach(id => preferencias[id] = $(id).value);
   preferencias.perfilBateria = "util-78-v1"; preferencias.perfilConsumo = "largos-165-v1";
-  try { localStorage.setItem("rutaev:prefs",JSON.stringify(preferencias)); $("estado-perfil").textContent = "Perfil guardado en este navegador."; }
+  try { localStorage.setItem("rutaev:v2:prefs",JSON.stringify(preferencias)); $("estado-perfil").textContent = "Perfil guardado en este navegador."; }
   catch (e) { $("estado-perfil").textContent = "No se ha podido guardar el perfil en este navegador."; }
 }
 function leerViajes() {
-  try { return JSON.parse(localStorage.getItem("rutaev:viajes") || "[]"); } catch (e) { return []; }
+  try { return JSON.parse(localStorage.getItem("rutaev:v2:viajes") || "[]"); } catch (e) { return []; }
 }
 function guardarViaje(v) {
   try {
     const l = leerViajes().filter(x => !(x.o === v.o && x.d === v.d));
-    l.unshift(v); localStorage.setItem("rutaev:viajes", JSON.stringify(l.slice(0, 20)));
+    l.unshift(v); localStorage.setItem("rutaev:v2:viajes", JSON.stringify(l.slice(0, 20)));
   } catch (e) {}
   pintarViajes();
 }
@@ -1207,7 +1207,7 @@ function pintarViajes() {
     c.appendChild(b);
   });
   const x = document.createElement("button"); x.textContent = "Borrar viajes guardados";
-  x.onclick = () => { try { localStorage.removeItem("rutaev:viajes"); } catch (e) {} pintarViajes(); };
+  x.onclick = () => { try { localStorage.removeItem("rutaev:v2:viajes"); } catch (e) {} pintarViajes(); };
   c.appendChild(x);
 }
 cargarPrefs(); pintarViajes(); actualizarResumenes();
@@ -1293,7 +1293,7 @@ $("calc").onclick = async () => {
     vista("calculando");
     const ocmKey = $("ocmKey").value.trim();
 
-    try { localStorage.setItem("rutaev:ocmKey", ocmKey); } catch (e) {}
+    try { localStorage.setItem("rutaev:v2:ocmKey", ocmKey); } catch (e) {}
     const P = {bat: +$("bat").value, cons: consumoAjustado(), maxkw: +$("maxkw").value, margenCarga: num("margenCarga", MARGEN_CARGA_DEF),
                min: +$("min").value, minDestino: +$("minDestino").value, max: +$("max").value,
                tmin: num("tmin", 15), pen: num("pen", 8), tmax: num("tmax", 40), maxkm: num("maxkm", 300) || Infinity, extra: num("extra", 5)};
