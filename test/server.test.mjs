@@ -45,3 +45,15 @@ test('rechaza otros orígenes, parámetros y métodos; sirve la v2',async t=>{
   assert.equal((await req('/api/reve/health',{method:'POST'})).status,405);
   assert.match(await(await req('/')).text(),/REVE · En pruebas/);
 });
+test('caché y cuota sobreviven al crear otra instancia',async t=>{
+  const {mkdtemp,readFile,writeFile,rm}=await import('node:fs/promises');
+  const {tmpdir}=await import('node:os');const {join}=await import('node:path');
+  const dir=await mkdtemp(join(tmpdir(),'rutaev-test-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+  const stateFile=join(dir,'state.json');let count=0;
+  const options={key:'secreto-ficticio',stateFile,fetcher:async()=>{count++;return Response.json([{id:'guardado'}]);}};
+  const first=await setup(t,options);await first('/api/reve/locations');
+  const second=await setup(t,options);assert.equal((await(await second('/api/reve/locations')).json()).cached,true);assert.equal(count,1);
+  const state=JSON.parse(await readFile(stateFile,'utf8'));assert.equal(state.calls.length,1);assert.ok(!JSON.stringify(state).includes('secreto-ficticio'));
+  state.cached=null;state.calls=Array(5).fill(Date.now());await writeFile(stateFile,JSON.stringify(state));
+  const third=await setup(t,options);assert.equal((await third('/api/reve/locations')).status,429);assert.equal(count,1);
+});
