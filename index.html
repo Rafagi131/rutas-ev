@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="rutaev-version" content="2026-10-27-trayecto-v1">
+<meta name="rutaev-version" content="2026-10-28-usabilidad-v1">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ruta EV · Planificador eléctrico</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -303,6 +303,28 @@ input[type=range]{accent-color:var(--acc)}
 #anadir-punto{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border:1px dashed var(--line);border-radius:2px;background:transparent;color:var(--acc);font:600 12px "DM Sans",system-ui,sans-serif;cursor:pointer}
 #anadir-punto:hover{background:var(--accsoft)}
 #ayuda-punto{margin:0;font-size:11px}
+
+/* Sugerencias en el flujo para que el panel móvil nunca las recorte. */
+.sugerencias{grid-column:1/-1;grid-row:3;display:grid;border:1px solid var(--line);margin:4px 0;background:var(--solid);max-height:230px;overflow:auto}
+.sugerencias button{display:block;width:100%;min-height:48px;padding:10px;text-align:left;border:0;border-bottom:1px solid var(--line);background:var(--solid);color:var(--ink);font:12px/1.5 "DM Sans",system-ui,sans-serif;cursor:pointer}
+.sugerencias button.activa,.sugerencias button:hover{background:var(--accsoft);color:var(--acc)}
+.estado-sugerencias{grid-column:1/-1;grid-row:4;font-size:11px;color:var(--mute);margin:4px 0 7px}
+.fuente-direcciones{font-size:10px;color:var(--mute);margin:-3px 0 0}.fuente-direcciones a{color:inherit}
+#puntos-ruta:empty{display:none}.punto-lugar{border-top:1px solid var(--line)}
+.punto-lugar::before,.trayecto .destino-lugar::before,.trayecto:has(.punto-lugar:not([hidden])) .destino-lugar::before{content:attr(data-num)}
+#puntos-ruta .punto-lugar{grid-template-columns:minmax(0,1fr);padding-right:0}
+.controles-punto{grid-column:1/-1;grid-row:5;display:flex;gap:8px;margin-bottom:4px}
+.controles-punto button{min-height:44px;min-width:44px;padding:7px 12px;border:1px solid var(--line);background:var(--field);color:var(--ink);font:inherit;cursor:pointer;border-radius:2px}
+.controles-punto button:last-child{margin-left:auto;font-size:12px}.controles-punto button:disabled,#anadir-punto:disabled{opacity:.4;cursor:default}
+.resumen-principal{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:12px 0;border:1px solid var(--line)}
+.resumen-principal>div{padding:12px;border-bottom:1px solid var(--line)}
+.resumen-principal>div:nth-child(odd){border-right:1px solid var(--line)}.resumen-principal>div:nth-child(n+3){border-bottom:0}
+.resumen-principal strong{display:block;font-size:24px;letter-spacing:-.7px;line-height:1.2;font-variant-numeric:tabular-nums}.resumen-principal>div:first-child strong{color:var(--acc)}
+.resumen-principal span{display:block;font-size:11px;color:var(--mute);margin-top:5px}
+.detalle-resultados{border-top:1px solid var(--line);margin-top:12px;padding:4px 0}
+.detalle-resultados>summary{display:flex;min-height:48px;font-size:13px;color:var(--acc)}
+.detalle-resultados>summary::after{content:"＋";margin-left:auto}.detalle-resultados[open]>summary::after{content:"−"}
+.diferencia-ruta{font-weight:600;color:var(--acc)}
 </style>
 </head>
 <body>
@@ -329,11 +351,12 @@ input[type=range]{accent-color:var(--acc)}
     <p class="proposito">Tu próximo viaje, con menos energía y tiempo.</p>
     <div class="trayecto">
       <div class="lugar origen-lugar"><div class="etiqueta-lugar"><label for="origen">Desde</label><button type="button" id="miub" class="mini">Mi ubicación</button></div><input id="origen" type="text" placeholder="Ciudad o dirección" autocomplete="off"></div>
-      <div id="punto-ruta" class="lugar punto-lugar" hidden><div class="etiqueta-lugar"><label for="vias">Punto en la ruta</label><button type="button" id="quitar-punto" class="mini" aria-label="Quitar punto de la ruta">Quitar</button></div><input id="vias" type="text" placeholder="Ciudad o dirección intermedia" aria-describedby="ayuda-punto" autocomplete="off"></div>
-      <div class="lugar destino-lugar"><div class="etiqueta-lugar"><label for="destino">Hasta</label><button type="button" id="elegirdest" class="mini">Elegir en el mapa</button></div><input id="destino" type="text" placeholder="¿Adónde vamos?" autocomplete="off"></div>
+      <div id="puntos-ruta"></div><input id="vias" type="hidden" value="">
+      <div class="lugar destino-lugar" id="fila-destino" data-num="02"><div class="etiqueta-lugar"><label for="destino">Hasta</label><button type="button" id="elegirdest" class="mini">Elegir en el mapa</button></div><input id="destino" type="text" placeholder="¿Adónde vamos?" autocomplete="off"></div>
     </div>
-    <button type="button" id="anadir-punto" aria-controls="punto-ruta" aria-expanded="false">＋ Añadir punto en la ruta</button>
-    <p id="ayuda-punto" class="ayuda" hidden>Paso intermedio, sin tiempo de estancia. Para varios puntos, sepáralos con ; en el orden del viaje.</p>
+    <button type="button" id="anadir-punto" aria-controls="puntos-ruta">＋ Añadir punto en la ruta</button>
+    <p id="ayuda-punto" class="ayuda" hidden>Los puntos se visitan en este orden, sin añadir tiempo de estancia. Máximo 8 puntos.</p>
+    <p class="fuente-direcciones">Sugerencias: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a> · © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></p>
     <label class="campo bateria-inicial"><span>Batería al salir <output id="socv">90 %</output></span><input id="soc" type="range" min="11" max="100" value="90"></label>
     <button id="calc">Buscar ruta <span aria-hidden="true">→</span></button>
     <p class="ayuda-principal">Menor consumo con hasta <strong id="margen-visible">10 %</strong> más de tiempo.</p>
@@ -386,8 +409,8 @@ input[type=range]{accent-color:var(--acc)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 const $ = id => document.getElementById(id);
-async function fetchConLimite(url) {
-  const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 30000);
+async function fetchConLimite(url, timeout = 30000) {
+  const controller = new AbortController(), timer = setTimeout(() => controller.abort(), timeout);
   try { return await fetch(url, {signal:controller.signal}); }
   catch (e) { if (e.name === "AbortError") throw new Error("El servicio tarda demasiado. Vuelve a intentarlo."); throw e; }
   finally { clearTimeout(timer); }
@@ -856,17 +879,136 @@ function consumoModelo(base, temperatura, velocidad, velocidadBase) {
 function consumoAjustado() {
   return consumoModelo(num("cons", 16.5), num("temp", 18), num("vel", 100), num("velref", 100));
 }
-function sincronizarPuntoRuta(forzar = false) {
-  const mostrar = Boolean($("vias").value.trim()) || (!forzar && !$("punto-ruta").hidden);
-  $("punto-ruta").hidden = !mostrar;
-  $("ayuda-punto").hidden = !mostrar;
-  $("anadir-punto").hidden = mostrar;
-  $("anadir-punto").setAttribute("aria-expanded", String(mostrar));
+// Sugerencias Photon (servicio de demostración: uso moderado, sin garantía de disponibilidad).
+const URL_SUGERENCIAS = "https://photon.komoot.io/api/";
+const cacheDirecciones = new Map(), seleccionDirecciones = new WeakMap(), sugeridores = new Set();
+let colaDirecciones = Promise.resolve(), ultimoInicioDireccion = 0, secuenciaDireccion = 0;
+function coordenadasValidas(p) { return Array.isArray(p) && p.length === 2 && p.every(Number.isFinite) && Math.abs(p[0]) <= 180 && Math.abs(p[1]) <= 90; }
+function direccionPhoton(f) {
+  const p = f.properties || {}, pos = f.geometry?.coordinates;
+  if (!coordenadasValidas(pos)) return null;
+  const calle = [p.street, p.housenumber].filter(Boolean).join(" ");
+  const partes = [p.name, calle, p.postcode, p.city || p.town || p.village, p.state, p.country].filter(Boolean);
+  const texto = [...new Set(partes)].join(", ");
+  return texto ? {texto, pos} : null;
 }
-$("anadir-punto").onclick = () => { $("punto-ruta").hidden = false; sincronizarPuntoRuta(); $("vias").focus(); };
-$("quitar-punto").onclick = () => { $("vias").value = ""; sincronizarPuntoRuta(true); actualizarResumenes(); $("anadir-punto").focus(); };
+async function buscarSugerencias(texto, vigente = () => true) {
+  const clave = texto.trim().toLocaleLowerCase();
+  if (cacheDirecciones.has(clave)) return cacheDirecciones.get(clave);
+  const tarea = colaDirecciones.catch(() => {}).then(async () => {
+    const espera = Math.max(0, 1100 - (Date.now() - ultimoInicioDireccion));
+    if (espera) await sleep(espera);
+    if (!vigente()) return [];
+    if (cacheDirecciones.has(clave)) return cacheDirecciones.get(clave);
+    ultimoInicioDireccion = Date.now();
+    const respuesta = await fetchConLimite(URL_SUGERENCIAS + "?limit=5&q=" + encodeURIComponent(texto), 8000);
+    if (!respuesta.ok) throw new Error("Sugerencias no disponibles");
+    const j = await respuesta.json(), vistos = new Set();
+    const opciones = (j.features || []).map(direccionPhoton).filter(x => x && !vistos.has(x.texto) && vistos.add(x.texto));
+    cacheDirecciones.set(clave, opciones);
+    if (cacheDirecciones.size > 40) cacheDirecciones.delete(cacheDirecciones.keys().next().value);
+    return opciones;
+  });
+  colaDirecciones = tarea.catch(() => {});
+  return tarea;
+}
+function registrarSugerencias(input, alElegir = () => {}) {
+  const id = "direcciones-" + (++secuenciaDireccion), lista = document.createElement("div"), aviso = document.createElement("span");
+  lista.id = id; lista.className = "sugerencias"; lista.setAttribute("role", "listbox"); lista.setAttribute("aria-label", "Direcciones sugeridas"); lista.hidden = true;
+  aviso.className = "estado-sugerencias"; aviso.setAttribute("role", "status"); aviso.hidden = true;
+  input.setAttribute("role", "combobox"); input.setAttribute("aria-autocomplete", "list"); input.setAttribute("aria-expanded", "false"); input.setAttribute("aria-controls", id);
+  input.setAttribute("autocapitalize", "words"); input.setAttribute("spellcheck", "false");
+  input.parentElement.append(lista, aviso);
+  let timer, revision = 0, opciones = [], activo = -1;
+  function cerrar() { clearTimeout(timer); revision++; lista.hidden = true; aviso.hidden = true; input.setAttribute("aria-expanded", "false"); input.removeAttribute("aria-activedescendant"); activo = -1; }
+  function elegir(i) {
+    const opcion = opciones[i]; if (!opcion) return;
+    input.value = opcion.texto; seleccionDirecciones.set(input, opcion); cerrar(); alElegir(opcion); actualizarResumenes(); input.focus({preventScroll:true});
+  }
+  function marcar(i) {
+    activo = i;
+    [...lista.children].forEach((e,n) => { e.setAttribute("aria-selected", String(n === i)); e.classList.toggle("activa", n === i); });
+    input.setAttribute("aria-activedescendant", id + "-" + i);
+    lista.children[i]?.scrollIntoView({block:"nearest"});
+  }
+  function mostrar(resultados) {
+    opciones = resultados; activo = -1; lista.textContent = "";
+    resultados.forEach((opcion, i) => {
+      const b = document.createElement("button"); b.type = "button"; b.id = id + "-" + i; b.tabIndex = -1; b.setAttribute("role", "option"); b.setAttribute("aria-selected", "false"); b.textContent = opcion.texto;
+      b.onmousedown = e => e.preventDefault(); b.onclick = () => elegir(i); lista.appendChild(b);
+    });
+    lista.hidden = !resultados.length; input.setAttribute("aria-expanded", String(Boolean(resultados.length)));
+    aviso.textContent = resultados.length ? "Selecciona una dirección de la lista." : "Sin sugerencias. Puedes escribir la dirección completa y buscar la ruta."; aviso.hidden = false;
+  }
+  input.addEventListener("input", e => {
+    seleccionDirecciones.delete(input); cerrar();
+    const texto = input.value.trim(), turno = revision;
+    if (texto.length < 3 || e.isComposing) return;
+    timer = setTimeout(async () => {
+      const vigente = () => revision === turno && input.isConnected && document.activeElement === input && input.value.trim() === texto;
+      if (!vigente()) return;
+      aviso.textContent = "Buscando direcciones…"; aviso.hidden = false;
+      try { const resultados = await buscarSugerencias(texto, vigente); if (vigente()) mostrar(resultados); }
+      catch (e) { if (vigente()) { lista.hidden = true; aviso.textContent = "No hay sugerencias disponibles. Puedes escribir la dirección completa y buscar la ruta."; aviso.hidden = false; } }
+    }, 800);
+  });
+  input.addEventListener("keydown", e => {
+    if (e.key === "Escape") cerrar();
+    if (lista.hidden || !opciones.length) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); marcar(activo < 0 ? (e.key === "ArrowDown" ? 0 : opciones.length - 1) : (activo + (e.key === "ArrowDown" ? 1 : -1) + opciones.length) % opciones.length); }
+    if (e.key === "Enter" && activo >= 0) { e.preventDefault(); elegir(activo); }
+    if (e.key === "Tab") cerrar();
+  });
+  input.addEventListener("blur", () => setTimeout(cerrar, 180));
+  const instancia = {cerrar, destruir: () => { cerrar(); sugeridores.delete(instancia); }}; sugeridores.add(instancia); return instancia;
+}
+function cerrarSugerencias() { sugeridores.forEach(x => x.cerrar()); }
+function seleccionDe(input) { const p = seleccionDirecciones.get(input); return p && p.texto === input.value ? p : null; }
+// Cada punto es independiente; el campo oculto mantiene compatibilidad con los viajes antiguos.
+let puntosEditables = [], siguientePunto = 0;
+function puntosGuardados() { return puntosEditables.filter(p => p.input.value.trim()).map(p => ({texto:p.input.value.trim(), pos:seleccionDe(p.input)?.pos || null})); }
+function actualizarPuntos() {
+  $("vias").value = puntosEditables.map(p => p.input.value.trim()).filter(Boolean).join(";");
+  $("anadir-punto").disabled = puntosEditables.length >= 8;
+  $("ayuda-punto").hidden = !puntosEditables.length;
+  puntosEditables.forEach((p,i) => { p.fila.dataset.num = String(i + 2).padStart(2,"0"); p.label.textContent = "Punto " + (i+1); p.subir.disabled = i === 0; p.bajar.disabled = i === puntosEditables.length - 1; p.subir.setAttribute("aria-label", "Subir punto " + (i+1)); p.bajar.setAttribute("aria-label", "Bajar punto " + (i+1)); p.quitar.setAttribute("aria-label", "Quitar punto " + (i+1)); });
+  $("fila-destino").dataset.num = String(puntosEditables.length + 2).padStart(2,"0");
+}
+function moverPunto(p, paso) {
+  cerrarSugerencias();
+  const i = puntosEditables.indexOf(p), j = i + paso;
+  if (i < 0 || j < 0 || j >= puntosEditables.length) return;
+  [puntosEditables[i], puntosEditables[j]] = [puntosEditables[j], puntosEditables[i]];
+  puntosEditables.forEach(x => $("puntos-ruta").appendChild(x.fila)); actualizarResumenes();
+  (paso < 0 ? (p.subir.disabled ? p.bajar : p.subir) : (p.bajar.disabled ? p.subir : p.bajar)).focus();
+}
+function agregarPunto(dato = {}, enfocar = true) {
+  if (puntosEditables.length >= 8) return;
+  const fila = document.createElement("div"), label = document.createElement("label"), input = document.createElement("input"), controles = document.createElement("div");
+  fila.className = "lugar punto-lugar"; input.id = "punto-" + (++siguientePunto); input.type = "text"; input.autocomplete = "off"; input.placeholder = "Ciudad o dirección intermedia"; input.value = dato.texto || ""; label.htmlFor = input.id;
+  const etiqueta = document.createElement("div"); etiqueta.className = "etiqueta-lugar"; etiqueta.appendChild(label); fila.append(etiqueta,input); controles.className = "controles-punto";
+  const boton = (texto, accion) => { const b = document.createElement("button"); b.type = "button"; b.textContent = texto; b.onclick = accion; controles.appendChild(b); return b; };
+  const p = {fila,label,input};
+  p.subir = boton("↑", () => moverPunto(p,-1)); p.bajar = boton("↓", () => moverPunto(p,1));
+  p.quitar = boton("Quitar", () => { const i = puntosEditables.indexOf(p); p.sugeridor.destruir(); puntosEditables.splice(i,1); fila.remove(); actualizarResumenes(); (puntosEditables[Math.min(i,puntosEditables.length-1)]?.input || $("anadir-punto")).focus(); });
+  puntosEditables.push(p); $("puntos-ruta").appendChild(fila); p.sugeridor = registrarSugerencias(input); fila.appendChild(controles);
+  if (coordenadasValidas(dato.pos)) seleccionDirecciones.set(input, {texto:input.value,pos:dato.pos.slice()});
+  input.addEventListener("input", actualizarPuntos); actualizarResumenes(); if (enfocar) input.focus();
+}
+function normalizarPuntos(datos) {
+  const lista = Array.isArray(datos) ? datos : String(datos || "").split(";").map(texto => ({texto:texto.trim()}));
+  return lista.filter(p => p && typeof p.texto === "string" && p.texto.trim()).slice(0,8).map(p => ({texto:p.texto.trim(),pos:coordenadasValidas(p.pos)?p.pos.slice():null}));
+}
+function restaurarPuntos(datos) {
+  puntosEditables.forEach(p => p.sugeridor.destruir()); puntosEditables = []; $("puntos-ruta").textContent = "";
+  normalizarPuntos(datos).forEach(p => agregarPunto(p,false)); actualizarResumenes();
+}
+$("anadir-punto").onclick = () => agregarPunto();
+registrarSugerencias($("origen"), p => { origenFijo = p; pintarPuntos(); });
+registrarSugerencias($("destino"), p => { destinoFijo = p; pintarPuntos(); });
+
 function actualizarResumenes() {
-  sincronizarPuntoRuta();
+  actualizarPuntos();
   const paradas = $("vias").value.split(";").filter(v => v.trim()).length;
   $("resumen-viaje").textContent = `${$("tempAuto").checked ? "Meteo automática" : num("temp",18) + " °C"} · ${num("vel",100)} km/h · ${paradas ? paradas + (paradas === 1 ? " parada" : " paradas") : "Sin paradas"}`;
   $("ayuda-tiempo").textContent = $("modoTiempo").value === "media"
@@ -916,7 +1058,7 @@ function pintarViajes() {
     const b = document.createElement("button");
     b.textContent = `${v.o} → ${v.d} (${v.km} km, ${v.p} paradas)`;
     b.onclick = () => { origenFijo = null; $("origen").value = v.o === "Mi ubicación actual" ? "" : v.o; // la ubicación actual hay que volver a pedirla
-    destinoFijo = v.dp ? {pos: v.dp, texto: v.d} : null; $("destino").value = v.d; pintarPuntos(); $("soc").value = v.soc; $("vias").value = v.v || ""; sincronizarPuntoRuta(true); pintaSoc(); actualizarResumenes(); };
+    destinoFijo = v.dp ? {pos: v.dp, texto: v.d} : null; $("destino").value = v.d; pintarPuntos(); $("soc").value = v.soc; restaurarPuntos(v.vp || v.v || ""); pintaSoc(); actualizarResumenes(); };
     c.appendChild(b);
   });
   const x = document.createElement("button"); x.textContent = "Borrar viajes guardados";
@@ -986,6 +1128,10 @@ function elegirRutas(opciones, margen) {
   const equilibrada = elegibles.sort((a,b) => a.energia - b.energia || a.tTotal - b.tTotal)[0];
   return {rapida, ahorro, equilibrada};
 }
+function compararConRecomendada(otra, referencia) {
+  const t = otra.tTotal - referencia.tTotal, energia = otra.energia - referencia.energia;
+  return `${Math.abs(t) < .5 ? "Mismo tiempo" : Math.round(Math.abs(t)) + " min " + (t < 0 ? "menos" : "más")} · ${Math.abs(energia) < .05 ? "Mismo consumo" : Math.abs(energia).toFixed(1) + " kWh " + (energia < 0 ? "menos" : "más")} que la recomendada`;
+}
 function explicarEquilibrio(e, margen) {
   const ahorro = e.rapida.energia - e.equilibrada.energia, extra = e.equilibrada.tTotal - e.rapida.tTotal;
   const regla = `Elegimos el menor consumo entre las rutas viables que tardan como máximo un ${margen} % más que la más rápida, contando recargas y paradas. `;
@@ -995,6 +1141,7 @@ function explicarEquilibrio(e, margen) {
 $("calc").onclick = async () => {
   try {
     $("calc").disabled = true;
+    cerrarSugerencias();
     vista("calculando");
     const ocmKey = $("ocmKey").value.trim();
 
@@ -1011,14 +1158,17 @@ $("calc").onclick = async () => {
     const a = origenFijo ? origenFijo.pos : await geocodificar($("origen").value);
     if (!origenFijo && !destinoFijo) await sleep(1100); // Nominatim pide máximo 1 consulta por segundo
     const b = destinoFijo ? destinoFijo.pos : await geocodificar($("destino").value);
-    const nombresVia = $("vias").value.split(";").map(x => x.trim()).filter(Boolean).slice(0, 8);
     const minVia = 0, puntosVia = [];
-    for (const nombre of nombresVia) { await sleep(1100); estado("Buscando " + nombre + "..."); puntosVia.push({nombre, pos: await geocodificar(nombre)}); }
+    for (const p of puntosGuardados()) {
+      estado("Buscando " + p.texto + "...");
+      if (!p.pos) await sleep(1100);
+      puntosVia.push({nombre:p.texto,pos:p.pos || await geocodificar(p.texto)});
+    }
     estado("Buscando rutas alternativas...");
     const rutas = await ruta(a, b, puntosVia.map(v => v.pos));
 
     const sesion = {a, b, P, minVia, margen, socIni, puntosVia, total:rutas.length, opciones:[], descartes:[], salida:Date.now(),
-      origenTexto:$("origen").value, destinoTexto:$("destino").value, viasTexto:$("vias").value, dp:destinoFijo ? destinoFijo.pos : null};
+      origenTexto:$("origen").value, destinoTexto:$("destino").value, viasTexto:$("vias").value, puntosTexto:puntosGuardados(), dp:destinoFijo ? destinoFijo.pos : null};
     const ops = $("ops").value.toLowerCase().split(",").map(x => x.trim()).filter(Boolean);
     const cache = new Map(), preparadas = [];
     let falloAltitud = false, fallosCarga = 0;
@@ -1098,65 +1248,74 @@ function mostrarOpcion(sesion, op) {
     L.polyline(trazo, {color:"#fff", weight:10, opacity:.9}).addTo(capas);
     const linea = L.polyline(trazo, {color:"#0284c7", weight:6}).addTo(capas);
     limitesRuta = linea.getBounds();
-    const titulo = document.createElement("h2"); titulo.textContent = "Elige tu ruta"; $("res").appendChild(titulo);
+    const titulo = document.createElement("h2"); titulo.textContent = sesion.opciones.length === 1 ? "Tu ruta" : op === sesion.eleccion.equilibrada ? "Tu ruta recomendada" : "Tu ruta seleccionada"; $("res").appendChild(titulo);
+    const principal = document.createElement("div"); principal.className = "resumen resumen-principal";
+    [[duracion(op.tTotal),"Tiempo total"],[op.energia.toFixed(1) + " kWh","Consumo total"],[String(plan.paradas.length),"Recargas"],[op.socFinal.toFixed(0) + " %","Batería al llegar"]].forEach(([valor,texto]) => {
+      const dato = document.createElement("div"), fuerte = document.createElement("strong"), etiqueta = document.createElement("span"); fuerte.textContent = valor; etiqueta.textContent = texto; dato.append(fuerte,etiqueta); principal.appendChild(dato);
+    });
+    $("res").appendChild(principal);
+    const distancia = document.createElement("p"); distancia.className = "meta"; distancia.textContent = `${r.total.toFixed(0)} km · Llegada estimada ${new Date(sesion.salida + op.tTotal * 60000).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})} si sales ahora · Sin tráfico en directo.`; $("res").appendChild(distancia);
+    const alternativas = document.createElement("details"), tituloAlternativas = document.createElement("summary"); alternativas.id = "alternativas-ruta"; alternativas.className = "detalle-resultados"; tituloAlternativas.textContent = `Comparar alternativas (${sesion.opciones.length})`; alternativas.appendChild(tituloAlternativas); if (sesion.opciones.length > 1) $("res").appendChild(alternativas);
+    const info = document.createElement("details"), tituloInfo = document.createElement("summary"); info.className = "detalle-resultados"; tituloInfo.textContent = "Detalles del cálculo"; info.appendChild(tituloInfo);
     const intro = document.createElement("p"); intro.className = "explicacion";
     intro.textContent = sesion.opciones.length > 1 ? explicarEquilibrio(sesion.eleccion, sesion.margen) : "Solo hay una opción viable evaluada; no podemos comparar el equilibrio entre rutas alternativas.";
-    $("res").appendChild(intro);
+    alternativas.appendChild(intro);
     const lista = document.createElement("div"); lista.className = "comparacion"; lista.setAttribute("aria-label", "Rutas disponibles");
     sesion.opciones.forEach((otra, i) => {
       const boton = document.createElement("button"); boton.className = "ruta-opcion"; boton.setAttribute("aria-pressed", String(otra === op));
       const nombre = document.createElement("strong");
       const etiquetas = [];
-      if (otra === sesion.eleccion.equilibrada) etiquetas.push("Equilibrada · recomendada");
+      if (otra === sesion.eleccion.equilibrada) etiquetas.push("Recomendada");
       if (otra === sesion.eleccion.rapida) etiquetas.push("Más rápida");
       if (otra === sesion.eleccion.ahorro) etiquetas.push("Menor consumo");
       nombre.textContent = sesion.opciones.length === 1 ? "Única ruta viable evaluada" : `Ruta ${i + 1} · ${etiquetas.join(" / ") || "Alternativa"}`;
       const datos = document.createElement("span");
       datos.textContent = `${duracion(otra.tTotal)} · ${otra.r.total.toFixed(0)} km · ${otra.energia.toFixed(1)} kWh · ${otra.plan.paradas.length} recargas · Llegada ${otra.socFinal.toFixed(0)} %`;
-      boton.append(nombre, datos); boton.onclick = () => { mostrarOpcion(sesion, otra); const activo = $("res").querySelector('[aria-pressed="true"]'); if (activo) activo.focus({preventScroll:true}); };
+      const diferencia = document.createElement("span"); diferencia.className = "diferencia-ruta"; diferencia.textContent = otra === sesion.eleccion.equilibrada ? "Referencia para comparar las alternativas" : compararConRecomendada(otra,sesion.eleccion.equilibrada);
+      boton.append(nombre, datos, diferencia); boton.onclick = () => { mostrarOpcion(sesion, otra); if ($("alternativas-ruta")) $("alternativas-ruta").open = true; const activo = $("res").querySelector('[aria-pressed="true"]'); if (activo) activo.focus({preventScroll:true}); };
       lista.appendChild(boton);
     });
-    $("res").appendChild(lista);
+    alternativas.appendChild(lista);
     const limites = document.createElement("p"); limites.className = "meta";
     limites.textContent = `${sesion.opciones.length} de ${sesion.total} rutas evaluadas tienen un plan viable. ${sesion.total === 1 ? "El servicio solo ofrece una ruta para este viaje; no hay alternativas que comparar. " : ""}${sesion.puntosVia.length ? "Con paradas intermedias se evalúa un único recorrido. " : ""}Estimaciones sin tráfico ni disponibilidad en directo. Se usa tu velocidad media prevista para el consumo de todas las rutas. El tiempo usa el modo elegido: OSRM o distancia dividida por tu media; ninguna opción incorpora tráfico en directo. Los accesos a cargadores no se recalculan: se aplica el extra fijo por parada. Comparación limitada a las alternativas recibidas.`;
     const alcance = document.createElement("p"); alcance.className = "meta";
     alcance.textContent = `${sesion.opciones.length} de ${sesion.total} rutas viables · Sin tráfico · Tiempo ${r.modoTiempo === "media" ? "según tu media" : "OSRM"}.`;
     if (sesion.total === 1) alcance.textContent += " Solo se ha obtenido una ruta; no hay alternativas que comparar.";
-    $("res").appendChild(alcance);
+    info.appendChild(alcance);
     const metodo = document.createElement("details"), resumen = document.createElement("summary");
-    resumen.textContent = "Cómo se calcula y límites"; metodo.append(resumen, limites); $("res").appendChild(metodo);
+    resumen.textContent = "Cómo se calcula y límites"; metodo.append(resumen, limites); info.appendChild(metodo);
     sesion.descartes.forEach(texto => { const aviso = document.createElement("p"); aviso.className = "aviso"; aviso.textContent = texto; $("res").appendChild(aviso); });
-    const detalle = document.createElement("h2"); detalle.textContent = "Detalle de la ruta seleccionada"; $("res").appendChild(detalle);
+    const detalle = document.createElement("h2"); detalle.textContent = plan.paradas.length || vias.length ? "Paradas del viaje" : "Viaje directo, sin recargas"; $("res").appendChild(detalle);
     const nP = plan.paradas.length;
     const cab = document.createElement("div"); cab.className = "resumen";
     const chip = (txt, cls) => { const e = document.createElement("span"); e.className = "chip " + cls; e.textContent = txt; return e; };
     cab.append(chip(`${r.total.toFixed(0)} km`, "km"), chip(duracion(op.tTotal) + " en total", "t"),
                chip(nP ? `${nP} ${nP === 1 ? "parada" : "paradas"}` : "Sin recargas", "n"));
-    $("res").appendChild(cab);
+    info.appendChild(cab);
     const ce = document.createElement("p"); ce.className = "meta";
     const consumoRuta = energiaEn(op.base, r.total) / r.total * 100;
     ce.textContent = `Consumo ajustado por temperatura y velocidad: ${consumoRuta.toFixed(1)} kWh/100 km (base ${num("cons", 16.5).toFixed(1)} a 18 °C y ${num("velref",100)} km/h de media). Energía total del viaje: ${op.energia.toFixed(1)} kWh. ${notaDesnivel}${op.regeneracionPerdida > 0.05 ? ` Recuperación no aprovechable por batería llena: ${op.regeneracionPerdida.toFixed(1)} kWh.` : ""}`;
-    $("res").appendChild(ce);
+    info.appendChild(ce);
     const meteoTexto = document.createElement("p"); meteoTexto.className = "meta";
     meteoTexto.textContent = op.meteo ? `Temperatura prevista en ${op.meteo.puntos} puntos: ${op.meteo.minima.toFixed(1)}–${op.meteo.maxima.toFixed(1)} °C. Horas aproximadas de paso según conducción, sin retrasos de carga.` : `Temperatura manual o de respaldo: ${num("temp",18)} °C.`;
     if (op.meteo) { const fuente = document.createElement("a"); fuente.href = "https://open-meteo.com/"; fuente.textContent = " Fuente: Open-Meteo (CC BY 4.0)"; fuente.target = "_blank"; fuente.rel = "noopener"; meteoTexto.appendChild(fuente); }
-    $("res").appendChild(meteoTexto);
+    info.appendChild(meteoTexto);
     const tl = document.createElement("p"); tl.className = "meta";
     tl.textContent = `Conducción: ${duracion(r.min)} (${r.modoTiempo === "media" ? "tu media de " + r.mediaPrevista + " km/h" : "OSRM"}) · Recargas: ${duracion(op.tCarga)} · Extras de carga: ${duracion(P.extra * nP)}.`;
-    $("res").appendChild(tl);
+    info.appendChild(tl);
     if (nP) {
       const avisoCarga = document.createElement("p"); avisoCarga.className = "meta";
       avisoCarga.textContent = `Recargas calculadas con curva aproximada del EV3 Long Range, límite de ${Math.min(P.maxkw,LIMITE_DC_EV3)} kW y margen del ${P.margenCarga ?? MARGEN_CARGA_DEF} %. La potencia baja al subir la batería. Temperatura de batería, potencia compartida y colas no se conocen; el tiempo real puede ser mayor. Los extras se suman aparte.`;
-      $("res").appendChild(avisoCarga);
+      info.appendChild(avisoCarga);
     }
     if (Number.isFinite(r.osrmMin)) {
       const contraste = document.createElement("p"); contraste.className = "meta";
       contraste.textContent = `Referencia de conducción: OSRM ${duracion(r.osrmMin)} (media ${r.mediaOSRM.toFixed(0)} km/h). A ${r.mediaPrevista} km/h de media: ${duracion(r.minMedia)}. Cambia el criterio en Opciones del viaje y vuelve a calcular.`;
-      $("res").appendChild(contraste);
+      info.appendChild(contraste);
     }
     const llegada = document.createElement("p"); llegada.className = "explicacion";
     llegada.textContent = `Batería estimada al destino: ${op.socFinal.toFixed(0)} % (mínimo pedido: ${P.minDestino} %) · Mínimo estimado en ruta: ${Math.floor(op.socMinimo + 1e-9)} % · Llegada estimada si sales al calcular: ${new Date(sesion.salida + op.tTotal * 60000).toLocaleTimeString("es-ES", {hour:"2-digit", minute:"2-digit"})}.`;
-    $("res").appendChild(llegada);
+    info.appendChild(llegada);
     const todos = [...plan.paradas, ...vias].sort((x, y) => x.km - y.km);
     const en = enlaces(a, b, todos);
     const ex = document.createElement("div"); ex.className = "exportar";
@@ -1165,7 +1324,7 @@ function mostrarOpcion(sesion, op) {
     [["Apple Maps", en.apple], ["Google Maps", en.google], ["Waze (destino final)", en.waze(b)]].forEach(([nombre, url]) => {
       const l = document.createElement("a"); l.href = url; l.target = "_blank"; l.rel = "noopener"; l.textContent = nombre; ex.appendChild(l);
     });
-    $("res").appendChild(ex);
+
     if (perfil.alt) {
       const tg = document.createElement("p"); tg.className = "meta";
       tg.textContent = "Altitud a lo largo de la ruta. Las líneas numeradas son las paradas de carga. Pasa el cursor o el dedo por encima para ver el valor y su posición en el mapa.";
@@ -1177,7 +1336,7 @@ function mostrarOpcion(sesion, op) {
         while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (acum[mid] <= km) lo = mid; else hi = mid; }
         marca = L.circleMarker([r.coords[lo][1], r.coords[lo][0]], {radius: 7, color: "#f59e0b", fillOpacity: 1}).addTo(capas);
       };
-      $("res").appendChild(tg); $("res").appendChild(dibujarPerfil(perfil, plan.paradas, alMover));
+      info.appendChild(tg); info.appendChild(dibujarPerfil(perfil, plan.paradas, alMover));
     }
     const ol = document.createElement("ol"); ol.className = "paradas"; $("res").appendChild(ol);
     const items = [];
@@ -1213,14 +1372,15 @@ function mostrarOpcion(sesion, op) {
       li.append(t, m, w); items.push({km: v.km, li});
     });
     items.sort((x, y) => x.km - y.km).forEach(x => ol.appendChild(x.li));
+    $("res").append(ex,info);
     estado("");
     const msgAviso = plan.ok ? plan.aviso : "Aviso: " + plan.motivo;
     if (msgAviso) {
       const av = document.createElement("p"); av.className = "aviso"; av.textContent = msgAviso;
-      cab.insertAdjacentElement("afterend", av);
+      $("res").insertBefore(av, detalle);
     }
     hayDatos = true; $("datos").classList.remove("plegado"); $("plegar").textContent = "Plegar"; vista("datos"); setTimeout(centrarRuta, 80);
-    guardarViaje({o: sesion.origenTexto, d: sesion.destinoTexto, soc: sesion.socIni, km: Math.round(r.total), p: plan.paradas.length, v: sesion.viasTexto, dp: sesion.dp});
+    guardarViaje({o: sesion.origenTexto, d: sesion.destinoTexto, soc: sesion.socIni, km: Math.round(r.total), p: plan.paradas.length, v: sesion.viasTexto, vp:sesion.puntosTexto, dp: sesion.dp});
 }
 </script>
 </body>
