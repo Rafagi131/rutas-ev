@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="rutaev-version" content="2026-10-28-usabilidad-v1">
+<meta name="rutaev-version" content="2026-10-28-ajustes-v1">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ruta EV · Planificador eléctrico</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -325,6 +325,13 @@ input[type=range]{accent-color:var(--acc)}
 .detalle-resultados>summary{display:flex;min-height:48px;font-size:13px;color:var(--acc)}
 .detalle-resultados>summary::after{content:"＋";margin-left:auto}.detalle-resultados[open]>summary::after{content:"−"}
 .diferencia-ruta{font-weight:600;color:var(--acc)}
+
+.acciones-trayecto{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#invertir-trayecto{min-height:44px;padding:8px;border:1px solid var(--line);border-radius:2px;background:var(--field);color:var(--acc);font:600 12px "DM Sans",system-ui,sans-serif;cursor:pointer}
+#invertir-trayecto:disabled{opacity:.4;cursor:default}
+.creditos-app{border-top:1px solid var(--line);margin-top:8px;color:var(--mute)}
+.creditos-app>summary{min-height:44px;font-size:11px;color:var(--mute)}
+.creditos-app p{font-size:11px;line-height:1.6;margin:0 0 12px}.creditos-app a{color:inherit}
 </style>
 </head>
 <body>
@@ -354,16 +361,17 @@ input[type=range]{accent-color:var(--acc)}
       <div id="puntos-ruta"></div><input id="vias" type="hidden" value="">
       <div class="lugar destino-lugar" id="fila-destino" data-num="02"><div class="etiqueta-lugar"><label for="destino">Hasta</label><button type="button" id="elegirdest" class="mini">Elegir en el mapa</button></div><input id="destino" type="text" placeholder="¿Adónde vamos?" autocomplete="off"></div>
     </div>
-    <button type="button" id="anadir-punto" aria-controls="puntos-ruta">＋ Añadir punto en la ruta</button>
+    <div class="acciones-trayecto"><button type="button" id="anadir-punto" aria-controls="puntos-ruta" aria-label="Añadir punto en la ruta">＋ Añadir punto</button><button type="button" id="invertir-trayecto" aria-label="Intercambiar origen y destino" title="Intercambiar origen y destino e invertir los puntos intermedios">⇅ Invertir trayecto</button></div>
     <p id="ayuda-punto" class="ayuda" hidden>Los puntos se visitan en este orden, sin añadir tiempo de estancia. Máximo 8 puntos.</p>
-    <p class="fuente-direcciones">Sugerencias: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a> · © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></p>
     <label class="campo bateria-inicial"><span>Batería al salir <output id="socv">90 %</output></span><input id="soc" type="range" min="11" max="100" value="90"></label>
     <button id="calc">Buscar ruta <span aria-hidden="true">→</span></button>
     <p class="ayuda-principal">Menor consumo con hasta <strong id="margen-visible">10 %</strong> más de tiempo.</p>
     <details name="panel-principal" class="grupo" id="opciones-viaje">
-      <summary><span class="icono-grupo" aria-hidden="true">↗</span><span class="texto-grupo"><strong>Opciones del viaje</strong><small id="resumen-viaje">18 °C · 100 km/h · Sin paradas</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
+      <summary><span class="icono-grupo" aria-hidden="true">↗</span><span class="texto-grupo"><strong>Para este viaje</strong><small id="resumen-viaje">18 °C · 100 km/h · Sin paradas</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
       <div class="contenido-grupo">
         <input id="minvia" type="hidden" value="0">
+        <label class="campo"><span>Batería mínima al destino (%)</span><input id="minDestino" type="number" min="0" max="100" step="1" value="20"><small>Independiente del mínimo de los cargadores. Por ejemplo: 10 % en cargadores y 20 % al destino.</small></label>
+
         <h2>Condiciones del viaje</h2>
         <label class="campo"><span><input id="tempAuto" type="checkbox" checked> Temperatura automática del recorrido</span></label>
         <p class="ayuda">Previsión de Open-Meteo en varios puntos, suponiendo salida ahora y horas de paso aproximadas sin recargas. Si falla, se usan 18 °C o tu temperatura manual de respaldo.</p>
@@ -373,21 +381,22 @@ input[type=range]{accent-color:var(--acc)}
         <label class="campo"><span><input id="desn" type="checkbox" checked> Tener en cuenta el desnivel</span></label>
         <h2>Tu equilibrio</h2>
         <label class="campo"><span>Tiempo adicional que aceptas (%)</span><input id="margen" type="number" min="0" max="50" step="1" value="10"><small>10 % permite hasta 12 min más en un viaje de 2 horas.</small></label>
+        <details name="panel-viaje" class="subgrupo" id="recargas-viaje"><summary>Reservas y recargas</summary><div class="contenido-subgrupo">
+        <h2>Cómo quieres cargar</h2>
+        <div class="dos-columnas"><label class="campo"><span>Mínimo al llegar a cargadores (%)</span><input id="min" type="number" value="10"></label> <label class="campo"><span>Cargar hasta (%)</span><input id="max" type="number" value="80"></label></div>
+        <label class="campo"><span>Tiempo máximo por recarga (min)</span><input id="tmax" type="number" value="40"></label>
+        <h2>Otros ajustes de recarga</h2>
+        <label class="campo"><span>Margen para el tiempo de recarga (%)</span><input id="margenCarga" type="number" min="0" max="100" value="20"><small>20 % adicional sobre la curva estimada. Es un margen de planificación, no un dato medido del EV3. Auméntalo si observas cargas más lentas.</small></label><p class="ayuda">La batería fría o caliente y la potencia compartida pueden alargar más la carga. La previsión meteorológica no mide la temperatura de la batería. El tiempo extra por parada (5 min por defecto) se suma aparte para acceso, conexión y preparación; no incluyen colas.</p><label class="campo"><span>Recarga mínima deseada (min)</span><input id="tmin" type="number" value="15"></label> <label class="campo"><span>Distancia máxima entre paradas (km, 0 = sin límite)</span><input id="maxkm" type="number" value="300"></label> <label class="campo"><span>Tiempo extra por parada (min)</span><input id="extra" type="number" value="5"></label> <input id="pen" type="hidden" value="8"> <label class="campo"><span>Potencia mínima (kW)</span><input id="minkw" type="number" value="50"></label> <label class="campo"><span>Operadores (separados por comas; vacío = todos)</span><input id="ops" type="text" placeholder="Ej: Iberdrola, Zunder"></label>
+        </div></details>
       </div>
     </details>
     <details name="panel-principal" class="grupo" id="ajustes-ev">
-      <summary><span class="icono-grupo" aria-hidden="true">ϟ</span><span class="texto-grupo"><strong>Mi EV y recargas</strong><small id="resumen-ev">Cargadores 10 % · Destino 20 %</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
+      <summary><span class="icono-grupo" aria-hidden="true">ϟ</span><span class="texto-grupo"><strong>Mi vehículo</strong><small id="resumen-ev">Cargadores 10 % · Destino 20 %</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
       <div class="contenido-grupo">
-        <p class="ayuda">Estos ajustes se guardan al calcular. Solo necesitas revisarlos cuando cambien tus preferencias.</p>
-        <h2>Cómo quieres cargar</h2>
-        <div class="dos-columnas"><label class="campo"><span>Mínimo al llegar a cargadores (%)</span><input id="min" type="number" value="10"></label> <label class="campo"><span>Cargar hasta (%)</span><input id="max" type="number" value="80"></label></div>
-        <label class="campo"><span>Batería mínima al destino (%)</span><input id="minDestino" type="number" min="0" max="100" step="1" value="20"><small>Independiente del mínimo de los cargadores. Por ejemplo: 10 % en cargadores y 20 % al destino.</small></label>
-        <label class="campo"><span>Tiempo máximo por recarga (min)</span><input id="tmax" type="number" value="40"></label>
-        <details name="panel-ev" class="subgrupo"><summary>Más opciones de recarga</summary><div class="contenido-subgrupo">
-        <label class="campo"><span>Margen para el tiempo de recarga (%)</span><input id="margenCarga" type="number" min="0" max="100" value="20"><small>20 % adicional sobre la curva estimada. Es un margen de planificación, no un dato medido del EV3. Auméntalo si observas cargas más lentas.</small></label><p class="ayuda">La batería fría o caliente y la potencia compartida pueden alargar más la carga. La previsión meteorológica no mide la temperatura de la batería. El tiempo extra por parada (5 min por defecto) se suma aparte para acceso, conexión y preparación; no incluyen colas.</p><label class="campo"><span>Recarga mínima deseada (min)</span><input id="tmin" type="number" value="15"></label> <label class="campo"><span>Distancia máxima entre paradas (km, 0 = sin límite)</span><input id="maxkm" type="number" value="300"></label> <label class="campo"><span>Tiempo extra por parada (min)</span><input id="extra" type="number" value="5"></label> <input id="pen" type="hidden" value="8"> <label class="campo"><span>Potencia mínima (kW)</span><input id="minkw" type="number" value="50"></label> <label class="campo"><span>Operadores (separados por comas; vacío = todos)</span><input id="ops" type="text" placeholder="Ej: Iberdrola, Zunder"></label>
-        </div></details>
-        <details name="panel-ev" class="subgrupo"><summary>Características de mi EV</summary><div class="contenido-subgrupo"><p class="ayuda">Referencia personal: 16,5 kWh/100 km a 18 °C y 100 km/h de media, incluidos picos ocasionales de 120 km/h. El desnivel se estima aparte; la referencia aún necesita contrastarse con viajes de terreno conocido.</p>
-        <label class="campo"><span>Batería útil (kWh)</span><input id="bat" type="number" value="78" step="0.1"></label> <label class="campo"><span>Consumo en viajes largos (kWh/100 km)</span><input id="cons" type="number" value="16.5" step="0.1"></label> <label class="campo"><span>Límite de carga DC del EV3 (kW)</span><input id="maxkw" type="number" min="1" max="128" value="128"></label> <input id="velref" type="hidden" value="100"><p class="ayuda">Velocidad media de referencia del consumo: <strong id="velref-visible">100 km/h</strong>. La velocidad media prevista se cambia en Opciones del viaje.</p> <label class="campo"><span>Masa del coche con carga (kg). Valor aproximado, ajústalo a tu ficha técnica</span><input id="masa" type="number" value="1950"></label>
+        <p class="ayuda">Tu perfil del EV3 se conserva en este navegador. Abre los datos solo cuando necesites cambiarlos.</p>
+        <details name="panel-ev" class="subgrupo" id="perfil-ev"><summary>Datos de mi EV3</summary><div class="contenido-subgrupo"><p class="ayuda">Referencia personal: 16,5 kWh/100 km a 18 °C y 100 km/h de media, incluidos picos ocasionales de 120 km/h. El desnivel se estima aparte; la referencia aún necesita contrastarse con viajes de terreno conocido.</p>
+        <label class="campo"><span>Batería útil (kWh)</span><input id="bat" type="number" min="0.1" value="78" step="0.1"></label> <label class="campo"><span>Consumo en viajes largos (kWh/100 km)</span><input id="cons" type="number" min="0.1" value="16.5" step="0.1"></label> <label class="campo"><span>Límite de carga DC del EV3 (kW)</span><input id="maxkw" type="number" min="1" max="128" value="128"></label> <input id="velref" type="hidden" value="100"><p class="ayuda">Velocidad media de referencia del consumo: <strong id="velref-visible">100 km/h</strong>. La velocidad media prevista se cambia en Para este viaje.</p> <label class="campo"><span>Masa del coche con carga (kg). Valor aproximado, ajústalo a tu ficha técnica</span><input id="masa" type="number" min="1" value="1950"></label>
+        <p id="estado-perfil" class="ayuda" role="status">Se guarda al terminar de editar cada dato.</p>
         </div></details>
         <details name="panel-ev" class="subgrupo" id="conexion-carga"><summary>Cargadores · <span id="estado-clave">Clave pendiente</span></summary><div class="contenido-subgrupo">
         <p class="ayuda">Introduce tu clave de Open Charge Map para buscar recargas. No hace falta en viajes que puedas completar sin cargar. Se guarda en este navegador al calcular.</p>
@@ -400,6 +409,7 @@ input[type=range]{accent-color:var(--acc)}
     </details>
   </div>
   <details name="panel-principal" class="grupo" id="historial" hidden><summary><span class="icono-grupo" aria-hidden="true">↶</span><span class="texto-grupo"><strong>Viajes recientes</strong><small id="resumen-historial">Recuperar un viaje guardado</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><section id="viajes" class="contenido-grupo"></section></details>
+  <details name="panel-principal" class="grupo creditos-app"><summary>Información y créditos</summary><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p></details>
 </section>
 <section id="datos" class="panel oculto">
   <div id="barra"><button id="plegar">Plegar</button></div>
@@ -436,7 +446,11 @@ const fallo = t => {
   if (/clave de Open Charge Map|rechazado el acceso a los cargadores/i.test(t)) {
     $("ajustes-ev").open = true; $("conexion-carga").open = true;
     $("ocmKey").scrollIntoView({block:"center"}); $("ocmKey").focus({preventScroll:true});
-  } else if (/Revisa los ajustes/.test(t)) $("ajustes-ev").open = true;
+  } else if (/Revisa los ajustes/.test(t)) {
+    const perfilInvalido = ["bat","cons","maxkw","masa"].some(id => !Number.isFinite(+$(id).value) || +$(id).value <= 0) || +$("maxkw").value > 128;
+    if (perfilInvalido) { $("ajustes-ev").open = true; $("perfil-ev").open = true; }
+    else { $("opciones-viaje").open = true; $("recargas-viaje").open = true; }
+  }
   else if (/margen de tiempo/.test(t)) $("opciones-viaje").open = true;
 };
 let hayDatos = false, limitesRuta = null;
@@ -451,7 +465,7 @@ function centrarRuta() {
 }
 addEventListener("resize", () => { if (hayDatos) setTimeout(centrarRuta, 150); });
 // Puntos elegidos sin escribir: "Mi ubicación" (origen) y un toque en el mapa (destino).
-let origenFijo = null, destinoFijo = null, modoElegir = false;
+let origenFijo = null, destinoFijo = null, modoElegir = false, revisionUbicacion = 0;
 const capaPuntos = L.layerGroup().addTo(map);
 function pintarPuntos() {
   capaPuntos.clearLayers();
@@ -1003,21 +1017,44 @@ function restaurarPuntos(datos) {
   puntosEditables.forEach(p => p.sugeridor.destruir()); puntosEditables = []; $("puntos-ruta").textContent = "";
   normalizarPuntos(datos).forEach(p => agregarPunto(p,false)); actualizarResumenes();
 }
+function cancelarUbicacionPendiente() {
+  revisionUbicacion++;
+  if ($("estado").textContent === "Obteniendo tu ubicación...") estado("");
+}
+function fijoValido(input, fijo) {
+  const seleccionado = seleccionDe(input);
+  const p = fijo && fijo.texto === input.value ? fijo : seleccionado;
+  return p && coordenadasValidas(p.pos) ? {texto:input.value,pos:p.pos.slice()} : null;
+}
+function intercambiarTrayecto() {
+  cerrarSugerencias(); cancelarUbicacionPendiente(); modoElegir = false;
+  const desde = $("origen"), hasta = $("destino"), texto = desde.value;
+  const a = fijoValido(desde, origenFijo), b = fijoValido(hasta, destinoFijo);
+  desde.value = hasta.value; hasta.value = texto;
+  origenFijo = b; destinoFijo = a;
+  seleccionDirecciones.delete(desde); seleccionDirecciones.delete(hasta);
+  if (b) seleccionDirecciones.set(desde,b);
+  if (a) seleccionDirecciones.set(hasta,a);
+  puntosEditables.reverse().forEach(p => $("puntos-ruta").appendChild(p.fila));
+  pintarPuntos(); actualizarResumenes();
+}
+$("invertir-trayecto").onclick = intercambiarTrayecto;
 $("anadir-punto").onclick = () => agregarPunto();
 registrarSugerencias($("origen"), p => { origenFijo = p; pintarPuntos(); });
 registrarSugerencias($("destino"), p => { destinoFijo = p; pintarPuntos(); });
 
 function actualizarResumenes() {
   actualizarPuntos();
-  const paradas = $("vias").value.split(";").filter(v => v.trim()).length;
-  $("resumen-viaje").textContent = `${$("tempAuto").checked ? "Meteo automática" : num("temp",18) + " °C"} · ${num("vel",100)} km/h · ${paradas ? paradas + (paradas === 1 ? " parada" : " paradas") : "Sin paradas"}`;
+  const paradas = puntosGuardados().length;
+  $("invertir-trayecto").disabled = !$("origen").value.trim() && !$("destino").value.trim() && !paradas;
+  $("resumen-viaje").textContent = `${$("tempAuto").checked ? "Meteo automática" : num("temp",18) + " °C"} · ${num("vel",100)} km/h · ${paradas ? paradas + (paradas === 1 ? " punto" : " puntos") + " · " : ""}Llegada ≥ ${num("minDestino",20)} %`;
   $("ayuda-tiempo").textContent = $("modoTiempo").value === "media"
     ? `Tiempo calculado con ${num("vel",100)} km/h de media en todo el recorrido, sin recargas. Es una hipótesis personal: no incorpora tráfico ni velocidades por carretera.`
     : "OSRM estima el tiempo con su perfil de velocidades. No incluye tráfico en directo. La velocidad media prevista se usa para el consumo.";
   $("temperatura-manual").hidden = $("tempAuto").checked;
   $("velref-visible").textContent = num("velref",100) + " km/h";
   $("margen-visible").textContent = num("margen",10) + " %";
-  $("resumen-ev").textContent = `Cargadores ${num("min",10)} % · Destino ${num("minDestino",20)} %`;
+  $("resumen-ev").textContent = `EV3 · ${num("bat",78).toLocaleString("es-ES")} kWh útiles · ${num("cons",16.5).toLocaleString("es-ES")} kWh/100 km`;
   $("estado-clave").textContent = $("ocmKey").value.trim() ? "Clave introducida" : "Clave pendiente";
 }
 $("formulario").addEventListener("input", actualizarResumenes);
@@ -1040,6 +1077,19 @@ function cargarPrefs() {
 function guardarPrefs() {
   try { const p = {perfilBateria:"util-78-v1", perfilConsumo:"largos-165-v1", tempAuto:$("tempAuto").checked}; PREFS.forEach(i => p[i] = $(i).value); localStorage.setItem("rutaev:prefs", JSON.stringify(p)); } catch (e) {}
 }
+function guardarPerfilEV() {
+  const ids = ["bat","cons","maxkw","masa","velref"];
+  if (!ids.every(id => Number.isFinite(+$(id).value) && +$(id).value > 0) || +$("maxkw").value > 128) {
+    $("estado-perfil").textContent = "Revisa los datos del vehículo para guardarlos."; return;
+  }
+  let preferencias = {};
+  try { preferencias = JSON.parse(localStorage.getItem("rutaev:prefs") || "{}"); } catch (e) {}
+  if (!preferencias || typeof preferencias !== "object" || Array.isArray(preferencias)) preferencias = {};
+  ids.forEach(id => preferencias[id] = $(id).value);
+  preferencias.perfilBateria = "util-78-v1"; preferencias.perfilConsumo = "largos-165-v1";
+  try { localStorage.setItem("rutaev:prefs",JSON.stringify(preferencias)); $("estado-perfil").textContent = "Perfil guardado en este navegador."; }
+  catch (e) { $("estado-perfil").textContent = "No se ha podido guardar el perfil en este navegador."; }
+}
 function leerViajes() {
   try { return JSON.parse(localStorage.getItem("rutaev:viajes") || "[]"); } catch (e) { return []; }
 }
@@ -1057,8 +1107,8 @@ function pintarViajes() {
   l.forEach(v => {
     const b = document.createElement("button");
     b.textContent = `${v.o} → ${v.d} (${v.km} km, ${v.p} paradas)`;
-    b.onclick = () => { origenFijo = null; $("origen").value = v.o === "Mi ubicación actual" ? "" : v.o; // la ubicación actual hay que volver a pedirla
-    destinoFijo = v.dp ? {pos: v.dp, texto: v.d} : null; $("destino").value = v.d; pintarPuntos(); $("soc").value = v.soc; restaurarPuntos(v.vp || v.v || ""); pintaSoc(); actualizarResumenes(); };
+    b.onclick = () => { cerrarSugerencias(); cancelarUbicacionPendiente(); origenFijo = v.o !== "Mi ubicación actual" && coordenadasValidas(v.op) ? {texto:v.o,pos:v.op} : null; $("origen").value = v.o === "Mi ubicación actual" ? "" : v.o; // la ubicación actual hay que volver a pedirla
+    destinoFijo = coordenadasValidas(v.dp) ? {pos: v.dp, texto: v.d} : null; $("destino").value = v.d; pintarPuntos(); $("soc").value = v.soc; restaurarPuntos(v.vp || v.v || ""); pintaSoc(); actualizarResumenes(); };
     c.appendChild(b);
   });
   const x = document.createElement("button"); x.textContent = "Borrar viajes guardados";
@@ -1066,18 +1116,21 @@ function pintarViajes() {
   c.appendChild(x);
 }
 cargarPrefs(); pintarViajes(); actualizarResumenes();
+$("perfil-ev").addEventListener("change", guardarPerfilEV);
 
-$("origen").addEventListener("input", () => { if (origenFijo && $("origen").value !== origenFijo.texto) { origenFijo = null; pintarPuntos(); } });
+$("origen").addEventListener("input", () => { cancelarUbicacionPendiente(); if (origenFijo && $("origen").value !== origenFijo.texto) { origenFijo = null; pintarPuntos(); } });
 $("destino").addEventListener("input", () => { if (destinoFijo && $("destino").value !== destinoFijo.texto) { destinoFijo = null; pintarPuntos(); } });
 $("miub").onclick = () => {
   if (!window.isSecureContext || !navigator.geolocation) return fallo("La ubicación solo funciona en páginas https y con un navegador compatible.");
+  const revision = ++revisionUbicacion;
   estado("Obteniendo tu ubicación...");
   navigator.geolocation.getCurrentPosition(p => {
+    if (revision !== revisionUbicacion) return;
     origenFijo = {pos: [p.coords.longitude, p.coords.latitude], texto: "Mi ubicación actual"};
-    $("origen").value = origenFijo.texto; pintarPuntos(); estado("");
+    $("origen").value = origenFijo.texto; pintarPuntos(); actualizarResumenes(); estado("");
     map.setView([p.coords.latitude, p.coords.longitude], Math.max(map.getZoom(), 10));
-  }, err => fallo(err.code === 1 ? "Permiso de ubicación denegado. Actívalo en los ajustes del navegador para esta página."
-                 : err.code === 3 ? "La ubicación tarda demasiado. Inténtalo de nuevo." : "No se pudo determinar la ubicación."),
+  }, err => { if (revision !== revisionUbicacion) return; fallo(err.code === 1 ? "Permiso de ubicación denegado. Actívalo en los ajustes del navegador para esta página."
+                 : err.code === 3 ? "La ubicación tarda demasiado. Inténtalo de nuevo." : "No se pudo determinar la ubicación."); },
   {enableHighAccuracy: true, timeout: 12000, maximumAge: 60000});
 };
 $("elegirdest").onclick = () => { modoElegir = true; vista("mapa"); };
@@ -1168,7 +1221,7 @@ $("calc").onclick = async () => {
     const rutas = await ruta(a, b, puntosVia.map(v => v.pos));
 
     const sesion = {a, b, P, minVia, margen, socIni, puntosVia, total:rutas.length, opciones:[], descartes:[], salida:Date.now(),
-      origenTexto:$("origen").value, destinoTexto:$("destino").value, viasTexto:$("vias").value, puntosTexto:puntosGuardados(), dp:destinoFijo ? destinoFijo.pos : null};
+      origenTexto:$("origen").value, destinoTexto:$("destino").value, viasTexto:$("vias").value, puntosTexto:puntosGuardados(), op:origenFijo ? origenFijo.pos : null, dp:destinoFijo ? destinoFijo.pos : null};
     const ops = $("ops").value.toLowerCase().split(",").map(x => x.trim()).filter(Boolean);
     const cache = new Map(), preparadas = [];
     let falloAltitud = false, fallosCarga = 0;
@@ -1310,7 +1363,7 @@ function mostrarOpcion(sesion, op) {
     }
     if (Number.isFinite(r.osrmMin)) {
       const contraste = document.createElement("p"); contraste.className = "meta";
-      contraste.textContent = `Referencia de conducción: OSRM ${duracion(r.osrmMin)} (media ${r.mediaOSRM.toFixed(0)} km/h). A ${r.mediaPrevista} km/h de media: ${duracion(r.minMedia)}. Cambia el criterio en Opciones del viaje y vuelve a calcular.`;
+      contraste.textContent = `Referencia de conducción: OSRM ${duracion(r.osrmMin)} (media ${r.mediaOSRM.toFixed(0)} km/h). A ${r.mediaPrevista} km/h de media: ${duracion(r.minMedia)}. Cambia el criterio en Para este viaje y vuelve a calcular.`;
       info.appendChild(contraste);
     }
     const llegada = document.createElement("p"); llegada.className = "explicacion";
@@ -1380,7 +1433,7 @@ function mostrarOpcion(sesion, op) {
       $("res").insertBefore(av, detalle);
     }
     hayDatos = true; $("datos").classList.remove("plegado"); $("plegar").textContent = "Plegar"; vista("datos"); setTimeout(centrarRuta, 80);
-    guardarViaje({o: sesion.origenTexto, d: sesion.destinoTexto, soc: sesion.socIni, km: Math.round(r.total), p: plan.paradas.length, v: sesion.viasTexto, vp:sesion.puntosTexto, dp: sesion.dp});
+    guardarViaje({o: sesion.origenTexto, d: sesion.destinoTexto, soc: sesion.socIni, km: Math.round(r.total), p: plan.paradas.length, v: sesion.viasTexto, vp:sesion.puntosTexto, op:sesion.op, dp: sesion.dp});
 }
 </script>
 </body>
