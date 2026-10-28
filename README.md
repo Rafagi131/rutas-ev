@@ -49,3 +49,9 @@ El laboratorio incluye «Ver estaciones contrastadas»: muestra la estación Tor
 En el laboratorio, «Migjorn 4 · Ver ida» y «Ver vuelta» muestran mapas OSRM y escenarios de batería a 16,5 y 20 kWh/100 km. Datos de trazado en `.cache/alquerias-study.json`, excluidos de Git; contienen extremos personales del recorrido y se sirven solo en localhost. La interfaz y el servidor sí se versionan; otra instalación sin ese archivo muestra «estudio no disponible».
 
 Salida asumida al 100 % en cada sentido y llegada objetivo al 20 %. Con 16,5 kWh/100 km la carga objetivo es 71–72 %; a 20 kWh/100 km sube al 82–83 %, superando el objetivo habitual del 80 %. No es una garantía de autonomía ni una validación de tarifa. Acceso calculado por OSRM a las coordenadas de la estación; horario/acceso físico y portal exacto del destino siguen pendientes. No se consumen consultas REVE al abrir estos mapas.
+
+## Reserva al volver a casa
+
+Para destinos que contienen Vilanova i la Geltrú, con código 08800 si aparece un código postal, se usa una reserva doméstica del 15 %, seleccionable al 10 % o desactivable con «Usar reserva general». Se guarda con las preferencias de v2 al calcular. La reserva general y la de cargadores no se sobrescriben. El resumen indica «Casa» y la cifra efectiva; el cálculo usa esa misma cifra. La regla identifica la localidad, no verifica una vivienda concreta.
+
+El estudio local de Migjorn usa ahora 15 % de reserva en la vuelta (20 % en ida). Con consumo plano de 16,5 kWh/100 km requiere salir de la estación al 67,1 %, unos 7,1 min de carga; a 20 kWh/100 km, 78,2 %, unos 20,7 min. El estudio guardado usa estos supuestos fijos y no recalcula al elegir 10 % en el formulario.
