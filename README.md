@@ -28,6 +28,6 @@ Para activar consultas reales, copiar `.env.example` como `.env` y completar `RE
 
 ## Límites y próximos pasos
 
-La documentación pública de REVE indica cinco solicitudes por hora: https://www.mapareve.es/docs/api/external/v1. El servicio limita a cinco intentos en una ventana móvil de una hora, también si fallan, y espera una hora al recibir 429. Caché y cuota están en memoria: se pierden al reiniciar; no usar varios procesos ni reinicios para ampliar la cuota. Confirmar las condiciones particulares de la clave antes de la primera consulta real.
+La documentación pública de REVE indica cinco solicitudes por hora: https://www.mapareve.es/docs/api/external/v1. El servicio limita a cinco intentos en una ventana móvil de una hora, también si fallan, y espera una hora al recibir 429. Caché y cuota se guardan en `.cache/reve-state.json`, excluido de Git. Los intentos se registran antes de contactar con REVE y sobreviven a reinicios. El servicio debe ejecutarse en un solo proceso; todavía no dispone de coordinación entre varias instancias. Si el archivo no se puede leer o guardar, se bloquean nuevas consultas para proteger la cuota. Confirmar las condiciones particulares de la clave antes de la primera consulta real.
 
 Con la clave configurada localmente podremos validar respuestas y paginación, enlazar cargadores y conectores con el recorrido, consultar tarifas y calcular costes. La comparación con Kia Charge Easy requerirá conocer su tarifa aplicable. Posteriormente añadiremos una vista de pruebas en Internet separada de la v1.
