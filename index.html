@@ -1579,8 +1579,15 @@ function mostrarOpcion(sesion, op) {
         const title = document.createElement('strong'); title.textContent = station.name;
         const detail = document.createElement('p');
         detail.textContent = station.address + ' · CCS: ' + station.connectors.map(c=>c.kw+' kW').join(', ') + '. ' + station.status;
-        const date = document.createElement('p'); date.textContent = 'Fuente: '+data.source+' · Consulta: '+new Date(data.updatedAt).toLocaleString('es-ES');
+        const date = document.createElement('p'); date.textContent = 'Fuente: '+data.source+' · Consulta: '+new Date(station.updatedAt || data.updatedAt).toLocaleString('es-ES');
         target.append(title,detail,date);
+      }
+      if (data.comparison) {
+        const title = document.createElement('strong');title.textContent = 'Vilanova–El Campello · Estudio preliminar';target.append(title);
+        for (const row of data.comparison.results) {
+          const line = document.createElement('p');line.textContent = row.name + ': ' + row.km.toFixed(1) + ' km · ' + Math.round(row.min) + ' min conduciendo · ' + row.minutosRecarga.toFixed(1) + ' min de carga estimada · ' + row.kwhRecarga.toFixed(1) + ' kWh a reponer. Precio pendiente.';target.append(line);
+        }
+        const note = document.createElement('p');note.textContent = data.comparison.assumptions;target.append(note);
       }
     } catch(e) { target.textContent = e.message; }
   };
