@@ -10,3 +10,10 @@ test('no sobrescribe almacenamiento corrupto ni acepta coordenadas inválidas',(
  stored='no es json';run("guardarFavorito({id:'x',nombre:'Estación',pos:[0,0]})");assert.equal(stored,'no es json');
  stored='[]';run("guardarFavorito({nombre:'Estación',pos:[181,0]})");assert.equal(stored,'[]');
 });
+test('favoritos no añaden puntos y OCM excluye equipos expresamente no operativos',async()=>{
+ const data=[{ID:1,StatusType:{IsOperational:false}},{ID:2,Connections:[{ConnectionTypeID:33,PowerKW:180,StatusType:{IsOperational:false}}]},{ID:3,Connections:[{ConnectionTypeID:33,PowerKW:100}]}].map(x=>({Connections:[{ConnectionTypeID:33,PowerKW:180}],AddressInfo:{Longitude:0,Latitude:0,Title:'Estación'},...x}));
+ const ctx=vm.createContext({consultarOCM:async()=>data,estado:()=>{},sleep:async()=>{},km:()=>0});
+ vm.runInContext(h.slice(h.indexOf('async function buscarCargadores('),h.indexOf('const CURVA')),ctx);
+ const r=await vm.runInContext('buscarCargadores([[0,0]],[0],50,"ficticia")',ctx);assert.equal(r.length,1);assert.equal(r[0].id,3);
+ const ui=h.slice(h.indexOf('function pintarFavoritos()'),h.indexOf('function mostrarOpcion('));assert.ok(!ui.includes('agregarPunto('));
+});
