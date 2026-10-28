@@ -17,3 +17,12 @@ test('elige método compatible más económico y descarta suplementos incompleto
  const r=compararParadas([estacion('x',{pagos:[pago(3,{completo:false}),pago(9,{metodo:'kia',compatible:false}),pago(12,{metodo:'zunder'}),pago(14,{metodo:'electroverse'})]})]);assert.equal(r.recomendada.pago.metodo,'zunder');
 });
 test('sin viabilidad no recomienda ninguna estación',()=>{assert.equal(compararParadas([estacion('x',{continuacionViable:false})]).recomendada,null);});
+test('curva EV3: prefiere 100 kW más económico frente a 350 kW si la demora es pequeña',async()=>{
+ const fs=await import('node:fs/promises'),vm=await import('node:vm');
+ const html=await fs.readFile(new URL('../index.html',import.meta.url),'utf8'),ctx=vm.createContext({});
+ vm.runInContext(html.slice(html.indexOf('const CURVA'),html.indexOf('function dibujarPerfil')),ctx);
+ const minutos=kw=>vm.runInContext(`minutosCarga(26,59,78,${kw},128)`,ctx);
+ assert.equal(minutos(150),minutos(350));
+ const r=compararParadas([estacion('350kW',{minutosRecarga:minutos(350),tiempoTotal:280+minutos(350),pagos:[pago(16)]}),estacion('100kW',{minutosRecarga:minutos(100),tiempoTotal:280+minutos(100),pagos:[pago(13)]})]);
+ assert.equal(r.recomendada.id,'100kW');assert.ok(r.recomendada.extraMinutos<3);
+});
