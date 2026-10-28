@@ -58,6 +58,15 @@ El estudio local de Migjorn usa ahora 15 % de reserva en la vuelta (20 % en ida)
 
 ## Estaciones favoritas
 
-Se guardan en `rutaev:v2:favoritos`, exclusivamente en el navegador de v2: nombre, identificador de origen, coordenadas, operador y potencia declarada, sin tarifas. Botones de guardar/quitar en paradas calculadas y estaciones contrastadas. La sección «Estaciones favoritas» permite añadirlas al recorrido o eliminarlas. Incluye acceso para guardar Migjorn 4, sin guardarla automáticamente.
+Se guardan en `rutaev:v2:favoritos`, exclusivamente en el navegador de v2: nombre, identificador de origen, coordenadas, operador y potencia declarada, sin tarifas. Botones de guardar/quitar en paradas calculadas y estaciones contrastadas. La sección «Estaciones favoritas» permite consultar sus servicios cercanos o eliminarlas. Incluye acceso para guardar Migjorn 4, sin guardarla automáticamente.
 
-«Añadir al recorrido» crea un punto intermedio con coordenadas conservadas, evita duplicarlo y respeta el máximo de ocho puntos. Al buscar se vuelve a calcular el trayecto; pasar por la estación no obliga al motor a recargar allí. La preferencia automática como estación de carga aún no está conectada al optimizador. No se sincronizan favoritos entre dispositivos y se mantienen al recargar la página.
+Los favoritos no crean puntos de paso. Se ha retirado «Añadir al recorrido»: una estación solo cuenta como parada cuando el motor la selecciona para recargar en un plan viable. La preferencia automática como estación de carga aún no está conectada al optimizador. No se sincronizan favoritos entre dispositivos y se mantienen al recargar la página.
+
+
+## Restauración y aseos
+
+Consulta manual en paradas, favoritos y estaciones contrastadas. El servidor consulta OpenStreetMap/Overpass dentro de 500 m y conserva las respuestas durante 24 h en memoria, sin consumir la cuota REVE. Muestra tipo de lugar, distancia en línea recta, horario registrado y restricciones de acceso/pago cuando existen. No comprueba el camino peatonal ni si está abierto ahora. Un bar o restaurante sin etiqueta de aseos se marca como «aseo sin confirmar». Una respuesta fallida o incompleta no se interpreta como ausencia de servicios. Todavía no afecta automáticamente a la clasificación de paradas.
+
+El buscador OCM descarta estaciones o conectores que la fuente marque explícitamente como no operativos. Un estado desconocido no se presenta como disponibilidad garantizada.
+
+En la prueba real de Migjorn el proveedor de servicios rechazó la consulta (HTTP 406; prueba alternativa sin respuesta). Se conserva el estado «no disponible» y se ofrecen enlaces para buscar restauración o aseos en el mapa. Las pruebas automáticas usan respuestas sintéticas: no certifican cobertura real de establecimientos. La consulta automática queda condicionada a la disponibilidad del proveedor.
