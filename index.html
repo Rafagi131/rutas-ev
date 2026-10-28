@@ -511,7 +511,7 @@ body{line-height:var(--interlineado)}
       <p class="ayuda">Los precios y la comparación con Kia Charge todavía no están integrados.</p>
     </div>
   </details>
-  <details name="panel-principal" class="grupo" id="favoritos-panel"><summary><span class="icono-grupo" aria-hidden="true">☆</span><span class="texto-grupo"><strong>Estaciones favoritas</strong><small id="favoritos-resumen">Tus paradas para futuros viajes</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><div class="contenido-grupo"><p class="ayuda">Se guardan en este navegador. Añadir una al recorrido solicita pasar por ella; el planificador sigue comprobando la viabilidad y no garantiza que la elija como recarga.</p><div id="favoritos-lista"></div><p id="favoritos-estado" class="ayuda" role="status"></p><div id="favorito-migjorn"></div></div></details>
+  <details name="panel-principal" class="grupo" id="favoritos-panel"><summary><span class="icono-grupo" aria-hidden="true">☆</span><span class="texto-grupo"><strong>Estaciones favoritas</strong><small id="favoritos-resumen">Tus paradas para futuros viajes</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><div class="contenido-grupo"><p class="ayuda">Los favoritos no añaden puntos obligatorios ni paradas. Solo podrán aparecer como recarga si el cálculo encuentra esa estación entre los cargadores viables. No se fuerza su selección.</p><div id="favoritos-lista"></div><p id="favoritos-estado" class="ayuda" role="status"></p><div id="favorito-migjorn"></div></div></details>
   <details name="panel-principal" class="grupo" id="historial" hidden><summary><span class="icono-grupo" aria-hidden="true">↶</span><span class="texto-grupo"><strong>Viajes recientes</strong><small id="resumen-historial">Recuperar un viaje guardado</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><section id="viajes" class="contenido-grupo"></section></details>
   <details name="panel-principal" class="grupo creditos-app"><summary>Información y créditos</summary><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p></details>
 </section>
@@ -662,7 +662,8 @@ async function buscarCargadores(coords, acum, minkw, key, cache = new Map()) {
   }
   const lista = [];
   for (const c of vistos.values()) {
-    const kw = Math.max(0, ...c.Connections.filter(x => x.ConnectionTypeID === 33).map(x => x.PowerKW || 0));
+    if (c.StatusType?.IsOperational === false) continue;
+    const kw = Math.max(0, ...c.Connections.filter(x => x.ConnectionTypeID === 33 && x.StatusType?.IsOperational !== false).map(x => x.PowerKW || 0));
     if (kw < minkw) continue;
     const pos = [c.AddressInfo.Longitude, c.AddressInfo.Latitude];
     let mejor = 1e9, idx = 0;
@@ -1424,6 +1425,21 @@ async function mostrarTrazadoPrevio(rutas) {
   // Dos fotogramas permiten pintar el mapa antes de continuar con los cálculos.
   await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 }
+function botonServicios(pos) {
+  const wrap=document.createElement('div'),b=document.createElement('button'),detail=document.createElement('div');b.type='button';b.className='boton-favorito';b.textContent='Restauración y aseos';detail.className='ayuda';detail.setAttribute('role','status');wrap.append(b,detail);
+  for(const [label,term] of [['Buscar restauración en mapa','restaurantes bares'],['Buscar aseos en mapa','aseos públicos']]) {const link=document.createElement('a');link.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(term+' cerca de '+pos[1]+','+pos[0]);link.target='_blank';link.rel='noopener';link.textContent=label;link.style.display='block';wrap.append(link);}
+  b.onclick=async()=>{
+    b.disabled=true;detail.textContent='Consultando servicios a menos de 500 m…';
+    try{
+      const r=await fetch('/api/services?lat='+pos[1]+'&lon='+pos[0],{signal:AbortSignal.timeout(15000)}),data=await r.json();if(!r.ok)throw new Error(data.error);
+      detail.textContent='';
+      const labels={restaurant:'Restaurante',cafe:'Cafetería',bar:'Bar',fast_food:'Comida rápida',toilets:'Aseo'};
+      if(!data.items.length)detail.textContent='No hay servicios registrados en esta consulta. No implica que no existan.';
+      for(const item of data.items){const p=document.createElement('p');p.textContent=(labels[item.type]||'Establecimiento')+' · '+item.name+' · '+item.distance+' m. '+(item.toilets==='indicado'?'Aseo indicado en OSM.':item.toilets==='desconocido'?'Aseo sin confirmar.':'OSM indica que no tiene aseo.')+(item.access?' Acceso: '+item.access+'.':'')+(item.fee?' Pago: '+item.fee+'.':'')+(item.openingHours?' Horario registrado: '+item.openingHours+'.':'');detail.append(p);}
+      const note=document.createElement('p');note.textContent=data.note+' Fuente: '+data.source+' · '+new Date(data.updatedAt).toLocaleString('es-ES');detail.append(note);
+    }catch(e){detail.textContent=e.message||'No se pudieron consultar los servicios. No significa que no existan.';}finally{b.disabled=false;}
+  };return wrap;
+}
 function normalizarFavorito(d) {
   if (!d || typeof d.nombre !== 'string' || !d.nombre.trim() || !coordenadasValidas(d.pos)) return null;
   const nombre = d.nombre.trim().slice(0,200), pos = d.pos.slice();
@@ -1462,11 +1478,7 @@ function pintarFavoritos() {
       const item=document.createElement('div');item.className='favorito-item';const name=document.createElement('strong');name.textContent=f.nombre;
       const detail=document.createElement('p');detail.className='ayuda';detail.textContent=[f.operador,f.kw ? f.kw+' kW declarados' : ''].filter(Boolean).join(' · ');
       const actions=document.createElement('div');actions.className='favorito-acciones';
-      const add=document.createElement('button');add.type='button';add.textContent='Añadir al recorrido';add.onclick=()=>{
-        if(puntosGuardados().some(p=>p.pos && km(p.pos,f.pos)<.03)){$('favoritos-estado').textContent='Esta estación ya está en los puntos del recorrido.';return;}
-        if(puntosEditables.length>=8){$('favoritos-estado').textContent='Ya tienes ocho puntos intermedios.';return;}
-        agregarPunto({texto:f.nombre,pos:f.pos});$('favoritos-estado').textContent='Añadida al recorrido. Pulsa Buscar ruta para comprobarla.';
-      };
+      const add=botonServicios(f.pos);
       const remove=document.createElement('button');remove.type='button';remove.textContent='Quitar';remove.setAttribute('aria-label','Quitar favorito '+f.nombre);remove.onclick=()=>guardarFavorito(f);
       actions.append(add,remove);item.append(name,detail,actions);target.append(item);
     }
@@ -1589,7 +1601,7 @@ function mostrarOpcion(sesion, op) {
       const rel = document.createElement("span"); rel.style.left = p.llegada + "%"; rel.style.width = Math.max(0, p.objetivo - p.llegada) + "%"; bar.appendChild(rel);
       const c = document.createElement("span"); c.className = "carga";
       c.textContent = `Llegas con ${p.llegada.toFixed(0)} %, cargas hasta ${p.objetivo.toFixed(0)} % (${p.kwh.toFixed(0)} kWh). Potencia media estimada hacia la batería: ${(p.kwh / p.minutos * 60).toFixed(0)} kW${p.objetivo > 80 ? ". Por encima del 80 % la estimación es menos fiable" : ""}`;
-      li.append(t, m, fila, bar, c, botonFavorito({id:"ocm:"+p.id,nombre:p.nombre,pos:p.pos,operador:p.op,kw:p.kw}));
+      li.append(t, m, fila, bar, c, botonServicios(p.pos), botonFavorito({id:"ocm:"+p.id,nombre:p.nombre,pos:p.pos,operador:p.op,kw:p.kw}));
       const w = document.createElement("a"); w.className = "wz"; w.href = en.waze(p.pos); w.target = "_blank"; w.rel = "noopener";
       w.textContent = "Ir a esta parada con Waze"; li.appendChild(w);
       if (p.alternativas.length) {
@@ -1671,7 +1683,7 @@ function mostrarOpcion(sesion, op) {
         const detail = document.createElement('p');
         detail.textContent = station.address + ' · CCS: ' + station.connectors.map(c=>c.kw+' kW').join(', ') + '. ' + station.status;
         const date = document.createElement('p'); date.textContent = 'Fuente: '+data.source+' · Consulta: '+new Date(station.updatedAt || data.updatedAt).toLocaleString('es-ES');
-        target.append(title,detail,date,botonFavorito({id:'reve:'+station.id,nombre:station.name,pos:[+station.coordinates.longitude,+station.coordinates.latitude],kw:Math.max(...station.connectors.map(c=>c.kw))}));
+        target.append(title,detail,date,botonServicios([+station.coordinates.longitude,+station.coordinates.latitude]),botonFavorito({id:'reve:'+station.id,nombre:station.name,pos:[+station.coordinates.longitude,+station.coordinates.latitude],kw:Math.max(...station.connectors.map(c=>c.kw))}));
       }
       if (data.comparison) {
         const title = document.createElement('strong');title.textContent = 'Vilanova–El Campello · Estudio preliminar';target.append(title);
