@@ -1,33 +1,53 @@
 import http from 'node:http';
-import {readFile} from 'node:fs/promises';
+import {readFile,writeFile,mkdir,rename} from 'node:fs/promises';
+import {dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const HOUR = 3600000;
 // Destino fijo: el navegador no puede elegir URLs ni enviar la clave.
 const LOCATIONS = 'https://www.mapareve.es/api/external/v1/locations';
-export function createApp({key = '', fetcher = fetch, now = Date.now} = {}) {
+export function createApp({key = '', fetcher = fetch, now = Date.now, stateFile = null} = {}) {
   let cached = null, pending = null, calls = [], blockedUntil = 0;
+  let storageError = false;
+  const ready = stateFile ? readFile(stateFile,'utf8').then(text => {
+    const state = JSON.parse(text);
+    if (!Array.isArray(state.calls) || !state.calls.every(Number.isFinite) || !Number.isFinite(state.blockedUntil)) throw Error('Estado inválido');
+    calls = state.calls; blockedUntil = state.blockedUntil;
+    if (state.cached && Number.isFinite(state.cached.time)) cached = state.cached;
+  }).catch(e => { if (e.code !== 'ENOENT') storageError = true; }) : Promise.resolve();
+  async function persist() {
+    if (!stateFile) return;
+    try {
+      await mkdir(dirname(stateFile),{recursive:true});
+      await writeFile(stateFile+'.tmp',JSON.stringify({calls,blockedUntil,cached}),{mode:0o600});
+      await rename(stateFile+'.tmp',stateFile);
+    } catch { storageError = true; throw {status:503,message:'No se pudo guardar el estado de REVE. Consulta detenida para proteger la cuota.'}; }
+  }
   const json = (res, status, body) => {
     res.writeHead(status, {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
     res.end(JSON.stringify(body));
   };
   async function catalog() {
+    await ready;
+    if (storageError) throw {status:503,message:'Revisa el almacenamiento local de REVE antes de consultar.'};
     if (cached && now() - cached.time < HOUR) return {...cached, cached:true};
     if (pending) return pending;
     calls = calls.filter(t => now() - t < HOUR);
     if (now() < blockedUntil || calls.length >= 5) throw {status:429, message:'Límite de consultas alcanzado. Espera antes de volver a consultar.'};
     calls.push(now());
     pending = (async () => {
+      await persist(); // Reservar el intento antes de contactar con REVE.
       let response;
       try { response = await fetcher(LOCATIONS, {headers:{'x-api-key':key,Accept:'application/json'},signal:AbortSignal.timeout(30000),redirect:'error'}); }
       catch { throw {status:502,message:'No se pudo conectar con REVE. Inténtalo más tarde.'}; }
       if (!response.ok) {
-        if (response.status === 429) blockedUntil = now() + HOUR;
+        if (response.status === 429) { blockedUntil = now() + HOUR; await persist(); }
         throw {status:response.status === 429 ? 429 : 502,message:[401,403].includes(response.status) ? 'REVE ha rechazado la clave. Revísala en el servidor.' : 'REVE no ha podido completar la consulta.'};
       }
       let data;
       try { data = await response.json(); } catch { throw {status:502,message:'REVE devolvió una respuesta no válida.'}; }
       cached = {time:now(),data};
+      await persist();
       return {...cached,cached:false};
     })();
     try { return await pending; } finally { pending = null; }
@@ -55,7 +75,7 @@ export function createApp({key = '', fetcher = fetch, now = Date.now} = {}) {
   });
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const server = createApp({key:process.env.REVE_API_KEY?.trim()});
+  const server = createApp({key:process.env.REVE_API_KEY?.trim(),stateFile:fileURLToPath(new URL('./.cache/reve-state.json',import.meta.url))});
   const port = Number(process.env.PORT || 8877), host = process.env.HOST || '127.0.0.1';
   server.listen(port,host,()=>console.log(`Ruta EV v2 disponible en http://${host}:${port}`));
 }
