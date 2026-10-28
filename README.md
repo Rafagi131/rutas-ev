@@ -31,3 +31,15 @@ Para activar consultas reales, copiar `.env.example` como `.env` y completar `RE
 La documentación pública de REVE indica cinco solicitudes por hora: https://www.mapareve.es/docs/api/external/v1. El servicio limita a cinco intentos en una ventana móvil de una hora, también si fallan, y espera una hora al recibir 429. Caché y cuota se guardan en `.cache/reve-state.json`, excluido de Git. Los intentos se registran antes de contactar con REVE y sobreviven a reinicios. El servicio debe ejecutarse en un solo proceso; todavía no dispone de coordinación entre varias instancias. Si el archivo no se puede leer o guardar, se bloquean nuevas consultas para proteger la cuota. Confirmar las condiciones particulares de la clave antes de la primera consulta real.
 
 Con la clave configurada localmente podremos validar respuestas y paginación, enlazar cargadores y conectores con el recorrido, consultar tarifas y calcular costes. La comparación con Kia Charge Easy requerirá conocer su tarifa aplicable. Posteriormente añadiremos una vista de pruebas en Internet separada de la v1.
+
+## Selección económica entre estaciones comparables
+
+`comparar-paradas.mjs` compara candidatas con acceso y compatibilidad verificados, reserva suficiente y continuación viable. Utiliza el tiempo completo de viaje (incluidos desvío y recarga) y el tiempo de carga calculado para el EV3. Margen inicial configurable: 10 % sobre el viaje más rápido y 20 % sobre su recarga; son valores de desarrollo pendientes de validar con el recorrido real.
+
+Elige el método compatible de menor coste total verificado en EUR, con fuente y fecha. No interpreta precios desconocidos como gratuitos ni tarifas generales como precios confirmados de una estación. El coste de entrada debe representar todas las recargas necesarias para la alternativa, con suplementos; no basta el €/kWh aislado. Si faltan precios, el resultado se limita explícitamente a los precios verificados. El ahorro solo se calcula cuando también se conoce el coste de la estación de referencia.
+
+Este módulo tiene pruebas sintéticas y todavía no está conectado al resultado visible ni alimentado con tarifas REVE. Falta completar el catálogo y calcular accesos, desvíos y energía de las candidatas reales. La v1 no cambia.
+
+El laboratorio incluye «Ver estaciones contrastadas»: muestra la estación Torrent dirección Alicante identificada en REVE, con sus conectores y fecha de consulta. No consume API. El servidor admite `/api/reve/locations?party_id=ZUN&page=4` y `/api/reve/tariffs?page=1`; los filtros están cerrados y todas las páginas comparten cuota y caché persistente. Una página completa de 100 registros se marca como posiblemente incompleta, nunca como catálogo nacional completo.
+
+`tarifas-reve.mjs` interpreta únicamente tarifas simples de energía y cargo fijo sin restricciones, con IVA explícito y bloques de facturación. Las condiciones horarias y de ocupación se dejan pendientes. Esta interpretación todavía no está vinculada a un precio confirmado para Torrent ni al cálculo visible de rutas.
