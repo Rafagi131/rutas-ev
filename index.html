@@ -504,7 +504,7 @@ body{line-height:var(--interlineado)}
       <p class="ayuda">La v2 tiene sus propios ajustes e historial. Las rutas siguen usando Open Charge Map mientras validamos REVE.</p>
       <button type="button" id="reve-comprobar">Comprobar servicio REVE</button>
       <button type="button" id="reve-catalogo" disabled>Consultar catálogo REVE</button>
-      <button type="button" id="reve-validacion">Ver estaciones contrastadas</button><div id="reve-estaciones" class="ayuda" aria-live="polite"></div>
+      <button type="button" id="reve-validacion">Ver estaciones contrastadas</button><button type="button" id="estudio-ida">Migjorn 4 · Ver ida</button><button type="button" id="estudio-vuelta">Migjorn 4 · Ver vuelta</button><div id="estudio-mapa" style="height:260px;margin:10px 0" hidden aria-label="Mapa del estudio por Migjorn 4"></div><div id="estudio-resumen" class="ayuda" aria-live="polite"></div><div id="reve-estaciones" class="ayuda" aria-live="polite"></div>
       <p id="reve-estado" class="ayuda" role="status">Pendiente de comprobar. La clave se configura solo en el servidor.</p>
       <p class="ayuda">Los precios y la comparación con Kia Charge todavía no están integrados.</p>
     </div>
@@ -1569,6 +1569,33 @@ function mostrarOpcion(sesion, op) {
     if (!res.ok) throw new Error(data.error || 'No se pudo completar la consulta.');
     return data;
   }
+  let studyMap = null, studyLayers = null;
+  async function showStudy(index) {
+    const target = document.getElementById('estudio-resumen');
+    target.textContent = 'Leyendo estudio local…';
+    try {
+      const data = await request('/api/reve/route-study'), route = data.routes[index];
+      const container = document.getElementById('estudio-mapa');container.hidden = false;
+      if (!studyMap) { studyMap = L.map(container,{scrollWheelZoom:false});L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(studyMap); studyLayers = L.layerGroup().addTo(studyMap); }
+      studyLayers.clearLayers();
+      const line = L.polyline(route.geometry.map(p=>[p[1],p[0]]),{color:'#1468e8',weight:4}).addTo(studyLayers);
+      L.marker([39.89830,-0.12622]).addTo(studyLayers).bindPopup('Migjorn 4 · Parada estudiada');
+      const start = route.geometry[0],end = route.geometry[route.geometry.length-1];
+      L.circleMarker([start[1],start[0]],{radius:5,color:'#1468e8'}).addTo(studyLayers).bindPopup('Salida');
+      L.circleMarker([end[1],end[0]],{radius:5,color:'#172033'}).addTo(studyLayers).bindPopup('Llegada');
+      setTimeout(()=>{studyMap.invalidateSize();studyMap.fitBounds(line.getBounds(),{padding:[16,16]});},80);
+      target.textContent = '';
+      const heading = document.createElement('strong');heading.textContent = route.direction + ' · ' + route.km.toFixed(1) + ' km';target.append(heading);
+      const distance = document.createElement('p');distance.textContent = 'Hasta la parada: '+route.legs[0].km.toFixed(1)+' km. Después: '+route.legs[1].km.toFixed(1)+' km.';target.append(distance);
+      for (const scenario of route.scenarios) {
+        const text = document.createElement('p');
+        text.textContent = scenario.cons+' kWh/100 km: llegas con '+scenario.socLlegada.toFixed(0)+' %, cargas hasta '+scenario.socSalidaNecesaria.toFixed(0)+' % para terminar al 20 %. Recarga estimada: '+scenario.minutosCarga.toFixed(0)+' min. '+(scenario.viableConMax80?'Dentro del objetivo de carga hasta el 80 %.':'Supera el objetivo habitual del 80 %; requiere más carga.');target.append(text);
+      }
+      const note = document.createElement('p');note.textContent = data.assumptions;target.append(note);
+    } catch(e) {target.textContent = e.message;}
+  }
+  document.getElementById('estudio-ida').onclick = () => showStudy(0);
+  document.getElementById('estudio-vuelta').onclick = () => showStudy(1);
   document.getElementById('reve-validacion').onclick = async () => {
     const target = document.getElementById('reve-estaciones');
     target.textContent = 'Leyendo estaciones contrastadas…';
