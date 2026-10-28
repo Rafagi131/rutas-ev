@@ -458,6 +458,7 @@ body{line-height:var(--interlineado)}
     <label class="check"><input type="checkbox" id="solo-con-precio"> Calcular solo con recargas con precio REVE disponible</label><p class="ayuda">Modo de prueba con cobertura limitada a las tarifas descargadas. No busca la estación más barata.</p>
     <label class="check"><input type="checkbox" id="mostrar-precios" checked> Mostrar precios disponibles de REVE</label>
     <button id="calc">Buscar ruta <span aria-hidden="true">→</span></button>
+    <div id="aviso-precios" hidden><p class="ayuda">No hemos podido completar este trayecto con las tarifas descargadas. Esto no demuestra que falten cargadores ni precios en REVE.</p><button type="button" id="buscar-sin-precio" class="boton-favorito">Buscar ruta sin exigir precio</button></div>
     <p class="ayuda-principal">Menor consumo con hasta <strong id="margen-visible">10 %</strong> más de tiempo.</p>
     <details name="panel-principal" class="grupo" id="opciones-viaje">
       <summary><span class="icono-grupo" aria-hidden="true">↗</span><span class="texto-grupo"><strong>Para este viaje</strong><small id="resumen-viaje">18 °C · 100 km/h · Sin paradas</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
@@ -1322,9 +1323,11 @@ function explicarEquilibrio(e, margen) {
   if (e.equilibrada === e.rapida) return regla + "En estas opciones, la recomendada también es la más rápida.";
   return regla + `La recomendada ahorra ${ahorro.toFixed(1)} kWh y añade ${Math.ceil(extra)} min frente a la más rápida.`;
 }
+$("buscar-sin-precio").onclick = () => { $("solo-con-precio").checked = false; $("calc").click(); };
 $("calc").onclick = async () => {
   try {
     $("calc").disabled = true;
+    $("aviso-precios").hidden = true;
     cerrarSugerencias();
     vista("calculando");
     const ocmKey = $("ocmKey").value.trim();
@@ -1423,12 +1426,15 @@ $("calc").onclick = async () => {
       Object.assign(op, metricasRuta(op.r, plan, op.perfil, P, socIni, op.vias.length * minVia), {plan});
       sesion.opciones.push(op);
     }
-    if (!sesion.opciones.length) throw new Error((soloPrecio ? "No hay un plan viable usando únicamente los cargadores con tarifa REVE descargada. " : "") + (fallosCarga ? "No se pudo completar el cálculo por un problema al consultar los cargadores. " : "No se encontró un plan viable. ") + sesion.descartes.join(" "));
+    if (!sesion.opciones.length) {
+      if(soloPrecio){const error=new Error('No se ha encontrado una combinación de recargas con las tarifas REVE descargadas para este recorrido. La cobertura de precios es parcial; el viaje puede ser viable con otros cargadores.');error.codigo='PRECIOS_INCOMPLETOS';throw error;}
+      throw new Error((fallosCarga ? 'No se pudo completar el cálculo por un problema al consultar los cargadores. ' : 'No se encontró un plan viable. ')+sesion.descartes.join(' '));
+    }
     if (falloAltitud) sesion.descartes.unshift("No se pudo completar la altitud. Todas las rutas se han comparado sin desnivel.");
     sesion.eleccion = elegirRutas(sesion.opciones, margen);
     guardarPrefs();
     mostrarOpcion(sesion, sesion.eleccion.equilibrada);
-  } catch (e) { fallo(e.message); } finally { $("calc").disabled = false; }
+  } catch (e) { fallo(e.message); $("aviso-precios").hidden = e.codigo !== "PRECIOS_INCOMPLETOS"; } finally { $("calc").disabled = false; }
 };
 // Primer trazado disponible; la recomendación se decide al terminar la evaluación.
 async function mostrarTrazadoPrevio(rutas) {
