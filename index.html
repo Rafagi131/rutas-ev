@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="rutaev-version" content="2026-10-28-compacto-v1">
+<meta name="rutaev-version" content="2026-10-28-cabecera-v1">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ruta EV · Planificador eléctrico</title>
+<title>Ruta EV · Planificador</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap">
 <style>
@@ -406,27 +406,42 @@ body{line-height:var(--interlineado)}
 @media(min-width:900px){#formulario,#datos{top:calc(var(--alto-marca) + 16px);max-height:calc(100dvh - var(--alto-marca) - 32px)}}
 @media(max-width:899px){#formulario{padding:14px;left:8px;right:8px;top:calc(var(--alto-marca) + 8px);max-height:calc(100dvh - var(--alto-marca) - 16px - env(safe-area-inset-bottom))}#datos{left:8px;right:8px}.cabecera-viaje{margin-bottom:10px}.cabecera-viaje h1{font-size:34px}.form{gap:8px}}
 @media(max-width:359px){#formulario{padding:12px}.cabecera-viaje h1{font-size:30px}.marca-nombre{font-size:17px}.marca-simbolo{width:32px;height:32px}.contenido-grupo .campo:has(>input[type=number]){grid-template-columns:minmax(0,1fr) 80px}.dos-columnas>.campo:has(>input[type=number]){grid-template-columns:minmax(0,1fr)}.dos-columnas:has(>[hidden])>.campo:not([hidden]):has(>input[type=number]){grid-template-columns:minmax(0,1fr) 80px}}
+
+/* Cabecera con jerarquía común y damero de nueve cuadrados. */
+.marca-inicio{gap:10px}
+.marca-nombre,.marca-vehiculo{font-family:"DM Sans",system-ui,sans-serif;font-size:clamp(21px,6vw,26px);font-weight:700;line-height:1.05;letter-spacing:.012em;word-spacing:.015em;font-kerning:normal;font-feature-settings:"kern" 1;text-transform:uppercase;color:#f5f7fc;white-space:nowrap}
+.marca-nombre{display:block}
+.marca-descripcion{display:block;font-size:10px;line-height:1.2;margin-top:3px;letter-spacing:.045em}
+.marca-vehiculo{border:0;border-radius:0;background:none;margin:0;padding:0 0 15px}
+.marca-simbolo{width:36px;height:36px}
+.cabecera-viaje{grid-template-columns:minmax(0,1fr) auto;align-items:end}
+.acciones-cabecera{display:flex;flex-wrap:nowrap;align-items:center;gap:6px}
+.acciones-cabecera #ver-mapa,.acciones-cabecera #cerrar{margin:0;min-height:44px;padding:6px 9px;line-height:1.2;border:1px solid var(--line);border-radius:2px;background:var(--field);color:var(--ink);font-size:12px;font-weight:600;white-space:nowrap}
+.cabecera-viaje #cerrar{grid-column:auto;justify-self:auto}
+/* Franja inferior de ancho completo, incluida la zona segura del iPhone. */
+#estado,#estado.error{left:0;right:0;bottom:0;transform:none;width:100%;max-width:none;margin:0;border:0;border-top:2px solid var(--acc);border-radius:0;padding:12px max(16px,env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));background:var(--solid);box-shadow:0 -4px 18px #0002;text-align:left;font-size:14px;line-height:1.4;max-height:35dvh;overflow:auto;overflow-wrap:anywhere}
+#estado.error{border-top-color:var(--err);color:var(--err)}
+@media(max-width:359px){.marca-app{gap:8px}.marca-inicio{gap:8px}.marca-simbolo{width:32px;height:32px}.acciones-cabecera{gap:4px}.acciones-cabecera #ver-mapa,.acciones-cabecera #cerrar{padding:6px 7px}.cabecera-viaje h1{font-size:29px}}
 </style>
 </head>
 <body>
 <header class="marca-app" aria-label="Ruta EV">
   <button class="marca-inicio" id="marca-inicio" type="button" aria-label="Ruta EV · Abrir planificación">
-    <svg class="marca-simbolo" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path d="M12 34C12 13 36 35 36 14" fill="none" stroke="#6aa3ff" stroke-width="4" stroke-linecap="round"/><circle cx="36" cy="14" r="5" fill="#f0f4ff"/><circle cx="12" cy="34" r="5" fill="#438aff"/><circle cx="12" cy="34" r="2" fill="#171b23"/></svg>
-    <span><strong class="marca-nombre">Ruta EV</strong><span class="marca-descripcion">Planificador eléctrico</span></span>
+    <svg class="marca-simbolo" viewBox="0 0 36 36" aria-hidden="true" focusable="false"><rect x="0" y="0" width="10" height="10" fill="#397fff"/><rect x="13" y="0" width="10" height="10" fill="#ffffff"/><rect x="26" y="0" width="10" height="10" fill="#ffffff"/><rect x="0" y="13" width="10" height="10" fill="#ffffff"/><rect x="13" y="13" width="10" height="10" fill="#ffffff"/><rect x="26" y="13" width="10" height="10" fill="#ffffff"/><rect x="0" y="26" width="10" height="10" fill="#ffffff"/><rect x="13" y="26" width="10" height="10" fill="#ffffff"/><rect x="26" y="26" width="10" height="10" fill="#ffffff"/></svg>
+    <span><strong class="marca-nombre">RUTA EV</strong><span class="marca-descripcion">planificador</span></span>
   </button>
-  <span class="marca-vehiculo">Kia EV3</span>
+  <span class="marca-vehiculo">KIA EV3</span>
 </header>
 
 <div id="map"></div>
-<div id="estado" role="status"></div>
+<div id="estado" role="status" aria-atomic="true"></div>
 <div id="elegir" class="oculto"><span>Toca el mapa para elegir el destino</span><button id="cancelarmapa">Cancelar</button></div>
 <button id="abrir" class="oculto">Editar viaje</button>
 <button id="preparar" class="oculto">Preparar viaje</button>
 <section id="formulario" class="panel" aria-label="Preparar viaje">
   <header class="cabecera-viaje">
     <div><span class="sobre-titulo">PLANIFICA / 01</span><h1 lang="en">We're off!</h1></div>
-    <button type="button" id="ver-mapa" class="insignia">Ver mapa</button>
-    <button id="cerrar" class="oculto">Volver a la ruta</button>
+    <div class="acciones-cabecera"><button type="button" id="ver-mapa" class="insignia" aria-label="Ver mapa">Mapa</button><button type="button" id="cerrar" class="oculto" aria-label="Volver a la ruta">Volver</button></div>
   </header>
   <div class="form">
     <p class="proposito">Tu próximo viaje, con menos energía y tiempo.</p>
@@ -514,9 +529,15 @@ function km(a, b) { // distancia entre 2 puntos [lon,lat] en km
   const h = Math.sin(dLa/2)**2 + Math.cos(a[1]*r)*Math.cos(b[1]*r)*Math.sin(dLo/2)**2;
   return 12742 * Math.asin(Math.sqrt(h));
 }
-const estado = t => { $("estado").textContent = t; $("estado").className = ""; };
+const estado = t => { $("estado").textContent = t; $("estado").className = ""; $("estado").setAttribute("role","status"); };
+function ocultarAlerta() {
+  if ($("estado").classList.contains("error")) estado("");
+}
+// Captura para incluir también el mapa y los controles que detienen la propagación.
+document.addEventListener("click", ocultarAlerta, true);
+document.addEventListener("keydown", e => { if (e.key === "Escape") ocultarAlerta(); }, true);
 const fallo = t => {
-  $("estado").textContent = t; $("estado").className = "error"; vista("form");
+  $("estado").textContent = t; $("estado").className = "error"; $("estado").setAttribute("role","alert"); vista("form");
   if (/clave de Open Charge Map|rechazado el acceso a los cargadores/i.test(t)) {
     $("ajustes-ev").open = true; $("conexion-carga").open = true;
     $("ocmKey").scrollIntoView({block:"center"}); $("ocmKey").focus({preventScroll:true});
