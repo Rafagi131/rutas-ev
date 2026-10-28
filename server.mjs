@@ -1,4 +1,5 @@
 import http from 'node:http';
+import {cotizarParada} from './precios-paradas.mjs';
 import {crearConsultaServicios} from './servicios.mjs';
 import {readFile,writeFile,mkdir,rename} from 'node:fs/promises';
 import {dirname} from 'node:path';
@@ -71,7 +72,40 @@ export function createApp({key = '', fetcher = fetch, now = Date.now, stateFile 
       // Solo mismo origen. El servicio inicial se ejecuta en localhost.
       if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}` && req.headers.origin !== `https://${req.headers.host}`) return json(res,403,{error:'Origen no permitido.'});
       const isCatalog = ['/api/reve/locations','/api/reve/tariffs'].includes(url.pathname);
-      if (url.search && !isCatalog && url.pathname !== '/api/services') return json(res,400,{error:'Esta consulta no admite parámetros.'});
+      if (url.search && !isCatalog && !['/api/services','/api/reve/quote'].includes(url.pathname)) return json(res,400,{error:'Esta consulta no admite parámetros.'});
+      if (url.pathname === '/api/reve/priced-stations') {
+        await ready;
+        if(storageError)return json(res,503,{error:'No se pueden leer las tarifas guardadas.'});
+        const locations=new Map();
+        for(const [resource,record] of Object.entries(records))if(resource.includes('/locations'))for(const location of record.data||[])locations.set(location.id,location);
+        const connectorIds=new Set();
+        for(const location of locations.values())if(['ZUN','ERA','CHT'].includes(location.party_id))for(const e of location.evses||[])for(const c of e.connectors||[])if(c.standard==='IEC_62196_T2_COMBO')connectorIds.add(c.id);
+        let refreshed=0;
+        for(const [resource,record] of Object.entries(records)){
+          if(refreshed>=2)break;
+          if(resource.includes('/connectors/tariffs') && now()-record.time>=HOUR && record.data.some(t=>connectorIds.has(t.connector_id))){
+            refreshed++;
+            try{await catalog(resource);}catch{/* No usar como reciente una tarifa que no se pudo actualizar. */}
+          }
+        }
+        const stations=[];
+        for(const location of locations.values()){
+          const lat=Number(location.coordinates?.latitude),lon=Number(location.coordinates?.longitude),operador=location.cpo_name;
+          if(!Number.isFinite(lat)||!Number.isFinite(lon)||!operador)continue;
+          const quote=cotizarParada({lat,lon,operador,kwh:1},records,now());
+          if(quote.status==='available')for(const price of quote.prices)stations.push({id:'reve:'+price.connectorId,nombre:location.name,op:operador,pos:[lon,lat],kw:price.kw,connectorId:price.connectorId});
+        }
+        return json(res,200,{stations,note:'Solo tarifas completas y recientes descargadas. No es el catálogo completo ni confirma disponibilidad.'});
+      }
+      if (url.pathname === '/api/reve/quote') {
+        const p=url.searchParams;
+        if([...p.keys()].some(k=>!['lat','lon','op','kwh'].includes(k)||p.getAll(k).length!==1)||['lat','lon','op','kwh'].some(k=>!p.get(k)))return json(res,400,{error:'Datos de parada incompletos.'});
+        const lat=Number(p.get('lat')),lon=Number(p.get('lon')),kwh=Number(p.get('kwh')),operador=p.get('op');
+        if(!Number.isFinite(lat)||Math.abs(lat)>90||!Number.isFinite(lon)||Math.abs(lon)>180||!Number.isFinite(kwh)||kwh<0||kwh>200||operador.length>200)return json(res,400,{error:'Datos de parada no válidos.'});
+        await ready;
+        if(storageError)return json(res,503,{error:'No se puede leer la caché de tarifas.'});
+        return json(res,200,cotizarParada({lat,lon,kwh,operador},records,now()));
+      }
       if (url.pathname === '/api/services') {
         const p = url.searchParams;
         if ([...p.keys()].some(k=>!['lat','lon'].includes(k)||p.getAll(k).length!==1) || !p.get('lat') || !p.get('lon')) return json(res,400,{error:'Coordenadas no válidas.'});
