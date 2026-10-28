@@ -70,3 +70,22 @@ Se han retirado los botones y enlaces de restauración/aseos en favoritos y esta
 La nota indica restauración próxima y aseos expresamente etiquetados en OSM, con distancias en línea recta hasta 500 m. Un bar no implica aseo confirmado. Acceso peatonal y apertura requieren comprobación. Si el proveedor falla, se mantiene «información no disponible; pendiente de confirmar». En la prueba anterior de Migjorn el proveedor rechazó la consulta; no se han confirmado servicios reales allí.
 
 El buscador OCM descarta estaciones o conectores que la fuente marque expresamente como no operativos. Un estado desconocido no garantiza disponibilidad.
+
+## Ruta con precios disponibles (sin optimización económica)
+
+El formulario incluye «Mostrar precios disponibles de REVE». Al calcular, cada recarga consulta exclusivamente el catálogo y las tarifas ya guardados, sin consumir nuevas peticiones REVE. La asociación OCM–REVE exige un solo emplazamiento del operador reconocido a menos de 60 m; el precio se une por identificador exacto del conector CCS. Se muestran potencia del conector, precio con IVA, energía estimada, coste y fecha. La proximidad no sustituye la comprobación física del conector ni confirma el precio de una tarjeta de roaming.
+
+Solo se muestran tarifas completas que interpreta el lector conservador y que se han consultado en la última hora. Faltas de asociación, condiciones no interpretadas y páginas sin tarifa resultan en «Precio no disponible». En modo normal, la tarifa no altera la elección del motor. El modo «Calcular solo con recargas con precio REVE disponible» filtra candidatos por cobertura de precio; no busca la opción más barata. No se suma un total de viaje si faltan precios. Estimación sobre energía hacia la batería, sin pérdidas de carga.
+
+Validación real: página 28 de tarifas REVE incluye el conector `0ee90c66-72c5-4f3c-ac52-c422affa46b5`, CCS 340 kW de Zunder Torrent dirección Alicante: 0,4876 €/kWh sin IVA, 21 % de IVA, equivalente a aproximadamente 0,59 €/kWh. Para 17,512107 kWh del estudio preliminar, 10,33 €. Confirmación específica de ese conector, no del resto de conectores ni de Kia Charge Easy. La ficha de estaciones contrastadas permite comprobar ese precio mientras su consulta siga vigente.
+
+
+## Prueba de ruta con precio garantizado en la selección
+
+El modo «Calcular solo con recargas con precio REVE disponible» usa únicamente conectores de la caché con tarifa completa y reciente, proyectados a menos de 1 km del trazado. No crea puntos de paso obligatorios: el motor debe encontrar un plan viable con ellos, respetando reservas y tiempos. Si no lo encuentra, avisa y no devuelve silenciosamente un plan sin precios. Si no hace falta cargar, tampoco fuerza una parada. Esta proyección conserva la aproximación de desvíos existente: no verifica por sí sola el acceso real ni disponibilidad.
+
+Al entrar en este modo se intentan actualizar como máximo dos páginas de tarifas ya conocidas que contengan conectores CCS de operadores asociados, solo si han caducado. Usa el contador compartido REVE. Si la cuota o el proveedor impiden actualizar, no se presentan datos caducados como recientes. La cobertura depende de las páginas ya descargadas.
+
+Diagnóstico real: el modo normal eligió Consum Gilet (REMO Mobility), sin asociación de tarifa guardada; por eso no mostraba precio aunque Torrent sí tuviera uno. El nuevo modo permite probar rutas con la cobertura de tarifas disponible, sin optimización económica.
+
+Prueba completa en interfaz con el viaje guardado Vilanova–Alicante, batería de salida 90 % y mínimo destino 20 %: el modo con precios selecciona Zunder Torrent dirección Alicante, 26,53 kWh aproximadamente, 17 min de carga y 15,65 € estimados a 0,59 €/kWh. La nota del motor advierte de que ese plan supera la preferencia de 300 km entre paradas y conserva el máximo de 40 min de carga. El modo normal seleccionó Consum Gilet sin tarifa asociada. Las dos opciones de precios se conservan en las preferencias al calcular.
