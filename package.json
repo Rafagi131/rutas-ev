@@ -1,0 +1,10 @@
+{
+  "name": "ruta-ev-v2-reve",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=22.9"},
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.mjs",
+    "test": "node --test test/*.test.mjs"
+  }
+}
