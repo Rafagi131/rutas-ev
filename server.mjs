@@ -71,6 +71,12 @@ export function createApp({key = '', fetcher = fetch, now = Date.now, stateFile 
       const isCatalog = ['/api/reve/locations','/api/reve/tariffs'].includes(url.pathname);
       if (url.search && !isCatalog) return json(res,400,{error:'Esta consulta no admite parámetros.'});
       if (url.pathname === '/api/reve/health') return json(res,200,{configured:Boolean(key),provider:'REVE',version:2});
+      if (url.pathname === '/api/reve/route-study') {
+        try {
+          const data = JSON.parse(await readFile(new URL('./.cache/alquerias-study.json',import.meta.url),'utf8'));
+          return json(res,200,data);
+        } catch { return json(res,404,{error:'El estudio local de ida y vuelta todavía no está disponible.'}); }
+      }
       if (url.pathname === '/api/reve/validation') {
         const data = JSON.parse(await readFile(new URL('./config/estaciones-contrastadas.json',import.meta.url),'utf8'));
         return json(res,200,data);
