@@ -54,6 +54,15 @@ test('caché y cuota sobreviven al crear otra instancia',async t=>{
   const first=await setup(t,options);await first('/api/reve/locations');
   const second=await setup(t,options);assert.equal((await(await second('/api/reve/locations')).json()).cached,true);assert.equal(count,1);
   const state=JSON.parse(await readFile(stateFile,'utf8'));assert.equal(state.calls.length,1);assert.ok(!JSON.stringify(state).includes('secreto-ficticio'));
-  state.cached=null;state.calls=Array(5).fill(Date.now());await writeFile(stateFile,JSON.stringify(state));
+  state.cached=null;state.records={};state.calls=Array(5).fill(Date.now());await writeFile(stateFile,JSON.stringify(state));
   const third=await setup(t,options);assert.equal((await third('/api/reve/locations')).status,429);assert.equal(count,1);
+});
+test('páginas y tarifas comparten cuota, caché independiente y filtros cerrados',async t=>{
+  const urls=[];const req=await setup(t,{key:'ficticia',fetcher:async url=>{urls.push(url);return Response.json([{id:url}]);}});
+  for(const path of ['/api/reve/locations?party_id=ZUN&page=4','/api/reve/tariffs?page=1'])assert.equal((await req(path)).status,200);
+  assert.equal((await(await req('/api/reve/locations?page=4&party_id=ZUN')).json()).cached,true);
+  assert.equal(urls.length,2);assert.ok(urls[1].endsWith('/connectors/tariffs'));
+  for(const path of ['/api/reve/locations?page=0','/api/reve/tariffs?party_id=ZUN','/api/reve/locations?page=1&page=2'])assert.equal((await req(path)).status,400);
+  for(let page=5;page<=8;page++)await req('/api/reve/locations?party_id=ZUN&page='+page);
+  assert.equal(urls.length,5);
 });
