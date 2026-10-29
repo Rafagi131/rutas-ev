@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="rutaev-version" content="2026-10-29-dos-corredores-v1">
+<meta name="rutaev-version" content="2026-10-29-vias-principales-v1">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ruta EV · Planificador</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -595,13 +595,22 @@ async function geocodificar(texto) {
   return [parseFloat(j[0].lon), parseFloat(j[0].lat)];
 }
 
-function resumirVias(r) {
+function detalleVias(r) {
   const distancias=new Map();
   for(const leg of r.legs||[])for(const step of leg.steps||[]){
-    const refs=(step.ref||'').split(';').map(x=>x.trim()).filter(x=>/^(?:AP|A|C|N|V|CV|B|E)-?\d+/.test(x));
-    for(const ref of refs)distancias.set(ref,(distancias.get(ref)||0)+(step.distance||0));
+    // Una referencia europea concurrente no constituye otra carretera.
+    const refs=(step.ref||'').split(';').map(x=>x.trim()).filter(x=>/^(?:AP|A|C|N|V|CV|B)-?\d+/.test(x));
+    if(!refs.length)continue;
+    const ref=refs[0];distancias.set(ref,(distancias.get(ref)||0)+(step.distance||0));
   }
-  return [...distancias].filter(([,metros])=>metros>=10000).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([ref])=>ref);
+  return [...distancias].filter(([,metros])=>metros>=1000).sort((a,b)=>b[1]-a[1]).map(([ref,metros])=>({ref,km:metros/1000}));
+}
+function resumirVias(r) {
+  return detalleVias(r).filter(v=>v.km>=10).slice(0,4).map(v=>v.ref);
+}
+function tieneNacional(r) {
+  const metros=detalleVias(r).filter(v=>/^N-?\d+/.test(v.ref)).reduce((sum,v)=>sum+v.km*1000,0);
+  return metros>=Math.max(10000,r.distance*.1);
 }
 function trazadosDistintos(a,b) {
   // Compara aristas sin orientación, redondeadas a unos 100 m.
@@ -658,12 +667,13 @@ async function ruta(a, b, vias = []) {
       }catch{notas.push('No se ha podido verificar el recorrido por '+corredor.nombre+'.');}
     }
     if(propuestas.length){
-      // Las dos propuestas solicitadas tienen prioridad sobre variantes genéricas.
+      // Conserva también otras alternativas: una nacional no debe desaparecer al añadir A/AP.
       const originales=raw.filter(r=>propuestas.every(prev=>trazadosDistintos({coords:r.geometry.coordinates},{coords:prev.geometry.coordinates})));
-      raw.splice(0,raw.length,...propuestas,...(propuestas.length<2?originales.slice(0,1):[]));
+      raw.splice(0,raw.length,...propuestas,...originales);
     }
   }
-  const resultado=raw.slice(0,3).map(f => ({...aplicarTiempo({coords:f.geometry.coordinates,total:f.distance/1000,min:f.duration/60},$('modoTiempo').value,num('vel',100)),varianteCorredor:!!f.varianteCorredor,corredorVia:f.corredorVia,corredorNombre:f.corredorNombre,viasPrincipales:resumirVias(f)}));
+  const candidatas=[...raw].sort((a,b)=>Number(!!b.corredorNombre)-Number(!!a.corredorNombre)||Number(tieneNacional(b))-Number(tieneNacional(a)));
+  const resultado=candidatas.slice(0,5).map(f => ({...aplicarTiempo({coords:f.geometry.coordinates,total:f.distance/1000,min:f.duration/60},$('modoTiempo').value,num('vel',100)),varianteCorredor:!!f.varianteCorredor,corredorVia:f.corredorVia,corredorNombre:f.corredorNombre,viasPrincipales:resumirVias(f),detalleVias:detalleVias(f)}));
   resultado.notas=notas;
   return resultado;
 }
@@ -1485,6 +1495,7 @@ function mostrarOpcion(sesion, op) {
     const intro = document.createElement("p"); intro.className = "explicacion";
     intro.textContent = sesion.opciones.length > 1 ? explicarEquilibrio(sesion.eleccion, sesion.margen) : "Solo hay una opción viable evaluada; no podemos comparar el equilibrio entre rutas alternativas.";
     alternativas.appendChild(intro);
+    const criterioVias=document.createElement('p');criterioVias.className='meta';criterioVias.textContent='Se comparan recorridos por carreteras nacionales, autovías y autopistas que se hayan obtenido. La recomendación usa consumo y tiempo total, incluidas recargas, sin dar prioridad por categoría de vía.';alternativas.appendChild(criterioVias);
     if(sesion.opciones.some(o=>o.r.corredorNombre)){const nota=document.createElement('p');nota.className='meta';nota.textContent='AP-7 y A-7 distinguen el corredor costero o interior entre Alicante y Valencia; pueden compartir vías en el resto del viaje.';alternativas.appendChild(nota);}
     const lista = document.createElement("div"); lista.className = "comparacion"; lista.setAttribute("aria-label", "Rutas disponibles");
     sesion.opciones.forEach((otra, i) => {
@@ -1500,12 +1511,15 @@ function mostrarOpcion(sesion, op) {
       const datos = document.createElement("span");
       datos.textContent = `${duracion(otra.tTotal)} · ${otra.r.total.toFixed(0)} km · ${otra.energia.toFixed(1)} kWh · ${otra.plan.paradas.length} recargas · Llegada ${otra.socFinal.toFixed(0)} %`;
       const diferencia = document.createElement("span"); diferencia.className = "diferencia-ruta"; diferencia.textContent = otra === sesion.eleccion.equilibrada ? "Referencia para comparar las alternativas" : compararConRecomendada(otra,sesion.eleccion.equilibrada);
-      boton.append(nombre, datos, diferencia); boton.onclick = () => { mostrarOpcion(sesion, otra); if ($("alternativas-ruta")) $("alternativas-ruta").open = true; const activo = $("res").querySelector('[aria-pressed="true"]'); if (activo) activo.focus({preventScroll:true}); };
+      const vias=document.createElement('span');vias.className='meta';
+      const principales=(otra.r.detalleVias||[]).filter(v=>v.km>=10);
+      vias.textContent=principales.length?'Vías principales: '+principales.map(v=>`${v.ref} (${Math.round(v.km)} km)`).join(' · '):'Vías principales pendientes de identificar.';
+      boton.append(nombre, datos, vias, diferencia); boton.onclick = () => { mostrarOpcion(sesion, otra); if ($("alternativas-ruta")) $("alternativas-ruta").open = true; const activo = $("res").querySelector('[aria-pressed="true"]'); if (activo) activo.focus({preventScroll:true}); };
       lista.appendChild(boton);
     });
     alternativas.appendChild(lista);
     const limites = document.createElement("p"); limites.className = "meta";
-    limites.textContent = `${sesion.opciones.length} de ${sesion.total} rutas evaluadas tienen un plan viable. ${sesion.total === 1 ? "Solo se ha obtenido un recorrido distinto; no hay una segunda propuesta que comparar. " : ""}${sesion.puntosVia.length ? "Con paradas intermedias se evalúa un único recorrido. " : ""}Estimaciones sin tráfico ni disponibilidad en directo. Se usa tu velocidad media prevista para el consumo de todas las rutas. El tiempo usa el modo elegido: OSRM o distancia dividida por tu media; ninguna opción incorpora tráfico en directo. Los accesos a cargadores no se recalculan: se aplica el extra fijo por parada. Comparación limitada a las alternativas recibidas.`;
+    limites.textContent = `${sesion.opciones.length} de ${sesion.total} rutas evaluadas tienen un plan viable. ${sesion.total === 1 ? "Solo se ha obtenido un recorrido distinto; no hay una segunda propuesta que comparar. " : ""}${sesion.puntosVia.length ? "Con paradas intermedias se evalúa un único recorrido. " : ""}Estimaciones sin tráfico ni disponibilidad en directo. Se usa tu velocidad media prevista para el consumo de todas las rutas. El tiempo usa el modo elegido: OSRM o distancia dividida por tu media; ninguna opción incorpora tráfico en directo. Los accesos a cargadores no se recalculan: se aplica el extra fijo por parada. Comparación limitada a las alternativas recibidas. El servidor actual no permite forzar una búsqueda sin autovías/autopistas; no se garantiza obtener un recorrido por nacionales para cada viaje.`;
     const alcance = document.createElement("p"); alcance.className = "meta";
     alcance.textContent = `${sesion.opciones.length} de ${sesion.total} rutas viables · Sin tráfico · Tiempo ${r.modoTiempo === "media" ? "según tu media" : "OSRM"}.`;
     if (sesion.total === 1) alcance.textContent += " Solo se ha obtenido una ruta; no hay alternativas que comparar.";
