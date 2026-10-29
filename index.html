@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="rutaev-version" content="2026-10-28-mapa-previo-v1">
+<meta name="rutaev-version" content="2026-10-29-dos-corredores-v1">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ruta EV · Planificador</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -595,14 +595,77 @@ async function geocodificar(texto) {
   return [parseFloat(j[0].lon), parseFloat(j[0].lat)];
 }
 
-async function ruta(a, b, vias = []) {
-  const u = `https://router.project-osrm.org/route/v1/driving/${[a, ...vias, b].map(p => p[0] + "," + p[1]).join(";")}?overview=full&geometries=geojson&alternatives=${vias.length ? "false" : "true"}`;
-  const r = await fetchConLimite(u);
+function resumirVias(r) {
+  const distancias=new Map();
+  for(const leg of r.legs||[])for(const step of leg.steps||[]){
+    const refs=(step.ref||'').split(';').map(x=>x.trim()).filter(x=>/^(?:AP|A|C|N|V|CV|B|E)-?\d+/.test(x));
+    for(const ref of refs)distancias.set(ref,(distancias.get(ref)||0)+(step.distance||0));
+  }
+  return [...distancias].filter(([,metros])=>metros>=10000).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([ref])=>ref);
+}
+function trazadosDistintos(a,b) {
+  // Compara aristas sin orientación, redondeadas a unos 100 m.
+  const edges=r=>{const pts=r.coords.map(p=>p.map(n=>n.toFixed(3)).join(','));return new Set(pts.slice(1).map((p,i)=>[pts[i],p].sort().join('/')).filter(e=>e.split('/')[0]!==e.split('/')[1]));};
+  const x=edges(a),y=edges(b);
+  if(!x.size||!y.size)return false;
+  let comunes=0;for(const e of x)if(y.has(e))comunes++;
+  return comunes/Math.min(x.size,y.size)<0.95;
+}
+function corredoresMediterraneo(a,b) {
+  const sur=p=>p[1]>=38&&p[1]<38.65&&p[0]>=-.85&&p[0]<=.15;
+  const norte=p=>p[1]>=39.5&&p[1]<=43&&p[0]>=-1&&p[0]<=3.5;
+  if(!((sur(a)&&norte(b))||(sur(b)&&norte(a))))return [];
+  return [
+    {nombre:'AP-7 · costa (Benissa)',ref:'AP-7',pos:[.051122,38.726510]},
+    {nombre:'A-7 · interior (Alcoy)',ref:'A-7',pos:[-.453884,38.799182]}
+  ];
+}
+function verificarPasoCorredor(r,corredor) {
+  // Exige la referencia en un tramo cercano al punto que define el corredor.
+  return (r.legs||[]).some(l=>(l.steps||[]).some(s=>
+    (s.ref||'').split(';').map(x=>x.trim()).includes(corredor.ref)&&
+    (s.geometry?.coordinates||[]).some(p=>km(p,corredor.pos)<3)));
+}
+async function pedirTrazados(puntos, alternativas=2, opciones={}) {
+  const u = `https://router.project-osrm.org/route/v1/driving/${puntos.map(p => p[0] + "," + p[1]).join(";")}?overview=full&geometries=geojson&alternatives=${alternativas}`;
+  const extra=new URLSearchParams({steps:'true'});
+  if(opciones.bearings)extra.set('bearings',opciones.bearings);
+  if(opciones.radiuses)extra.set('radiuses',opciones.radiuses);
+  const r = await fetchConLimite(u+'&'+extra);
   if (!r.ok) throw new Error("Cálculo de ruta falló (" + r.status + ")");
   const j = await r.json();
   if (j.code !== "Ok") throw new Error("No se pudo calcular la ruta: " + j.code);
   if (!j.routes || !j.routes.length) throw new Error("El servicio no devolvió rutas.");
-  return j.routes.slice(0, 3).map(f => aplicarTiempo({coords: f.geometry.coordinates, total: f.distance/1000, min: f.duration/60}, $("modoTiempo").value, num("vel",100)));
+  return j;
+}
+async function ruta(a, b, vias = []) {
+  const respuesta=await pedirTrazados([a,...vias,b],vias.length?'false':2);
+  const raw=respuesta.routes.filter((r,i,all)=>all.slice(0,i).every(prev=>trazadosDistintos({coords:r.geometry.coordinates},{coords:prev.geometry.coordinates}))).slice(0,3);
+  const notas=[];
+  const corredores=vias.length?[]:corredoresMediterraneo(a,b);
+  if(corredores.length) {
+    const propuestas=[];
+    for(const corredor of corredores){
+      estado('Evaluando corredor '+corredor.nombre+'…');
+      try {
+        const norte=b[1]>a[1];
+        const extra=await pedirTrazados([a,corredor.pos,b],'false',{bearings:`;${norte?0:180},90;`,radiuses:';200;'});
+        const r=extra.routes[0],wp=extra.waypoints?.[1];
+        if(!wp||!Array.isArray(wp.location)||wp.distance>200||!verificarPasoCorredor(r,corredor))throw Error('Paso por la vía sin confirmar');
+        r.corredorNombre=corredor.nombre;r.corredorVia=wp.location;r.varianteCorredor=true;
+        if(propuestas.every(prev=>trazadosDistintos({coords:r.geometry.coordinates},{coords:prev.geometry.coordinates})))propuestas.push(r);
+        else notas.push('Los corredores calculados coinciden: no se presentan como dos rutas distintas.');
+      }catch{notas.push('No se ha podido verificar el recorrido por '+corredor.nombre+'.');}
+    }
+    if(propuestas.length){
+      // Las dos propuestas solicitadas tienen prioridad sobre variantes genéricas.
+      const originales=raw.filter(r=>propuestas.every(prev=>trazadosDistintos({coords:r.geometry.coordinates},{coords:prev.geometry.coordinates})));
+      raw.splice(0,raw.length,...propuestas,...(propuestas.length<2?originales.slice(0,1):[]));
+    }
+  }
+  const resultado=raw.slice(0,3).map(f => ({...aplicarTiempo({coords:f.geometry.coordinates,total:f.distance/1000,min:f.duration/60},$('modoTiempo').value,num('vel',100)),varianteCorredor:!!f.varianteCorredor,corredorVia:f.corredorVia,corredorNombre:f.corredorNombre,viasPrincipales:resumirVias(f)}));
+  resultado.notas=notas;
+  return resultado;
 }
 
 function errorAccesoOCM(status) {
@@ -1316,7 +1379,7 @@ $("calc").onclick = async () => {
     const rutas = await ruta(a, b, puntosVia.map(v => v.pos));
     await mostrarTrazadoPrevio(rutas);
 
-    const sesion = {a, b, P, minVia, margen, socIni, puntosVia, total:rutas.length, opciones:[], descartes:[], salida:Date.now(),
+    const sesion = {a, b, P, minVia, margen, socIni, puntosVia, total:rutas.length, opciones:[], descartes:[...(rutas.notas||[])], salida:Date.now(),
       origenTexto:$("origen").value, destinoTexto:$("destino").value, viasTexto:$("vias").value, puntosTexto:puntosGuardados(), op:origenFijo ? origenFijo.pos : null, dp:destinoFijo ? destinoFijo.pos : null};
     const ops = $("ops").value.toLowerCase().split(",").map(x => x.trim()).filter(Boolean);
     const cache = new Map(), preparadas = [];
@@ -1417,16 +1480,19 @@ function mostrarOpcion(sesion, op) {
     });
     $("res").appendChild(principal);
     const distancia = document.createElement("p"); distancia.className = "meta"; distancia.textContent = `${r.total.toFixed(0)} km · Llegada estimada ${new Date(sesion.salida + op.tTotal * 60000).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})} si sales ahora · Sin tráfico en directo.`; $("res").appendChild(distancia);
-    const alternativas = document.createElement("details"), tituloAlternativas = document.createElement("summary"); alternativas.id = "alternativas-ruta"; alternativas.className = "detalle-resultados"; tituloAlternativas.textContent = `Comparar alternativas (${sesion.opciones.length})`; alternativas.appendChild(tituloAlternativas); if (sesion.opciones.length > 1) $("res").appendChild(alternativas);
+    const alternativas = document.createElement("details"), tituloAlternativas = document.createElement("summary"); alternativas.id = "alternativas-ruta"; alternativas.className = "detalle-resultados"; tituloAlternativas.textContent = `Comparar alternativas (${sesion.opciones.length})`; alternativas.appendChild(tituloAlternativas); alternativas.open = true; $("res").appendChild(alternativas);
     const info = document.createElement("details"), tituloInfo = document.createElement("summary"); info.className = "detalle-resultados"; tituloInfo.textContent = "Detalles del cálculo"; info.appendChild(tituloInfo);
     const intro = document.createElement("p"); intro.className = "explicacion";
     intro.textContent = sesion.opciones.length > 1 ? explicarEquilibrio(sesion.eleccion, sesion.margen) : "Solo hay una opción viable evaluada; no podemos comparar el equilibrio entre rutas alternativas.";
     alternativas.appendChild(intro);
+    if(sesion.opciones.some(o=>o.r.corredorNombre)){const nota=document.createElement('p');nota.className='meta';nota.textContent='AP-7 y A-7 distinguen el corredor costero o interior entre Alicante y Valencia; pueden compartir vías en el resto del viaje.';alternativas.appendChild(nota);}
     const lista = document.createElement("div"); lista.className = "comparacion"; lista.setAttribute("aria-label", "Rutas disponibles");
     sesion.opciones.forEach((otra, i) => {
       const boton = document.createElement("button"); boton.className = "ruta-opcion"; boton.setAttribute("aria-pressed", String(otra === op));
       const nombre = document.createElement("strong");
       const etiquetas = [];
+      if(otra.r.corredorNombre)etiquetas.push("Vía "+otra.r.corredorNombre);
+      else if(otra.r.viasPrincipales?.length)etiquetas.push("Por "+otra.r.viasPrincipales.join(" / "));
       if (otra === sesion.eleccion.equilibrada) etiquetas.push("Recomendada");
       if (otra === sesion.eleccion.rapida) etiquetas.push("Más rápida");
       if (otra === sesion.eleccion.ahorro) etiquetas.push("Menor consumo");
@@ -1439,13 +1505,14 @@ function mostrarOpcion(sesion, op) {
     });
     alternativas.appendChild(lista);
     const limites = document.createElement("p"); limites.className = "meta";
-    limites.textContent = `${sesion.opciones.length} de ${sesion.total} rutas evaluadas tienen un plan viable. ${sesion.total === 1 ? "El servicio solo ofrece una ruta para este viaje; no hay alternativas que comparar. " : ""}${sesion.puntosVia.length ? "Con paradas intermedias se evalúa un único recorrido. " : ""}Estimaciones sin tráfico ni disponibilidad en directo. Se usa tu velocidad media prevista para el consumo de todas las rutas. El tiempo usa el modo elegido: OSRM o distancia dividida por tu media; ninguna opción incorpora tráfico en directo. Los accesos a cargadores no se recalculan: se aplica el extra fijo por parada. Comparación limitada a las alternativas recibidas.`;
+    limites.textContent = `${sesion.opciones.length} de ${sesion.total} rutas evaluadas tienen un plan viable. ${sesion.total === 1 ? "Solo se ha obtenido un recorrido distinto; no hay una segunda propuesta que comparar. " : ""}${sesion.puntosVia.length ? "Con paradas intermedias se evalúa un único recorrido. " : ""}Estimaciones sin tráfico ni disponibilidad en directo. Se usa tu velocidad media prevista para el consumo de todas las rutas. El tiempo usa el modo elegido: OSRM o distancia dividida por tu media; ninguna opción incorpora tráfico en directo. Los accesos a cargadores no se recalculan: se aplica el extra fijo por parada. Comparación limitada a las alternativas recibidas.`;
     const alcance = document.createElement("p"); alcance.className = "meta";
     alcance.textContent = `${sesion.opciones.length} de ${sesion.total} rutas viables · Sin tráfico · Tiempo ${r.modoTiempo === "media" ? "según tu media" : "OSRM"}.`;
     if (sesion.total === 1) alcance.textContent += " Solo se ha obtenido una ruta; no hay alternativas que comparar.";
     info.appendChild(alcance);
     const metodo = document.createElement("details"), resumen = document.createElement("summary");
     resumen.textContent = "Cómo se calcula y límites"; metodo.append(resumen, limites); info.appendChild(metodo);
+    if(sesion.opciones.length<2){const aviso=document.createElement('p');aviso.className='aviso';aviso.textContent=sesion.total<2?'No se ha obtenido una segunda propuesta distinta por vías principales.':'Solo una de las propuestas evaluadas cumple los parámetros del viaje. Consulta los motivos de descarte.';$('res').appendChild(aviso);}
     sesion.descartes.forEach(texto => { const aviso = document.createElement("p"); aviso.className = "aviso"; aviso.textContent = texto; $("res").appendChild(aviso); });
     const detalle = document.createElement("h2"); detalle.textContent = plan.paradas.length || vias.length ? "Paradas del viaje" : "Viaje directo, sin recargas"; $("res").appendChild(detalle);
     const nP = plan.paradas.length;
@@ -1478,7 +1545,9 @@ function mostrarOpcion(sesion, op) {
     const llegada = document.createElement("p"); llegada.className = "explicacion";
     llegada.textContent = `Batería estimada al destino: ${op.socFinal.toFixed(0)} % (mínimo pedido: ${P.minDestino} %) · Mínimo estimado en ruta: ${Math.floor(op.socMinimo + 1e-9)} % · Llegada estimada si sales al calcular: ${new Date(sesion.salida + op.tTotal * 60000).toLocaleTimeString("es-ES", {hour:"2-digit", minute:"2-digit"})}.`;
     info.appendChild(llegada);
-    const todos = [...plan.paradas, ...vias].sort((x, y) => x.km - y.km);
+    const puntosCorredor=[];
+    if(r.corredorVia){let idx=0,menor=Infinity;r.coords.forEach((q,j)=>{const d=km(q,r.corredorVia);if(d<menor){menor=d;idx=j;}});puntosCorredor.push({pos:r.corredorVia,km:op.acum[idx]});}
+    const todos = [...plan.paradas, ...vias,...puntosCorredor].sort((x, y) => x.km - y.km);
     const en = enlaces(a, b, todos);
     const ex = document.createElement("div"); ex.className = "exportar";
     const tx = document.createElement("span"); tx.className = "meta"; tx.textContent = "Navegar (la aplicación externa puede cambiar el recorrido):";
