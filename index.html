@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="rutaev-version" content="2.0">
+<meta name="rutaev-version" content="3.0">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ruta EV · Planificador · v2</title>
+<title>Ruta EV · Planificador · v3</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Montserrat:wght@400;500;600;700;800&family=Space+Grotesk:wght@700&display=swap">
 <style>
@@ -716,9 +716,10 @@ input[type=range]::-moz-range-track,input[type=range]::-moz-range-progress{heigh
 .exportar a{display:flex;align-items:center;justify-content:center;white-space:nowrap;padding:8px 5px;font-size:10px;min-width:0}
 @media(max-width:359px){.marca-app{padding-left:16px;padding-right:16px;gap:8px}.marca-derecha{width:90px}.marca-derecha .marca-vehiculo{font-size:18px}.marca-derecha .marca-descripcion{font-size:10px}.version-app{left:16px}}
 </style>
+<style>.perfil .parada-l{stroke:#30383d;stroke-width:2;vector-effect:non-scaling-stroke}.creditos-app p strong{color:var(--ink)}</style>
 </head>
 <body>
-<header class="marca-app" aria-label="Ruta EV versión 2"><span class="version-app">v2</span>
+<header class="marca-app" aria-label="Ruta EV">
   <button class="marca-inicio" id="marca-inicio" type="button" aria-label="Ruta EV · Abrir planificación">
     <svg class="marca-simbolo" viewBox="0 0 36 36" aria-hidden="true" focusable="false"><rect x="0" y="0" width="10" height="10" fill="#397fff"/><rect x="13" y="0" width="10" height="10" fill="#ffffff"/><rect x="26" y="0" width="10" height="10" fill="#ffffff"/><rect x="0" y="13" width="10" height="10" fill="#ffffff"/><rect x="13" y="13" width="10" height="10" fill="#ffffff"/><rect x="26" y="13" width="10" height="10" fill="#ffffff"/><rect x="0" y="26" width="10" height="10" fill="#ffffff"/><rect x="13" y="26" width="10" height="10" fill="#ffffff"/><rect x="26" y="26" width="10" height="10" fill="#ffffff"/></svg>
     <strong class="marca-nombre">RUTA EV</strong>
@@ -791,7 +792,7 @@ input[type=range]::-moz-range-track,input[type=range]::-moz-range-progress{heigh
     </details>
   </div>
   <details name="panel-principal" class="grupo" id="historial" hidden><summary><span class="icono-grupo" aria-hidden="true">↶</span><span class="texto-grupo"><strong>Viajes recientes</strong><small id="resumen-historial">Recuperar un viaje guardado</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><section id="viajes" class="contenido-grupo"></section></details>
-  <details name="panel-principal" class="grupo creditos-app"><summary><span class="icono-grupo" aria-hidden="true">i</span><span class="texto-grupo"><strong>Información y créditos</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p></details>
+  <details name="panel-principal" class="grupo creditos-app"><summary><span class="icono-grupo" aria-hidden="true">i</span><span class="texto-grupo"><strong>Información y créditos</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary><p><strong>Versión 3</strong><br>Idea y desarrollo propiedad de Rafa Galdó</p><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p></details>
 </section>
 <section id="datos" class="panel oculto">
   <div id="barra"><h2>Ruta seleccionada</h2><div class="acciones-ruta"><button id="abrir" class="oculto" aria-label="Editar viaje">editar</button><button id="plegar" aria-label="Plegar resultados" aria-expanded="true">−</button></div></div>
@@ -1287,7 +1288,7 @@ function dibujarPerfil(perfil, paradas, alMover) {
   svg.appendChild(el("text", {x: W - m.r, y: H - 6, "text-anchor": "end", class: "eje"}, Math.round(total) + " km"));
   paradas.forEach((p, i) => {
     svg.appendChild(el("line", {x1: X(p.km).toFixed(1), x2: X(p.km).toFixed(1), y1: m.t, y2: H - m.b, class: "parada-l"}));
-    svg.appendChild(el("text", {x: X(p.km).toFixed(1), y: m.t - 4, "text-anchor": "middle", class: "eje num"}, String(i + 1)));
+    svg.appendChild(el("text", {x: X(p.km).toFixed(1), y: m.t - 4, "text-anchor": "middle", class: "eje num"}, p.etiqueta || String(i + 1)));
   });
   const guia = el("line", {y1: m.t, y2: H - m.b, class: "guia", visibility: "hidden"});
   const punto = el("circle", {r: 4, class: "punto", visibility: "hidden"});
@@ -1878,13 +1879,13 @@ function mostrarOpcion(sesion, op) {
     const ex = document.createElement("div"); ex.className = "exportar";
     const tx = document.createElement("span"); tx.className = "meta"; tx.textContent = "Navegar (la aplicación externa puede cambiar el recorrido):";
     ex.appendChild(tx);
-    [["Apple Maps", en.apple], ["Google Maps", en.google], ["a destino", en.waze(b)]].forEach(([nombre, url]) => {
+    [["Apple Maps", en.apple], ["Google Maps", en.google], ["Waze", en.waze(b)]].forEach(([nombre, url]) => {
       const l = document.createElement("a"); l.href = url; l.target = "_blank"; l.rel = "noopener"; l.textContent = nombre; ex.appendChild(l);
     });
 
     if (perfil.alt) {
       const tg = document.createElement("p"); tg.className = "meta";
-      tg.textContent = "Altitud a lo largo de la ruta. Las líneas numeradas son las paradas de carga. Pasa el cursor o el dedo por encima para ver el valor y su posición en el mapa.";
+      tg.textContent = "Altitud a lo largo de la ruta. Las líneas verticales numeradas indican las recargas y las marcadas con ★, las paradas elegidas. Pasa el cursor o el dedo por encima para ver el valor y su posición en el mapa.";
       let marca = null;
       const alMover = km => {
         if (marca) { capas.removeLayer(marca); marca = null; }
@@ -1893,7 +1894,7 @@ function mostrarOpcion(sesion, op) {
         while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (acum[mid] <= km) lo = mid; else hi = mid; }
         marca = L.circleMarker([r.coords[lo][1], r.coords[lo][0]], {radius: 7, color: "#f59e0b", fillOpacity: 1}).addTo(capas);
       };
-      info.appendChild(tg); info.appendChild(dibujarPerfil(perfil, plan.paradas, alMover));
+      info.appendChild(tg); info.appendChild(dibujarPerfil(perfil, [...plan.paradas.map((p,i) => ({...p, etiqueta:String(i+1)})), ...vias.map(v => ({...v, etiqueta:"★"}))].sort((a,b) => a.km-b.km), alMover));
     }
     const ol = document.createElement("ol"); ol.className = "paradas"; $("res").appendChild(ol);
     const items = [];
