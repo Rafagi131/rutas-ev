@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="rutaev-version" content="2026-10-30-montserrat-kia-v1">
+<meta name="rutaev-version" content="2026-11-02-relieve-v1">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ruta EV · Planificador</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -431,6 +431,276 @@ body{line-height:var(--interlineado)}
 .marca-descripcion{white-space:nowrap}
 .logo-kia{display:block;width:auto;height:.72em;height:1cap;flex:none}
 </style>
+<style>
+/* Prueba de dirección visual: superficies cálidas y relieves suaves. */
+:root{--bg:#e8e7e3;--solid:#e8e7e3;--card:#e8e7e3;--field:#e3e2de;--ink:#30343a;--mute:#62666d;--line:#d3d2ce;--acc:#196cbd;--acc2:#196cbd;--accsoft:#dce7ef;--grad:linear-gradient(145deg,#368bd7,#1769b2);--alto-marca:calc(82px + env(safe-area-inset-top,0px));--relieve:7px 7px 15px #c4c3bf,-7px -7px 15px #fffffc;--hundido:inset 3px 3px 6px #c4c3bf,inset -3px -3px 6px #fffffc}
+body{background:var(--bg)}
+.marca-app{background:var(--bg);border:0;box-shadow:0 4px 14px #5f605c20;padding-left:22px;padding-right:22px}
+.marca-nombre,.marca-vehiculo{color:var(--ink)}
+.marca-descripcion{color:var(--mute)}
+.marca-simbolo{padding:5px;border-radius:9px;background:#333a43;box-shadow:3px 3px 7px #bebdba,-3px -3px 7px #fff}
+.logo-kia{filter:brightness(0) opacity(.8)}
+.marca-inicio{gap:13px}
+#map{filter:saturate(.45)}
+.panel{background:var(--card);border:1px solid #ffffff75;box-shadow:var(--relieve);backdrop-filter:none;-webkit-backdrop-filter:none;border-radius:25px}
+#formulario{padding:22px;left:16px;right:16px;top:calc(var(--alto-marca) + 18px);max-height:calc(100dvh - var(--alto-marca) - 36px);scrollbar-width:thin;scrollbar-color:#bbbcb9 transparent}
+.sobre-titulo{font-size:10px;letter-spacing:.12em;color:var(--mute);margin-bottom:8px}
+.cabecera-viaje{margin-bottom:20px;align-items:center}
+.cabecera-viaje h1{font-size:29px;letter-spacing:-1px;line-height:1.1}
+.acciones-cabecera #ver-mapa,.acciones-cabecera #cerrar{border-radius:50%;width:48px;height:48px;padding:0;border:1px solid #ffffff85;background:linear-gradient(145deg,#efeeeb,#deddd9);box-shadow:4px 4px 8px #c3c2bf,-4px -4px 8px #fffffc;font-size:11px;color:var(--ink)}
+.form{gap:16px}
+.trayecto{padding:7px 15px 7px 34px;border:0;border-radius:20px;background:var(--bg);box-shadow:var(--hundido)}
+.lugar{padding:5px 0 8px}
+.lugar+.lugar{border-color:#c9cac680}
+.lugar::before{border-radius:6px;top:29px;font-size:9px;background:var(--bg);box-shadow:2px 2px 4px #bfbeba,-2px -2px 4px #fff}
+.etiqueta-lugar label{font-size:10px;letter-spacing:.08em}
+.lugar input[type=text]{font-size:14px;min-height:39px}
+.mini{font-size:10px;color:#2967a2}
+#anadir-punto,#invertir-trayecto{border:1px solid #ffffff80;border-radius:22px;background:linear-gradient(145deg,#efeeeb,#deddd9);box-shadow:4px 4px 8px #c4c3bf,-4px -4px 8px #fffffc;font-size:11px;min-height:43px}
+#invertir-trayecto:disabled{box-shadow:none;background:#dfdeda;color:#90938f;opacity:.75}
+.bateria-inicial{background:transparent;padding:6px 0 0;border:0;border-radius:0}
+.bateria-inicial>span:first-child{font-size:12px;color:var(--ink)}
+.bateria-inicial output{font-size:27px;color:var(--ink)}
+input[type=range]{appearance:none;-webkit-appearance:none;background:transparent;height:26px;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:9px;border-radius:12px;background:linear-gradient(90deg,#2f85cc,#1c71b9);box-shadow:inset 2px 2px 4px #12528c80,1px 1px 2px #fff;border:1px solid #c2c7c9}
+input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:23px;height:23px;margin-top:-8px;border-radius:50%;background:linear-gradient(145deg,#faf9f5,#d8d7d3);border:1px solid #e5e4df;box-shadow:3px 3px 6px #4c58646b,-2px -2px 5px #ffffffa8}
+#calc{background:linear-gradient(145deg,#398bd2,#1a6ab0);border:1px solid #ffffff70;border-radius:25px;min-height:50px;padding:12px 19px;box-shadow:5px 5px 11px #aeb9c2,-5px -5px 11px #fffffc;font-size:14px}
+#calc span{font-size:24px}
+.ayuda-principal{font-size:10px;text-align:center;margin:0;line-height:1.6}
+.grupo{margin:3px 0;border:1px solid #ffffff70;border-radius:17px;background:linear-gradient(145deg,#edede9,#e1e0dc);box-shadow:5px 5px 10px #c6c5c1,-5px -5px 10px #fffffc;overflow:hidden}
+.grupo>summary{min-height:64px;padding:12px 13px;gap:11px}
+.icono-grupo{display:grid;width:32px;height:32px;border-radius:50%;background:var(--bg);box-shadow:var(--hundido);color:var(--mute);font-size:18px}
+.texto-grupo strong{font-size:11px;letter-spacing:.015em;text-transform:none;font-weight:700}
+.texto-grupo small{font-size:10px;line-height:1.5;color:var(--mute)}
+.flecha{display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;box-shadow:2px 2px 4px #bfbeba,-2px -2px 4px #fff;font-size:15px}
+.grupo[open]{background:var(--bg)}
+.grupo[open]>summary{box-shadow:inset 2px 2px 5px #c7c6c2,inset -2px -2px 5px #fafaf5}
+.contenido-grupo{padding:16px 13px 8px}
+.contenido-grupo input[type=number],.contenido-grupo input[type=password],#modoTiempo{background:var(--bg);border:1px solid #ffffff90;border-radius:11px;box-shadow:var(--hundido);padding:10px}
+.subgrupo{border-color:#c9cac6;padding-top:8px}
+.creditos-app>summary{min-height:45px;font-size:11px;color:var(--mute)}
+button:active:not(:disabled),#anadir-punto:active,#invertir-trayecto:active{box-shadow:var(--hundido);transform:translateY(1px)}
+button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid #1e73be;outline-offset:4px}
+#datos{border-radius:22px;padding:20px}
+.ruta-opcion{background:var(--bg);border-radius:16px;border:1px solid #ffffff80;box-shadow:4px 4px 9px #c5c4c0,-4px -4px 9px #fffffc;margin-bottom:8px}
+.ruta-opcion[aria-pressed=true]{border:2px solid var(--acc);box-shadow:var(--hundido)}
+#abrir,#preparar{border-radius:25px;box-shadow:var(--relieve)}
+#estado,#estado.error{background:var(--bg)}
+@media(min-width:900px){#formulario{left:28px;right:auto;width:390px;top:calc(var(--alto-marca) + 26px)}#datos{left:28px;top:calc(var(--alto-marca) + 26px);max-height:calc(100dvh - var(--alto-marca) - 52px)}}
+@media(max-width:359px){#formulario{left:12px;right:12px;padding:17px}.marca-app{padding-left:16px;padding-right:16px}.cabecera-viaje h1{font-size:26px}.grupo>summary{padding:10px}.texto-grupo small{font-size:9px}}
+#formulario{border:1px solid #ffffff80;border-radius:25px}
+.cabecera-viaje h1{white-space:normal}
+input[type=checkbox]{appearance:none;-webkit-appearance:none;position:relative;display:inline-block;width:38px!important;min-width:38px;height:22px;border-radius:16px;background:#c1c3c2;box-shadow:inset 2px 2px 4px #959a9d,inset -2px -2px 4px #f9faf6;border:1px solid #ffffff80;vertical-align:middle;cursor:pointer}
+input[type=checkbox]::before{content:"";position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:linear-gradient(145deg,#f9f9f5,#deded9);box-shadow:2px 2px 4px #6a70778a;transition:transform .15s}
+input[type=checkbox]:checked{background:#2a7ec5}
+input[type=checkbox]:checked::before{transform:translateX(15px)}
+@media(prefers-reduced-motion:reduce){input[type=checkbox]::before{transition:none}}
+/* Segunda prueba: luz superior izquierda y sombras de contacto más marcadas. */
+:root{--bg:#e6e5e1;--solid:#e6e5e1;--card:#e6e5e1;--field:#ddddd9;--relieve:1px 1px 2px #ffffffd9,7px 8px 10px #aaa9a5,12px 13px 19px #9a999640,-6px -6px 12px #fffffff0;--hundido:inset 2px 2px 3px #92938f,inset 5px 5px 9px #b9bab5,inset -2px -2px 3px #fff,inset -5px -5px 8px #f8f8f4}
+#formulario{background:linear-gradient(135deg,#ebeae6,#e1e0dc);border-color:#ffffff95;box-shadow:2px 2px 3px #fff,9px 11px 13px #90918a70,-6px -6px 13px #fff;border-radius:19px}
+.marca-app{box-shadow:0 2px 2px #ffffffc9,0 7px 12px #8b8d8545}
+.trayecto{border:1px solid #f8f8f4;border-radius:16px;background:linear-gradient(145deg,#dcdcd7,#eeede9);box-shadow:var(--hundido)}
+.lugar+.lugar{border-top:1px solid #c3c4bd;box-shadow:0 -1px 0 #ffffff85}
+.lugar::before{box-shadow:1px 1px 2px #fff,3px 3px 4px #a5a69f,-2px -2px 4px #fff;border:1px solid #f8f8f4}
+.acciones-cabecera #ver-mapa,.acciones-cabecera #cerrar,#anadir-punto,#invertir-trayecto{background:linear-gradient(145deg,#f2f1ed 0%,#e5e4e0 48%,#d8d8d3 100%);border:1px solid #fafaf5;box-shadow:1px 1px 1px #fff,4px 5px 5px #9d9e97,7px 8px 11px #a3a49d60,-4px -4px 8px #fff}
+#invertir-trayecto:disabled{background:#ddddd8;border-color:#e8e8e1;box-shadow:none;color:#868a83}
+.grupo{background:linear-gradient(135deg,#edede8,#deded8);border:1px solid #f8f8f2;border-radius:14px;box-shadow:1px 1px 1px #fff,5px 6px 6px #a2a39b,8px 9px 13px #9d9e9752,-4px -4px 8px #fff}
+.grupo>summary{min-height:64px}
+.grupo[open]>summary{background:linear-gradient(145deg,#d6d7d1,#e6e7e0);box-shadow:inset 2px 2px 4px #969991,inset -2px -2px 4px #fff}
+.icono-grupo{background:linear-gradient(145deg,#dbdcd6,#ebebe5);box-shadow:inset 2px 2px 3px #a2a59b,inset -2px -2px 3px #fff;color:#6d726b}
+.flecha{background:linear-gradient(145deg,#f6f6ef,#dbdcd4);box-shadow:1px 1px 2px #fff,3px 4px 4px #a4a79c,-2px -2px 4px #fff;border:1px solid #f7f8ef}
+.contenido-grupo input[type=number],.contenido-grupo input[type=password],#modoTiempo{border-radius:9px;border-color:#f9faf2;background:linear-gradient(145deg,#d8d9d2,#eeeee7);box-shadow:var(--hundido)}
+#calc{background:linear-gradient(160deg,#4a9ce1,#2b7fc3 48%,#1966aa);border-color:#d5e5ed;box-shadow:inset 1px 1px 2px #aed4f1,inset -1px -2px 3px #17568d,5px 6px 7px #919d9e,9px 10px 14px #9ca7a760,-4px -4px 9px #fff}
+input[type=range]::-webkit-slider-runnable-track{height:10px;border:1px solid #f8f8ee;box-shadow:inset 1px 2px 3px #133e69,inset 0 -1px 1px #91c5ed,0 1px 1px #fff}
+input[type=range]::-webkit-slider-thumb{background:linear-gradient(145deg,#fcfcf6,#d9dbd1);box-shadow:1px 1px 1px #fff,3px 4px 4px #828a81,5px 6px 7px #68797050,-2px -2px 4px #fff;border-color:#efefe5}
+input[type=checkbox]{box-shadow:inset 2px 2px 3px #7e847e,inset -2px -2px 3px #f9faf0;background:#adb1aa}
+input[type=checkbox]::before{box-shadow:1px 1px 1px #fff,2px 3px 3px #676f668f;background:linear-gradient(145deg,#fbfcf4,#d9dcd1)}
+input[type=checkbox]:checked{background:#367fb7}
+.ruta-opcion{box-shadow:var(--relieve);background:linear-gradient(135deg,#edede8,#deded8)}
+/* Relieves positivos, sin contorno y con sombra corta de borde definido. */
+:root{--relieve:4px 5px 3px #92948d,-3px -3px 4px #fafaf5;--hundido:inset 2px 2px 2px #9a9d94,inset -2px -2px 3px #fafbf3}
+#formulario{border:0;box-shadow:6px 7px 4px #92948d,-4px -4px 5px #fafaf5}
+.trayecto{border:0;background:linear-gradient(135deg,#eaeae4,#dfdfd9);box-shadow:var(--relieve)}
+.panel,.grupo,.ruta-opcion,.acciones-cabecera #ver-mapa,.acciones-cabecera #cerrar,#anadir-punto,#invertir-trayecto,.flecha,.lugar::before,#calc,.contenido-grupo input[type=number],.contenido-grupo input[type=password],#modoTiempo,input[type=checkbox]{border:0}
+.grupo,.ruta-opcion,.acciones-cabecera #ver-mapa,.acciones-cabecera #cerrar,#anadir-punto,#invertir-trayecto,.flecha,.lugar::before{box-shadow:var(--relieve)}
+.grupo[open]>summary,.contenido-grupo input[type=number],.contenido-grupo input[type=password],#modoTiempo,.icono-grupo{box-shadow:var(--hundido)}
+#invertir-trayecto:disabled{box-shadow:none}
+#calc{box-shadow:inset 0 1px 1px #78add7,4px 5px 3px #87938e,-3px -3px 4px #fafaf5}
+input[type=range]::-webkit-slider-runnable-track{border:0;background:linear-gradient(to right,#287fc3 0%,#287fc3 var(--bateria-relleno,88.764%),#cfD0c9 var(--bateria-relleno,88.764%),#cfD0c9 100%);box-shadow:inset 1px 2px 2px #979c93,inset -1px -1px 2px #f9faf2;height:9px}
+input[type=range]::-webkit-slider-thumb{border:0;box-shadow:3px 3px 2px #8d9589,-2px -2px 3px #fcfdf5;margin-top:-7px}
+input[type=range]::-moz-range-track{height:9px;border:0;border-radius:10px;background:#cfd0c9;box-shadow:inset 1px 2px 2px #979c93}
+input[type=range]::-moz-range-progress{height:9px;border-radius:10px;background:#287fc3}
+input[type=range]::-moz-range-thumb{width:23px;height:23px;border:0;border-radius:50%;background:#e9eae2;box-shadow:3px 3px 2px #8d9589,-2px -2px 3px #fcfdf5}
+:root{--relieve:4px 5px 3px #92948d;--hundido:inset 2px 2px 2px #9a9d94,inset -2px -2px 3px #eeefe8}
+#formulario{box-shadow:6px 7px 4px #92948d}
+#calc{box-shadow:4px 5px 3px #87938e}
+/* Selectores superiores y luz difusa sobre la cara izquierda. */
+:root{--relieve:inset 5px 1px 7px -3px #ffffffdf,4px 5px 3px #92948d}
+#formulario{box-shadow:inset 6px 0 10px -5px #ffffffcf,6px 7px 4px #92948d}
+.acciones-cabecera #ver-mapa,.acciones-cabecera #cerrar{width:auto;min-width:64px;height:39px;min-height:39px;padding:0 15px;border-radius:21px;font-size:11px;box-shadow:var(--relieve)}
+.cabecera-viaje h1{font-size:26px}
+.trayecto{padding-top:16px}
+.selectores-trayecto{display:flex;align-items:stretch;gap:12px;margin:0 0 17px -19px}
+.selectores-trayecto .mini{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;min-height:42px;padding:8px 10px;border:0;border-radius:23px;background:linear-gradient(140deg,#eaeae5,#dedfd8);box-shadow:var(--relieve);font:600 10px/1.35 "Montserrat",system-ui,sans-serif;color:#396c95;white-space:normal}
+.selectores-trayecto .mini:active{box-shadow:var(--hundido)}
+.lugar{padding-top:11px}
+.lugar::before{top:27px}
+#calc{box-shadow:inset 5px 0 7px -4px #ffffffa8,4px 5px 3px #87938e}
+@media(max-width:359px){.cabecera-viaje h1{font-size:23px}.selectores-trayecto{gap:10px}.selectores-trayecto .mini{padding:8px 6px;font-size:9px}}
+/* La luz lateral pertenece al fondo; los controles conservan solo su sombra. */
+:root{--relieve:4px 5px 3px #92948d}
+.trayecto{box-shadow:inset 5px 1px 7px -3px #ffffffdf,4px 5px 3px #92948d}
+#calc{box-shadow:4px 5px 3px #87938e}
+/* Luz y sombra exteriores: ambas quedan por debajo de las superficies. */
+:root{--relieve:-4px -4px 5px #ffffffed,4px 5px 3px #92948d}
+#formulario{box-shadow:-5px -5px 7px #ffffffed,6px 7px 4px #92948d}
+.trayecto{box-shadow:var(--relieve)}
+#calc{box-shadow:-4px -4px 5px #ffffffed,4px 5px 3px #87938e}
+/* Luz exterior con una transición más suave hacia el fondo. */
+:root{--relieve:-4px -4px 9px #ffffffdf,4px 5px 3px #92948d}
+#formulario{box-shadow:-5px -5px 11px #ffffffdf,6px 7px 4px #92948d}
+#calc{box-shadow:-4px -4px 9px #ffffffdf,4px 5px 3px #87938e}
+/* Criterio común en ajustes, búsqueda, historial y resultados. */
+.contenido-grupo input[type=number]{height:32px;min-height:32px;padding:4px 9px;font-size:16px;line-height:24px;border:0;border-radius:9px;background:linear-gradient(135deg,#eaeae4,#dfdfd9);box-shadow:var(--relieve)}
+.contenido-grupo .campo:has(>input[type=number]){margin-bottom:13px;gap:7px 12px}
+.contenido-grupo input[type=text],.contenido-grupo input[type=password],.contenido-grupo input:not([type]),.contenido-grupo select,#modoTiempo{min-height:38px;height:auto;padding:9px 11px;border:0;border-radius:11px;background:linear-gradient(135deg,#eaeae4,#dfdfd9);box-shadow:var(--relieve);font:400 14px/1.4 "Montserrat",system-ui,sans-serif;color:var(--ink)}
+.lugar input[type=text]{grid-column:1/-1;width:100%;border:0;box-shadow:none;background:transparent;border-radius:0}
+.lugar input[type=text]:focus{box-shadow:0 2px 0 var(--acc)}
+.sugerencias{border:0;border-radius:13px;background:var(--bg);box-shadow:var(--relieve);padding:4px 6px;margin:9px 0;max-height:220px}
+.sugerencias button{border:0;border-bottom:1px solid #c6c8bf;background:transparent;color:var(--ink);font-size:13px;padding:10px 8px}
+.sugerencias button:last-child{border-bottom:0}
+.sugerencias button:hover,.sugerencias button[aria-selected=true]{background:#d2dfe5;border-radius:8px}
+.contenido-grupo button,#viajes button,.controles-punto button,#barra button,#plegar,.exportar a,.wz,#elegir button{background:linear-gradient(135deg,#eaeae4,#dfdfd9);border:0;border-radius:20px;box-shadow:var(--relieve);padding:9px 13px;min-height:38px;color:var(--ink);font-family:"Montserrat",system-ui,sans-serif;text-decoration:none}
+#viajes button{margin:0 0 13px;padding:12px 13px;border-radius:13px}
+#viajes button:last-child{background:var(--bg);color:var(--mute);font-size:11px}
+#comprobar-ocm{width:100%;margin-bottom:10px;color:var(--acc)}
+.subgrupo{border:0;margin:14px 0 6px;padding:0}
+.subgrupo>summary,.detalle-resultados>summary{display:flex;align-items:center;min-height:40px;padding:9px 12px;border-radius:12px;background:linear-gradient(135deg,#eaeae4,#dfdfd9);box-shadow:var(--relieve);color:var(--ink);font-size:12px;gap:8px}
+.subgrupo[open]>summary,.detalle-resultados[open]>summary{box-shadow:var(--hundido)}
+.contenido-subgrupo{padding:16px 2px 8px}
+.creditos-app p{padding:0 13px 12px;font-size:12px}
+#datos{background:var(--bg);border:0;box-shadow:var(--relieve);border-radius:20px}
+#res{padding:0 4px}
+.resumen-principal{gap:13px;margin:17px 0}
+.resumen-principal>div{border:0;border-radius:13px;background:linear-gradient(135deg,#eaeae4,#dfdfd9);box-shadow:var(--relieve);padding:12px}
+.resumen-principal strong{font-size:23px;color:var(--ink)}
+.resumen-principal span{color:var(--mute)}
+.detalle-resultados{border:0;margin:15px 0;padding:0}
+.detalle-resultados>summary{margin-bottom:14px}
+.comparacion{gap:16px;padding:4px 0}
+.ruta-opcion{border:0;border-radius:14px;box-shadow:var(--relieve);margin:0;padding:13px}
+.ruta-opcion[aria-pressed=true]{border:0;box-shadow:var(--hundido);background:#d9e4e8}
+.ruta-opcion[aria-pressed=true] strong{color:#145e9a}
+.paradas{border-color:#b1b8b0;padding-left:18px;margin:16px 0 8px 13px}
+.paradas li{padding:0 0 20px 4px}
+.paradas li::before{background:var(--bg);color:var(--ink);box-shadow:var(--relieve);border:0}
+.chip,.alt{border:0;border-radius:9px;background:#dddfd7;color:var(--ink)}
+.alt{padding:10px;margin-top:9px;box-shadow:var(--hundido)}
+.exportar{gap:13px;margin:15px 0}
+.exportar>span{flex-basis:100%}
+.exportar a,.wz{font-size:11px;color:#23669d;background:linear-gradient(135deg,#eaeae4,#dfdfd9)}
+#abrir,#preparar{background:var(--bg);color:var(--ink);border:0;box-shadow:var(--relieve)}
+#elegir{background:var(--bg);border:0;border-radius:20px;box-shadow:var(--relieve)}
+#estado,#estado.error{border:0;background:var(--bg);box-shadow:0 -4px 9px #ffffffbd,0 -1px 3px #92948d50}
+button:disabled{opacity:.55;box-shadow:none;cursor:default}
+/* Gris general más profundo y círculos de apertura hundidos al seleccionar. */
+:root{--bg:#d4d4cf;--solid:#d4d4cf;--card:#d4d4cf;--field:#cdcec7;--line:#b9bcb2;--ink:#292e33;--mute:#555d60;--relieve:-4px -4px 9px #f9faf2df,4px 5px 3px #85897f;--hundido:inset 3px 3px 3px #969b8e,inset -3px -3px 4px #f3f5eb}
+#formulario{background:linear-gradient(135deg,#dadbd5,#cecfc8);box-shadow:-5px -5px 11px #f9faf2df,6px 7px 4px #85897f}
+.trayecto,.grupo,.ruta-opcion,.acciones-cabecera #ver-mapa,.acciones-cabecera #cerrar,#anadir-punto,#invertir-trayecto,.flecha,.selectores-trayecto .mini,.contenido-grupo input[type=number],.contenido-grupo input[type=text],.contenido-grupo input[type=password],.contenido-grupo input:not([type]),.contenido-grupo select,#modoTiempo,.contenido-grupo button,#viajes button,.controles-punto button,#barra button,#plegar,.exportar a,.wz,#elegir button,.resumen-principal>div,.subgrupo>summary,.detalle-resultados>summary{background:linear-gradient(135deg,#dadbd5,#cbcdc5)}
+#invertir-trayecto:disabled{background:#c9cbc3;color:#7c837a}
+.grupo[open]>summary{background:transparent;box-shadow:none}
+.grupo[open]>summary .flecha{background:#ced0c7;border:0;box-shadow:inset 3px 3px 3px #959b8d,inset -3px -3px 4px #f4f7ea;transform:rotate(0deg)}
+.grupo[open]>summary .flecha::before{content:"⌃"}
+.grupo[open]>summary .flecha{font-size:0}
+.grupo[open]>summary .flecha::before{font-size:15px}
+.subgrupo[open]>summary,.detalle-resultados[open]>summary{background:#ced0c7;box-shadow:var(--hundido)}
+/* Acciones en grafito, sombras profundas y damero original en relieve. */
+:root{--relieve:-4px -4px 9px #f9faf2df,4px 5px 3px #71766b;--hundido:inset 3px 3px 3px #808879,inset -3px -3px 4px #f3f5eb}
+#formulario{box-shadow:-5px -5px 11px #f9faf2df,6px 7px 4px #71766b}
+#calc,.exportar a,.exportar a:nth-of-type(1),.exportar a:nth-of-type(2),.exportar a:nth-of-type(3),.wz{background:linear-gradient(140deg,#373c42,#272c32);color:#f5f6f2;border:0;box-shadow:-4px -4px 9px #f9faf2df,4px 5px 3px #71766b}
+#calc:active,.exportar a:active,.wz:active{box-shadow:inset 3px 3px 4px #12171c,inset -2px -2px 3px #51575d}
+#plegar{display:grid;place-items:center;width:38px;height:34px;min-height:34px;padding:0;border-radius:17px;font-size:23px;line-height:1;font-weight:500}
+.grupo[open]>summary .flecha{box-shadow:inset 3px 3px 3px #7e8874,inset -3px -3px 4px #f4f7ea}
+.marca-simbolo{padding:0;border-radius:0;background:none;box-shadow:none;overflow:visible;filter:drop-shadow(-1px -1px 2px #fffffff0) drop-shadow(2px 3px 1px #71766b)}
+#barra #plegar{font-size:23px;line-height:1;width:38px;height:34px;padding:0}
+/* Interruptores comunes: contraste invertido y verificación al activar. */
+input[type=checkbox]{appearance:none;-webkit-appearance:none;position:relative;display:inline-block;width:46px!important;min-width:46px;height:26px;box-sizing:border-box;border:0;border-radius:18px;background:#777c7d;box-shadow:inset 2px 2px 3px #565c5c,inset -1px -1px 2px #a0a5a2;vertical-align:middle;cursor:pointer}
+input[type=checkbox]::before{content:"";position:absolute;left:3px;top:3px;display:grid;place-items:center;width:20px;height:20px;box-sizing:border-box;border-radius:50%;background:linear-gradient(145deg,#eeefe7,#cdd0c5);color:#f1f3e9;font:700 13px/1 system-ui,sans-serif;box-shadow:2px 2px 2px #41484380;transform:translateX(0);transition:transform .15s ease,background .15s ease}
+input[type=checkbox]:checked{background:#daddd3;box-shadow:inset 2px 2px 3px #a6aea0,inset -2px -2px 3px #f6f9ec}
+input[type=checkbox]:checked::before{content:"✓";background:linear-gradient(145deg,#606865,#343d3a);color:#f3f5ee;transform:translateX(20px);box-shadow:2px 2px 2px #747d7180}
+input[type=checkbox]:disabled{opacity:.5;cursor:default}
+@media(prefers-reduced-motion:reduce){input[type=checkbox]::before{transition:none}}
+/* Espaciado compacto manteniendo separación para las sombras. */
+.form{gap:11px}
+.cabecera-viaje{margin-bottom:14px}
+.selectores-trayecto{margin-bottom:11px}
+.trayecto{padding-top:12px}
+.lugar{padding-top:8px;padding-bottom:6px}
+.grupo{margin:1px 0}
+.grupo>summary{min-height:55px;padding:10px 13px}
+.contenido-grupo{padding:12px 13px 7px}
+.subgrupo{margin:11px 0 5px}
+.contenido-subgrupo{padding:12px 2px 6px}
+.detalle-resultados{margin:11px 0}
+.detalle-resultados>summary{margin-bottom:10px}
+.comparacion{gap:12px}
+.resumen-principal{gap:11px;margin:12px 0}
+#viajes button{margin-bottom:11px}
+.exportar{gap:11px;margin:12px 0}
+input[type=range]::-webkit-slider-runnable-track{height:12.6px}
+input[type=range]::-webkit-slider-thumb{margin-top:-5.2px}
+input[type=range]::-moz-range-track,input[type=range]::-moz-range-progress{height:12.6px}
+/* Selección del historial y título fijo junto al control de plegado. */
+#viajes button[data-viaje][aria-pressed=true]{background:linear-gradient(140deg,#898e88,#737b73);color:#fff;box-shadow:var(--hundido)}
+#datos #barra{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 4px 14px}
+#datos #barra h2{margin:0;font:700 20px/1.2 "Montserrat",system-ui,sans-serif;letter-spacing:-.025em;color:var(--ink)}
+#barra #plegar{flex:none;margin:0}
+/* Edición integrada en el título y alternativa seleccionada en gris medio. */
+.acciones-ruta{display:flex;align-items:center;gap:10px;flex:none}
+#datos #barra #abrir{position:static;inset:auto;transform:none;margin:0;padding:7px 12px;min-height:34px;font:600 11px/1.2 "Montserrat",system-ui,sans-serif;box-shadow:var(--relieve);border-radius:18px;background:linear-gradient(135deg,#dadbd5,#cbcdc5);color:var(--ink)}
+#datos #barra{gap:9px}
+#datos #barra h2{font-size:18px;min-width:0}
+.ruta-opcion[aria-pressed=true]{background:linear-gradient(140deg,#898e88,#737b73);border:0;box-shadow:var(--hundido);color:#fff}
+.ruta-opcion[aria-pressed=true] span,.ruta-opcion[aria-pressed=true] .meta{color:#fff}
+.ruta-opcion[aria-pressed=true] strong,.ruta-opcion[aria-pressed=true] .diferencia-ruta{color:#080b09}
+@media(max-width:359px){#datos #barra h2{font-size:16px}.acciones-ruta{gap:7px}#datos #barra #abrir{padding:7px 9px}}
+/* Acciones del trayecto más compactas, con hover en el mismo gris. */
+#anadir-punto,#invertir-trayecto{min-height:32px;padding:5px 10px;font-size:10px;border-radius:18px}
+#anadir-punto,#anadir-punto:hover{color:var(--ink);background:linear-gradient(135deg,#dadbd5,#cbcdc5)}
+
+/* Mayor profundidad exclusivamente en la alternativa seleccionada. */
+.ruta-opcion[aria-pressed=true]{box-shadow:inset 3px 3px 3px #252c26,inset 6px 6px 7px #3c443b99,inset -3px -3px 4px #f3f5eb}
+
+/* Ritmo uniforme en las cuatro tarjetas de configuración. */
+#formulario .grupo{margin:0}
+#formulario .form{gap:12px}
+#formulario>#historial,#formulario>.creditos-app{margin-top:12px}
+#formulario .grupo>summary{min-height:60px;padding:10px 13px;gap:11px}
+#formulario .grupo .icono-grupo{width:32px;height:32px;flex:0 0 32px}
+#formulario .grupo .texto-grupo{flex:1;gap:3px}
+#formulario .grupo .texto-grupo strong{line-height:1.3}
+#formulario .grupo .texto-grupo small{line-height:1.4}
+#formulario .grupo .flecha{flex-shrink:0;margin-left:auto}
+#formulario .creditos-app>p{padding:0 13px 12px;margin:0}
+
+/* Prueba de mapa claro Positron y controles en relieve. */
+#map,#map .leaflet-tile-pane{filter:none}
+#map .leaflet-control-zoom{border:0;background:transparent;box-shadow:none}
+#map .leaflet-control-zoom a{width:36px;height:36px;line-height:36px;margin-top:10px;border:0;border-radius:50%;background:linear-gradient(135deg,#dadbd5,#cbcdc5);color:#30343a;box-shadow:var(--relieve);font-size:23px}
+#map .leaflet-control-zoom a:hover{background:#d4d4cf}
+#map .leaflet-control-zoom a:active{box-shadow:var(--hundido)}
+#map .leaflet-control-attribution{background:#eeefead9;color:#62666d;font-size:9px;padding:2px 5px;border-radius:0 0 0 6px}
+#map .leaflet-control-attribution a{color:#58645e}
+
+/* Aproximación clara con la cartografía disponible, sin clave externa. */
+#map .leaflet-tile-pane{filter:grayscale(1) contrast(.65) brightness(1.2)}
+
+/* Comparador con el mismo control circular que las tarjetas de ajustes. */
+#alternativas-ruta>summary,#alternativas-ruta[open]>summary{box-shadow:var(--relieve);background:linear-gradient(135deg,#dadbd5,#cbcdc5)}
+#alternativas-ruta>summary::after{content:"⌄";display:grid;place-items:center;width:24px;height:24px;flex:0 0 24px;margin-left:auto;border:0;border-radius:50%;background:linear-gradient(135deg,#dadbd5,#cbcdc5);box-shadow:var(--relieve);color:var(--mute);font-size:15px;line-height:1}
+#alternativas-ruta[open]>summary::after{content:"⌃";background:#ced0c7;box-shadow:inset 3px 3px 3px #7e8874,inset -3px -3px 4px #f4f7ea}
+
+</style>
 </head>
 <body>
 <header class="marca-app" aria-label="Ruta EV">
@@ -444,7 +714,7 @@ body{line-height:var(--interlineado)}
 <div id="map"></div>
 <div id="estado" role="status" aria-atomic="true"></div>
 <div id="elegir" class="oculto"><span>Toca el mapa para elegir el destino</span><button id="cancelarmapa">Cancelar</button></div>
-<button id="abrir" class="oculto">Editar viaje</button>
+
 <button id="preparar" class="oculto">Preparar viaje</button>
 <section id="formulario" class="panel" aria-label="Preparar viaje">
   <header class="cabecera-viaje">
@@ -454,15 +724,15 @@ body{line-height:var(--interlineado)}
   <div class="form">
     <p class="proposito">Tu próximo viaje, con menos energía y tiempo.</p>
     <div class="trayecto">
-      <div class="lugar origen-lugar"><div class="etiqueta-lugar"><label for="origen">Desde</label><button type="button" id="miub" class="mini">Mi ubicación</button></div><input id="origen" type="text" placeholder="Ciudad o dirección" autocomplete="off"></div>
+      <div class="selectores-trayecto" role="group" aria-label="Elegir ubicaciones"><button type="button" id="miub" class="mini">Mi ubicación</button><button type="button" id="elegirdest" class="mini">Elegir en el mapa</button></div>
+      <div class="lugar origen-lugar"><div class="etiqueta-lugar"><label for="origen">Desde</label></div><input id="origen" type="text" placeholder="Ciudad o dirección" autocomplete="off"></div>
       <div id="puntos-ruta"></div><input id="vias" type="hidden" value="">
-      <div class="lugar destino-lugar" id="fila-destino" data-num="02"><div class="etiqueta-lugar"><label for="destino">Hasta</label><button type="button" id="elegirdest" class="mini">Elegir en el mapa</button></div><input id="destino" type="text" placeholder="¿Adónde vamos?" autocomplete="off"></div>
+      <div class="lugar destino-lugar" id="fila-destino" data-num="02"><div class="etiqueta-lugar"><label for="destino">Hasta</label></div><input id="destino" type="text" placeholder="¿Adónde vamos?" autocomplete="off"></div>
     </div>
     <div class="acciones-trayecto"><button type="button" id="anadir-punto" aria-controls="puntos-ruta" aria-label="Añadir punto en la ruta">＋ Añadir punto</button><button type="button" id="invertir-trayecto" aria-label="Intercambiar origen y destino" title="Intercambiar origen y destino e invertir los puntos intermedios">⇅ Invertir trayecto</button></div>
     <p id="ayuda-punto" class="ayuda" hidden>Los puntos se visitan en este orden, sin añadir tiempo de estancia. Máximo 8 puntos.</p>
     <label class="campo bateria-inicial"><span>Batería al salir <output id="socv">90 %</output></span><input id="soc" type="range" min="11" max="100" value="90"></label>
     <button id="calc">Buscar ruta <span aria-hidden="true">→</span></button>
-    <p class="ayuda-principal">Menor consumo con hasta <strong id="margen-visible">10 %</strong> más de tiempo.</p>
     <details name="panel-principal" class="grupo" id="opciones-viaje">
       <summary><span class="icono-grupo" aria-hidden="true">↗</span><span class="texto-grupo"><strong>Para este viaje</strong><small id="resumen-viaje">18 °C · 100 km/h · Sin paradas</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
       <div class="contenido-grupo">
@@ -506,10 +776,10 @@ body{line-height:var(--interlineado)}
     </details>
   </div>
   <details name="panel-principal" class="grupo" id="historial" hidden><summary><span class="icono-grupo" aria-hidden="true">↶</span><span class="texto-grupo"><strong>Viajes recientes</strong><small id="resumen-historial">Recuperar un viaje guardado</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><section id="viajes" class="contenido-grupo"></section></details>
-  <details name="panel-principal" class="grupo creditos-app"><summary>Información y créditos</summary><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p></details>
+  <details name="panel-principal" class="grupo creditos-app"><summary><span class="icono-grupo" aria-hidden="true">i</span><span class="texto-grupo"><strong>Información y créditos</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p></details>
 </section>
 <section id="datos" class="panel oculto">
-  <div id="barra"><button id="plegar">Plegar</button></div>
+  <div id="barra"><h2>Ruta seleccionada</h2><div class="acciones-ruta"><button id="abrir" class="oculto" aria-label="Editar viaje">editar</button><button id="plegar" aria-label="Plegar resultados" aria-expanded="true">−</button></div></div>
   <div id="res"></div>
 </section>
 
@@ -529,7 +799,7 @@ const map = L.map("map", {zoomControl: false}).setView([41.4, 2.0], 7);
 L.control.zoom({position: "bottomright"}).addTo(map);
 map.attributionControl.setPosition("topright");
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-  {maxZoom: 18, attribution: "© OpenStreetMap"}).addTo(map);
+  {maxZoom: 18, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
 let capas = L.layerGroup().addTo(map);
 
 function km(a, b) { // distancia entre 2 puntos [lon,lat] en km
@@ -1048,7 +1318,7 @@ function enlaces(origen, destino, paradas) {
     waze: p => "https://waze.com/ul?ll=" + ll(p) + "&navigate=yes"
   };
 }
-function pintaSoc() { $("socv").textContent = $("soc").value + " %"; }
+function pintaSoc() { const slider = $("soc"); $("socv").textContent = slider.value + " %"; slider.style.setProperty("--bateria-relleno", ((Number(slider.value) - Number(slider.min)) / (Number(slider.max) - Number(slider.min)) * 100) + "%"); }
 $("soc").addEventListener("input", pintaSoc);
 const PREFS = ["margenCarga", "modoTiempo", "temp", "vel", "bat", "cons", "maxkw", "min", "max", "minDestino", "minkw", "ops", "velref", "masa", "tmin", "pen", "tmax", "maxkm", "extra", "margen"];
 const num = (id, def) => { const v = parseFloat($(id).value); return isNaN(v) ? def : v; };
@@ -1229,7 +1499,6 @@ function actualizarResumenes() {
     : "OSRM estima el tiempo con su perfil de velocidades. No incluye tráfico en directo. La velocidad media prevista se usa para el consumo.";
   $("temperatura-manual").hidden = $("tempAuto").checked;
   $("velref-visible").textContent = num("velref",100) + " km/h";
-  $("margen-visible").textContent = num("margen",10) + " %";
   $("resumen-ev").textContent = `EV3 · ${num("bat",78).toLocaleString("es-ES")} kWh útiles · ${num("cons",16.5).toLocaleString("es-ES")} kWh/100 km`;
   $("estado-clave").textContent = $("ocmKey").value.trim() ? "Clave introducida" : "Clave pendiente";
 }
@@ -1276,6 +1545,7 @@ function guardarViaje(v) {
   } catch (e) {}
   pintarViajes();
 }
+let viajeRecienteSeleccionado = null;
 function pintarViajes() {
   const c = $("viajes"); c.textContent = "";
   const l = leerViajes(); $("historial").hidden = !l.length; $("resumen-historial").textContent = l.length + (l.length === 1 ? " viaje guardado" : " viajes guardados"); if (!l.length) return;
@@ -1283,7 +1553,8 @@ function pintarViajes() {
   l.forEach(v => {
     const b = document.createElement("button");
     b.textContent = `${v.o} → ${v.d} (${v.km} km, ${v.p} paradas)`;
-    b.onclick = () => { cerrarSugerencias(); cancelarUbicacionPendiente(); origenFijo = v.o !== "Mi ubicación actual" && coordenadasValidas(v.op) ? {texto:v.o,pos:v.op} : null; $("origen").value = v.o === "Mi ubicación actual" ? "" : v.o; // la ubicación actual hay que volver a pedirla
+    const identificador = JSON.stringify([v.o,v.d]); b.dataset.viaje = identificador; b.setAttribute("aria-pressed",String(viajeRecienteSeleccionado === identificador));
+    b.onclick = () => { viajeRecienteSeleccionado = identificador; c.querySelectorAll("button[data-viaje]").forEach(boton => boton.setAttribute("aria-pressed",String(boton === b))); cerrarSugerencias(); cancelarUbicacionPendiente(); origenFijo = v.o !== "Mi ubicación actual" && coordenadasValidas(v.op) ? {texto:v.o,pos:v.op} : null; $("origen").value = v.o === "Mi ubicación actual" ? "" : v.o; // la ubicación actual hay que volver a pedirla
     destinoFijo = coordenadasValidas(v.dp) ? {pos: v.dp, texto: v.d} : null; $("destino").value = v.d; pintarPuntos(); $("soc").value = v.soc; restaurarPuntos(v.vp || v.v || ""); pintaSoc(); actualizarResumenes(); };
     c.appendChild(b);
   });
@@ -1326,7 +1597,7 @@ $("marca-inicio").onclick = () => { vista("form"); $("formulario").scrollTop = 0
 $("ver-mapa").onclick = () => vista("explorar");
 $("preparar").onclick = () => vista("form");
 $("cerrar").onclick = () => { vista("datos"); setTimeout(centrarRuta, 80); };
-$("plegar").onclick = () => { const p = $("datos").classList.toggle("plegado"); $("plegar").textContent = p ? "Desplegar" : "Plegar"; setTimeout(centrarRuta, 80); };
+$("plegar").onclick = () => { const p = $("datos").classList.toggle("plegado"); $("plegar").textContent = p ? "+" : "−"; $("plegar").setAttribute("aria-label",p ? "Desplegar resultados" : "Plegar resultados"); $("plegar").setAttribute("aria-expanded",String(!p)); setTimeout(centrarRuta, 80); };
 function aplicarTiempo(r, modo, media) {
   const osrmMin = r.osrmMin ?? r.min;
   if (!Number.isFinite(media) || media <= 0 || !Number.isFinite(osrmMin) || osrmMin < 0 || !Number.isFinite(r.total) || r.total < 0) throw new Error("No se puede estimar el tiempo con esos datos.");
@@ -1467,13 +1738,27 @@ $("calc").onclick = async () => {
     mostrarOpcion(sesion, sesion.eleccion.equilibrada);
   } catch (e) { fallo(e.message); } finally { $("calc").disabled = false; }
 };
-// Primer trazado disponible; la recomendación se decide al terminar la evaluación.
+function marcarExtremosRuta(trazo) {
+  if (!trazo.length) return;
+  [[trazo[0], "Origen", "#247bd1"], [trazo[trazo.length - 1], "Destino", "#30383d"]].forEach(([pos, nombre, color]) => {
+    L.circleMarker(pos, {radius:8, color:"#fff", weight:3, fillColor:color, fillOpacity:1}).addTo(capas).bindTooltip(nombre);
+  });
+}
+// Todos los trazados disponibles; la recomendación se decide al terminar la evaluación.
 async function mostrarTrazadoPrevio(rutas) {
   capas.clearLayers();
+  capaPuntos.clearLayers();
+  const limites = L.latLngBounds([]);
+  rutas.forEach((ruta, i) => {
+    const puntos = ruta.coords.map(c => [c[1], c[0]]);
+    puntos.forEach(p => limites.extend(p));
+    if (i) L.polyline(puntos, {color:"#7a827f", weight:4, opacity:.65}).addTo(capas);
+  });
   const trazo = rutas[0].coords.map(c => [c[1], c[0]]);
   L.polyline(trazo, {color:"#fff", weight:10, opacity:.9}).addTo(capas);
-  const linea = L.polyline(trazo, {color:"#0284c7", weight:6, dashArray:"10 7"}).addTo(capas);
-  limitesRuta = linea.getBounds();
+  L.polyline(trazo, {color:"#247bd1", weight:6}).addTo(capas);
+  marcarExtremosRuta(trazo);
+  limitesRuta = limites;
   vista("calculando");
   estado("Trazado provisional · Calculando consumo, recargas y alternativas…");
   centrarRuta();
@@ -1485,13 +1770,14 @@ function mostrarOpcion(sesion, op) {
     const {r, acum, vias, perfil, plan, notaDesnivel} = op;
     $("res").textContent = ""; capas.clearLayers();
     sesion.opciones.forEach(otra => {
-      if (otra !== op) L.polyline(otra.r.coords.map(c => [c[1], c[0]]), {color:"#64748b", weight:4, opacity:.5}).addTo(capas);
+      if (otra !== op) L.polyline(otra.r.coords.map(c => [c[1], c[0]]), {color:"#7a827f", weight:4, opacity:.65}).addTo(capas);
     });
     const trazo = r.coords.map(c => [c[1], c[0]]);
     L.polyline(trazo, {color:"#fff", weight:10, opacity:.9}).addTo(capas);
-    const linea = L.polyline(trazo, {color:"#0284c7", weight:6}).addTo(capas);
+    const linea = L.polyline(trazo, {color:"#247bd1", weight:6}).addTo(capas);
+    marcarExtremosRuta(trazo);
     limitesRuta = linea.getBounds();
-    const titulo = document.createElement("h2"); titulo.textContent = sesion.opciones.length === 1 ? "Tu ruta" : op === sesion.eleccion.equilibrada ? "Tu ruta recomendada" : "Tu ruta seleccionada"; $("res").appendChild(titulo);
+    // El título permanece en la barra junto al control de plegado.
     const principal = document.createElement("div"); principal.className = "resumen resumen-principal";
     [[duracion(op.tTotal),"Tiempo total"],[op.energia.toFixed(1) + " kWh","Consumo total"],[String(plan.paradas.length),"Recargas"],[op.socFinal.toFixed(0) + " %","Batería al llegar"]].forEach(([valor,texto]) => {
       const dato = document.createElement("div"), fuerte = document.createElement("strong"), etiqueta = document.createElement("span"); fuerte.textContent = valor; etiqueta.textContent = texto; dato.append(fuerte,etiqueta); principal.appendChild(dato);
@@ -1536,7 +1822,10 @@ function mostrarOpcion(sesion, op) {
     resumen.textContent = "Cómo se calcula y límites"; metodo.append(resumen, limites); info.appendChild(metodo);
     if(sesion.opciones.length<2){const aviso=document.createElement('p');aviso.className='aviso';aviso.textContent=sesion.total<2?'No se ha obtenido una segunda propuesta distinta por vías principales.':'Solo una de las propuestas evaluadas cumple los parámetros del viaje. Consulta los motivos de descarte.';$('res').appendChild(aviso);}
     sesion.descartes.forEach(texto => { const aviso = document.createElement("p"); aviso.className = "aviso"; aviso.textContent = texto; $("res").appendChild(aviso); });
-    const detalle = document.createElement("h2"); detalle.textContent = plan.paradas.length || vias.length ? "Paradas del viaje" : "Viaje directo, sin recargas"; $("res").appendChild(detalle);
+    let detalle = null;
+    if (plan.paradas.length || vias.length) {
+      detalle = document.createElement("h2"); detalle.textContent = "Paradas del viaje"; $("res").appendChild(detalle);
+    }
     const nP = plan.paradas.length;
     const cab = document.createElement("div"); cab.className = "resumen";
     const chip = (txt, cls) => { const e = document.createElement("span"); e.className = "chip " + cls; e.textContent = txt; return e; };
@@ -1632,7 +1921,7 @@ function mostrarOpcion(sesion, op) {
       const av = document.createElement("p"); av.className = "aviso"; av.textContent = msgAviso;
       $("res").insertBefore(av, detalle);
     }
-    hayDatos = true; $("datos").classList.remove("plegado"); $("plegar").textContent = "Plegar"; vista("datos"); setTimeout(centrarRuta, 80);
+    hayDatos = true; $("datos").classList.remove("plegado"); $("plegar").textContent = "−"; $("plegar").setAttribute("aria-label","Plegar resultados"); $("plegar").setAttribute("aria-expanded","true"); vista("datos"); setTimeout(centrarRuta, 80);
     guardarViaje({o: sesion.origenTexto, d: sesion.destinoTexto, soc: sesion.socIni, km: Math.round(r.total), p: plan.paradas.length, v: sesion.viasTexto, vp:sesion.puntosTexto, op:sesion.op, dp: sesion.dp});
 }
 </script>
