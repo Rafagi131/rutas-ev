@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="rutaev-version" content="3.0">
+<meta name="rutaev-version" content="4.0">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ruta EV · Planificador · v3</title>
+<title>Ruta EV · Planificador · v4</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Montserrat:wght@400;500;600;700;800&family=Space+Grotesk:wght@700&display=swap">
 <style>
@@ -717,12 +717,60 @@ input[type=range]::-moz-range-track,input[type=range]::-moz-range-progress{heigh
 @media(max-width:359px){.marca-app{padding-left:16px;padding-right:16px;gap:8px}.marca-derecha{width:90px}.marca-derecha .marca-vehiculo{font-size:18px}.marca-derecha .marca-descripcion{font-size:10px}.version-app{left:16px}}
 </style>
 <style>.perfil .parada-l{stroke:#30383d;stroke-width:2;vector-effect:non-scaling-stroke}.creditos-app p strong{color:var(--ink)}</style>
-</head>
+<style>
+/* Prueba local: perfil integrado en las superficies de relieve. */
+.perfil{background:linear-gradient(135deg,#dadbd5,#cbcdc5);border-radius:15px;padding:12px 8px;margin:14px 0 18px;box-shadow:var(--hundido);overflow:visible}
+.perfil .linea{stroke:#287bbf;stroke-width:2.2;vector-effect:non-scaling-stroke;stroke-linecap:round}
+.perfil .eje{font-size:15px;fill:#535c57;font-family:"Montserrat",sans-serif}
+.perfil .rejilla-perfil{stroke:#858d80;stroke-width:.6;opacity:.35;vector-effect:non-scaling-stroke}
+.perfil .parada-l{stroke:#fff;stroke-width:.65;vector-effect:non-scaling-stroke}
+.perfil .num{fill:#30383d;font-weight:700}
+#detalles-calculo>summary,#detalles-calculo[open]>summary{background:linear-gradient(135deg,#dadbd5,#cbcdc5);box-shadow:var(--relieve)}
+#detalles-calculo>summary::after{content:"⌄";display:grid;place-items:center;width:24px;height:24px;flex:0 0 24px;margin-left:auto;border:0;border-radius:50%;background:linear-gradient(135deg,#dadbd5,#cbcdc5);box-shadow:var(--relieve);color:var(--mute);font-size:15px;line-height:1}
+#detalles-calculo[open]>summary::after{content:"⌃";background:#ced0c7;box-shadow:inset 3px 3px 3px #7e8874,inset -3px -3px 4px #f4f7ea}
+</style>
+<style>
+#viajes button.borrar-viajes{display:flex;justify-content:center;align-items:center;width:100%;min-height:36px;padding:8px 14px;line-height:1.3;text-align:center;white-space:normal;border-radius:20px;margin:14px 0 4px}
+#nueva-ruta,.nueva-ruta-resultados{border:0;border-radius:20px;background:linear-gradient(135deg,#dadbd5,#cbcdc5);box-shadow:var(--relieve);color:var(--ink);padding:8px 12px;font:600 11px/1.3 "Montserrat",sans-serif;cursor:pointer}
+.nueva-ruta-resultados{display:block;width:100%;margin:14px 0;min-height:38px}
+.cabecera-viaje .acciones-cabecera{flex-wrap:wrap}
+</style><style>
+#confirmar-borrado{width:min(360px,calc(100vw - 40px));border:0;border-radius:20px;padding:24px;background:var(--bg);color:var(--ink);box-shadow:var(--relieve);font-family:"Montserrat",sans-serif}
+#confirmar-borrado::backdrop{background:#22282b70}
+#confirmar-borrado h2{font-size:18px;margin:0 0 12px}
+#confirmar-borrado p{font-size:13px;line-height:1.6}
+.acciones-confirmacion{display:flex;gap:12px;margin-top:20px}
+.acciones-confirmacion button{flex:1;border:0;border-radius:20px;padding:10px 8px;background:linear-gradient(135deg,#dadbd5,#cbcdc5);box-shadow:var(--relieve);color:var(--ink);font:600 11px "Montserrat",sans-serif;cursor:pointer}
+#aceptar-borrado{background:#30383d;color:#fff}
+</style><style>
+.acciones-cabecera #nueva-ruta,.acciones-cabecera #ver-mapa,.acciones-cabecera #cerrar,.nueva-ruta-resultados{min-height:30px;padding:5px 11px;font-size:10px;line-height:1.3}
+.selectores-trayecto .mini{min-height:32px;padding:5px 8px;line-height:1.3}
+#confirmar-borrado{width:min(310px,calc(100vw - 40px));padding:18px;border-radius:17px}
+#confirmar-borrado h2{font-size:15px;margin:0 0 9px;line-height:1.3}
+#confirmar-borrado p{font-size:12px;line-height:1.45;margin:0}
+.acciones-confirmacion{gap:10px;margin-top:15px}
+.acciones-confirmacion button{min-height:30px;padding:6px 8px;font-size:10px}
+</style><style>
+.marca-referencia{display:block;height:1.72cap;width:auto;max-width:47vw;object-fit:contain;mix-blend-mode:multiply;clip-path:inset(10% 0 10% 2%);flex-shrink:1}
+</style><style>.marca-derecha .logo-kia{height:1.15cap;width:auto;max-width:none;object-fit:contain}.marca-derecha .marca-vehiculo{align-items:flex-end}</style><style>
+#formulario .cabecera-viaje{display:flex;flex-direction:column;align-items:flex-start;gap:10px;margin:0 0 14px;padding:0}
+#formulario .cabecera-viaje h1{margin:0;line-height:1.1}
+#formulario .cabecera-viaje .acciones-cabecera{display:flex;align-items:center;justify-content:flex-start;gap:10px;margin:0;padding:0;flex-wrap:nowrap}
+#formulario .acciones-cabecera #nueva-ruta,#formulario .acciones-cabecera #ver-mapa,#formulario .acciones-cabecera #cerrar{display:flex;align-items:center;justify-content:center;height:30px;min-height:30px;min-width:64px;padding:0 12px;margin:0;font:600 10px/1 "Montserrat",sans-serif;border-radius:18px;box-shadow:var(--relieve)}
+</style><style>#formulario .cabecera-viaje .acciones-cabecera{align-self:flex-end;justify-content:flex-end;margin-left:auto}</style><style>
+#formulario .cabecera-viaje .acciones-cabecera{display:flex;flex-direction:row;align-self:flex-end;justify-content:flex-end;gap:10px;width:min(100%,260px);margin-left:auto}
+#formulario .acciones-cabecera #nueva-ruta,#formulario .acciones-cabecera #ver-mapa,#formulario .acciones-cabecera #cerrar{flex:1 1 0;width:0;min-width:0;height:30px;padding:0 7px;white-space:nowrap}
+#formulario .acciones-cabecera #nueva-ruta{order:1}
+#formulario .acciones-cabecera #ver-mapa{order:2}
+#formulario .acciones-cabecera #cerrar{order:3}
+#formulario .acciones-cabecera:has(#nueva-ruta[hidden]){width:80px}
+</style></head>
 <body>
+<dialog id="confirmar-borrado" aria-labelledby="titulo-borrado"><h2 id="titulo-borrado">¿Borrar los viajes guardados?</h2><p>Se borrará el historial de este navegador. No se puede deshacer.</p><div class="acciones-confirmacion"><button type="button" id="cancelar-borrado" autofocus>Cancelar</button><button type="button" id="aceptar-borrado">Borrar viajes</button></div></dialog>
 <header class="marca-app" aria-label="Ruta EV">
   <button class="marca-inicio" id="marca-inicio" type="button" aria-label="Ruta EV · Abrir planificación">
     <svg class="marca-simbolo" viewBox="0 0 36 36" aria-hidden="true" focusable="false"><rect x="0" y="0" width="10" height="10" fill="#397fff"/><rect x="13" y="0" width="10" height="10" fill="#ffffff"/><rect x="26" y="0" width="10" height="10" fill="#ffffff"/><rect x="0" y="13" width="10" height="10" fill="#ffffff"/><rect x="13" y="13" width="10" height="10" fill="#ffffff"/><rect x="26" y="13" width="10" height="10" fill="#ffffff"/><rect x="0" y="26" width="10" height="10" fill="#ffffff"/><rect x="13" y="26" width="10" height="10" fill="#ffffff"/><rect x="26" y="26" width="10" height="10" fill="#ffffff"/></svg>
-    <strong class="marca-nombre">RUTA EV</strong>
+    <img class="marca-referencia" src="data:image/png;base64,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" alt="Ruta EV">
   </button>
   <span class="marca-derecha"><span class="marca-descripcion" aria-label="planificador"><span aria-hidden="true">p</span><span aria-hidden="true">l</span><span aria-hidden="true">a</span><span aria-hidden="true">n</span><span aria-hidden="true">i</span><span aria-hidden="true">f</span><span aria-hidden="true">i</span><span aria-hidden="true">c</span><span aria-hidden="true">a</span><span aria-hidden="true">d</span><span aria-hidden="true">o</span><span aria-hidden="true">r</span></span><span class="marca-vehiculo"><img class="logo-kia" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANIAAAA2CAMAAACFkjfkAAAChVBMVEVHcEz///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////8MZ0GGAAAA1nRSTlMAH3Fh7Ez5bdfYKdno+gQqB+nn+yD+9/wNAQgGC4v1HkAhBVYifg4MKIiO9rDyA/EsAtv9fS0rGh1Kx+DM3bLc0vPlu+MYJ78JL0VcrtpwS1FYD15bST4ZeHNHV2luN1VkGzRss8Oxo6TB0+aBwPil1JO+5PS9yuqsPNHth5biNZHWr01gMFJnf2M6LhA9F05daz9yMVoSdnRTJUEWT3szQgoTI2ZffFkURHlGemKSrY+2gt+dwqruuMSNzqbVoKfvtajGiZvQvPChyJjegJDFolS6OUiEqpJ8swAABLtJREFUeJzt2udfFEcYB/DnEIgcAqeB40A4lF6kI0YEBKMoINiNXaPGFhM1Mfbe0qumanrTdE3vXdN75u/J5zjC7e3+ZnZmZ/LCfHxezjwzu9+9Z/dm547oSlymcbQlpDW+btaxYeKYPdbIiRYePxE/b5Ef5hWvZczn/TA5c/Yw98h6I4d0o+b2Sc6J35zhyMu9I8h0SN03MLm4UxNE3a1w3gp7XlLbQLtX0ty3siVF7LweKHAhDc/bEJ83tn2w3SNp3kh0kOnw0MO1RHcN512qRmtabkmk5ryT7oY1t2c37UXtqRqgvEONPBFjlrxZk2PNHkillajmavtriBINk3re5oMspMx11mZ10vxRaPr10yJ9Zkn3vCMCDZECTVVMhzT+XTR5x73RXqOk2fDaOUgLLDXngVRaeTWYujYhnYyT7nvPBRQlFYxzNCuReuF12zBQc4ZJ8+CTxkG6/32mQ6rbiObdtNCSAkkp6qCCD9xBEdIDqNlnquYMknIe7JQRMSru1CHNvxGN3nBdfJYRUteHUiDGaDPzTqq7CY3d9JA9zwApfdHNkiJGrZ5JoY9QzVWfjKs5Q6RTH8uCGKMRXkkPw5rbYqs5I6TAPnDxGg/1cEhp3kjNcC26dQxM1iTtTgHDD/9JPg6JeSGF8mHNLXbWnD6pbFuWc3Da3wEySpozBY35ZAIvX4e0BLy5stbuSJc5UsYtaMSnuOY0SY98BkYGH60hk6QyWHOdj3FqTo/0OHp4bXxisNcQaSmsuc+5NadDmjYTDKteNrQPY4SEay71tMu5eSMN+wKM+vKaWIIBUlk+fuIvo/+AlHktGJPYG5eiTSq6Feey5CTjpPrl28GQr87EJel+Sv7bOCAJkzLJ/zUYMOVJW5Yeqewbzq6ZlClRbdOr8Cm0RP12LpkkcWtOzqRGevoiyG57xpmoQSq/5AJyM6mQcivA3llj5bNkkJRXIaw5GZMCaWEfSN26AuZ6Ja2cKgMSm6RJof1oibp5NBkkdaFvB2WTLGniAZC3YzxvWkyqFpJwzYW3jVA0yZGeWw+yqhZHl6jypEki0u+w5mYWUPkoNZMUqQj96jH9eS6IRxrHJ3X9gTr6lkQmUzRJkCY4t0cZq31B+FOhD57DizxS3r5k0Fz1UiA6m1/J5E5a9R3IaL9eBCJMaknnkPajG5UdiT0I/Sr3kxupGC22dr4sBhFcth72EYeEomGBdT4Vk5hUnxAG3VvOuokIfErf55E8qappsOY8mISk5h9A51S3xT0kpZwbaJcUrcske8ibBKTCEnDPZv1YSuqk7YsGv5KlQJMnoimlTXzSwQ7Q0yDYmeGTdg2970qAgiW5BCND0sQjzcgHS9TsfOefMdxJqT2xdndRO//PMRkjpUwc0pgG0Nyxmns0Pin8inUZCNaJcdEmvFHlTDtRSvAIOHRySSGpk3ZZ9liI6CchKPgzp+aUTDuYZLRkyIPoX1Lqq7b2X0SHWFvsOm+zhKlJDhTurydlUvg1x6tHiP/68Ct8ztmjHP5uxlhy7Lk1Gi3g7JH9m+of2jKji2gQK16/CsSaldz3FHscXLo8wRn9dZaU1asSxLEmyWVBB6KA9f1F/6+o77UtaK4EXTbxD/tBFBoL+SjoAAAAAElFTkSuQmCC" alt="Kia" width="210" height="54"> <span>EV3</span></span></span>
 </header>
@@ -734,8 +782,8 @@ input[type=range]::-moz-range-track,input[type=range]::-moz-range-progress{heigh
 <button id="preparar" class="oculto">Preparar viaje</button>
 <section id="formulario" class="panel" aria-label="Preparar viaje">
   <header class="cabecera-viaje">
-    <div><span class="sobre-titulo">PLANIFICA / 01</span><h1 lang="en">We're off!</h1></div>
-    <div class="acciones-cabecera"><button type="button" id="ver-mapa" class="insignia" aria-label="Ver mapa">Mapa</button><button type="button" id="cerrar" class="oculto" aria-label="Volver a la ruta">Volver</button></div>
+    <h1 lang="en">We're off!</h1>
+    <div class="acciones-cabecera"><button type="button" id="nueva-ruta" class="insignia" hidden>Nueva ruta</button><button type="button" id="ver-mapa" class="insignia" aria-label="Ver mapa">Mapa</button><button type="button" id="cerrar" class="oculto" aria-label="Volver a la ruta">Volver</button></div>
   </header>
   <div class="form">
     <p class="proposito">Tu próximo viaje, con menos energía y tiempo.</p>
@@ -792,7 +840,7 @@ input[type=range]::-moz-range-track,input[type=range]::-moz-range-progress{heigh
     </details>
   </div>
   <details name="panel-principal" class="grupo" id="historial" hidden><summary><span class="icono-grupo" aria-hidden="true">↶</span><span class="texto-grupo"><strong>Viajes recientes</strong><small id="resumen-historial">Recuperar un viaje guardado</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><section id="viajes" class="contenido-grupo"></section></details>
-  <details name="panel-principal" class="grupo creditos-app"><summary><span class="icono-grupo" aria-hidden="true">i</span><span class="texto-grupo"><strong>Información y créditos</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary><p><strong>Versión 3</strong><br>Idea y desarrollo propiedad de Rafa Galdó</p><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p></details>
+  <details name="panel-principal" class="grupo creditos-app"><summary><span class="icono-grupo" aria-hidden="true">i</span><span class="texto-grupo"><strong>Información y créditos</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary><p><strong>Versión 4</strong><br>Idea y desarrollo propiedad de Rafa Galdó</p><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p></details>
 </section>
 <section id="datos" class="panel oculto">
   <div id="barra"><h2>Ruta seleccionada</h2><div class="acciones-ruta"><button id="abrir" class="oculto" aria-label="Editar viaje">editar</button><button id="plegar" aria-label="Plegar resultados" aria-expanded="true">−</button></div></div>
@@ -871,6 +919,7 @@ async function nombreLugar(pos) { // nombre aproximado del punto (Nominatim inve
 }
 // Pantallas: "form" (formulario), "calculando" (solo mapa) y "datos" (panel de la ruta + botón Editar viaje)
 function vista(m) {
+  $("nueva-ruta").hidden = !hayDatos;
   $("formulario").classList.toggle("oculto", m !== "form");
   $("datos").classList.toggle("oculto", m !== "datos");
   $("abrir").classList.toggle("oculto", m !== "datos");
@@ -1267,7 +1316,7 @@ function planificarVoraz(total, socIni, cargadores, P, perfil) {
 }
 
 function dibujarPerfil(perfil, paradas, alMover) {
-  const W = 600, H = 190, m = {l: 52, r: 10, t: 16, b: 26};
+  const W = 600, H = 240, m = {l: 62, r: 20, t: 28, b: 32};
   const alts = perfil.alt, kms = perfil.km, total = kms[kms.length - 1];
   const amin = Math.min(...alts), amax = Math.max(...alts), rango = Math.max(amax - amin, 50);
   const X = k => m.l + k / total * (W - m.l - m.r);
@@ -1276,9 +1325,14 @@ function dibujarPerfil(perfil, paradas, alMover) {
   const el = (n, at, txt) => { const e = document.createElementNS(ns, n); for (const k in at) e.setAttribute(k, at[k]); if (txt) e.textContent = txt; return e; };
   const svg = el("svg", {viewBox: `0 0 ${W} ${H}`, class: "perfil", role: "img", "aria-label": "Perfil de altitud de la ruta"});
   const defs = el("defs", {}), g = el("linearGradient", {id: "gdesn", x1: 0, y1: 0, x2: 0, y2: 1});
-  g.appendChild(el("stop", {offset: "0%", "stop-color": "#0ea5e9", "stop-opacity": .5}));
-  g.appendChild(el("stop", {offset: "100%", "stop-color": "#1769c9", "stop-opacity": .05}));
+  g.appendChild(el("stop", {offset: "0%", "stop-color": "#347ebc", "stop-opacity": .65}));
+  g.appendChild(el("stop", {offset: "100%", "stop-color": "#526e80", "stop-opacity": .12}));
   defs.appendChild(g); svg.appendChild(defs);
+  [0, .5, 1].forEach(fraccion => {
+    const y = m.t + fraccion * (H-m.t-m.b);
+    svg.appendChild(el("line", {x1:m.l,x2:W-m.r,y1:y,y2:y,class:"rejilla-perfil"}));
+  });
+  svg.appendChild(el("text", {x:X(total/2),y:H-6,"text-anchor":"middle",class:"eje"},Math.round(total/2)+" km"));
   const pts = kms.map((k, i) => `${X(k).toFixed(1)},${Y(alts[i]).toFixed(1)}`);
   svg.appendChild(el("polygon", {points: `${X(0).toFixed(1)},${H - m.b} ${pts.join(" ")} ${X(total).toFixed(1)},${H - m.b}`, class: "area"}));
   svg.appendChild(el("polyline", {points: pts.join(" "), class: "linea"}));
@@ -1574,10 +1628,15 @@ function pintarViajes() {
     destinoFijo = coordenadasValidas(v.dp) ? {pos: v.dp, texto: v.d} : null; $("destino").value = v.d; pintarPuntos(); $("soc").value = v.soc; restaurarPuntos(v.vp || v.v || ""); pintaSoc(); actualizarResumenes(); };
     c.appendChild(b);
   });
-  const x = document.createElement("button"); x.textContent = "Borrar viajes guardados";
-  x.onclick = () => { try { localStorage.removeItem("rutaev:viajes"); } catch (e) {} pintarViajes(); };
+  const x = document.createElement("button"); x.type = "button"; x.className = "borrar-viajes"; x.textContent = "Borrar viajes guardados";
+  x.onclick = () => $("confirmar-borrado").showModal();
   c.appendChild(x);
 }
+$("cancelar-borrado").onclick = () => $("confirmar-borrado").close();
+$("aceptar-borrado").onclick = () => {
+  try { localStorage.removeItem("rutaev:viajes"); } catch (e) { $("confirmar-borrado").close(); estado("No se pudieron borrar los viajes guardados."); return; }
+  $("confirmar-borrado").close(); viajeRecienteSeleccionado = null; pintarViajes();
+};
 cargarPrefs(); pintarViajes(); actualizarResumenes();
 $("perfil-ev").addEventListener("change", guardarPerfilEV);
 
@@ -1611,6 +1670,17 @@ map.on("click", async ev => {
 $("abrir").onclick = () => vista("form");
 $("marca-inicio").onclick = () => { vista("form"); $("formulario").scrollTop = 0; };
 $("ver-mapa").onclick = () => vista("explorar");
+function nuevaRuta() {
+  cerrarSugerencias(); cancelarUbicacionPendiente(); modoElegir = false;
+  origenFijo = null; destinoFijo = null;
+  ["origen", "destino"].forEach(id => { $(id).value = ""; seleccionDirecciones.delete($(id)); });
+  $("vias").value = ""; restaurarPuntos([]);
+  capas.clearLayers(); capaPuntos.clearLayers(); limitesRuta = null; hayDatos = false;
+  $("res").textContent = ""; estado(""); viajeRecienteSeleccionado = null;
+  pintarViajes(); actualizarResumenes(); vista("form");
+  $("formulario").scrollTop = 0; $("origen").focus();
+}
+$("nueva-ruta").onclick = nuevaRuta;
 $("preparar").onclick = () => vista("form");
 $("cerrar").onclick = () => { vista("datos"); setTimeout(centrarRuta, 80); };
 $("plegar").onclick = () => { const p = $("datos").classList.toggle("plegado"); $("plegar").textContent = p ? "+" : "−"; $("plegar").setAttribute("aria-label",p ? "Desplegar resultados" : "Plegar resultados"); $("plegar").setAttribute("aria-expanded",String(!p)); setTimeout(centrarRuta, 80); };
@@ -1801,7 +1871,7 @@ function mostrarOpcion(sesion, op) {
     $("res").appendChild(principal);
     const distancia = document.createElement("p"); distancia.className = "meta"; distancia.textContent = `${r.total.toFixed(0)} km · Llegada estimada ${new Date(sesion.salida + op.tTotal * 60000).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})} si sales ahora · Sin tráfico en directo.`; $("res").appendChild(distancia);
     const alternativas = document.createElement("details"), tituloAlternativas = document.createElement("summary"); alternativas.id = "alternativas-ruta"; alternativas.className = "detalle-resultados"; tituloAlternativas.textContent = `Comparar alternativas (${sesion.opciones.length})`; alternativas.appendChild(tituloAlternativas); alternativas.open = true; $("res").appendChild(alternativas);
-    const info = document.createElement("details"), tituloInfo = document.createElement("summary"); info.className = "detalle-resultados"; tituloInfo.textContent = "Detalles del cálculo"; info.appendChild(tituloInfo);
+    const info = document.createElement("details"), tituloInfo = document.createElement("summary"); info.className = "detalle-resultados"; info.id = "detalles-calculo"; tituloInfo.textContent = "Detalles del cálculo"; info.appendChild(tituloInfo);
     const intro = document.createElement("p"); intro.className = "explicacion";
     intro.textContent = sesion.opciones.length > 1 ? explicarEquilibrio(sesion.eleccion, sesion.margen) : "Solo hay una opción viable evaluada; no podemos comparar el equilibrio entre rutas alternativas.";
     alternativas.appendChild(intro);
@@ -1930,7 +2000,8 @@ function mostrarOpcion(sesion, op) {
       li.append(t, m, w); items.push({km: v.km, li});
     });
     items.sort((x, y) => x.km - y.km).forEach(x => ol.appendChild(x.li));
-    $("res").append(ex,info);
+    const nueva = document.createElement("button"); nueva.type = "button"; nueva.className = "nueva-ruta-resultados"; nueva.textContent = "Nueva ruta"; nueva.onclick = nuevaRuta;
+    $("res").append(ex,nueva,info);
     estado("");
     const msgAviso = plan.ok ? plan.aviso : "Aviso: " + plan.motivo;
     if (msgAviso) {
