@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="rutaev-version" content="4.10-pages">
+<meta name="rutaev-version" content="4.11-pages">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ruta EV · Planificador · v4.10</title>
+<title>Ruta EV · Planificador · v4.11</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Montserrat:wght@400;500;600;700;800&display=swap">
 <style>
@@ -953,7 +953,7 @@ body:has(#progreso-cargadores:not([hidden])) #estado{bottom:calc(48px + env(safe
   </details>
   <details name="panel-principal" class="grupo" id="favoritos-panel"><summary><span class="icono-grupo" aria-hidden="true">☆</span><span class="texto-grupo"><strong>Estaciones favoritas</strong><small id="favoritos-resumen">Tus paradas para futuros viajes</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><div class="contenido-grupo"><p class="ayuda">Los favoritos no añaden puntos obligatorios ni paradas. Solo podrán aparecer como recarga si el cálculo encuentra esa estación entre los cargadores viables. No se fuerza su selección.</p><div id="favoritos-lista"></div><p id="favoritos-estado" class="ayuda" role="status"></p><div id="favorito-migjorn"></div></div></details>
   <details name="panel-principal" class="grupo" id="historial" hidden><summary><span class="icono-grupo" aria-hidden="true">↶</span><span class="texto-grupo"><strong>Viajes recientes</strong><small id="resumen-historial">Recuperar un viaje guardado</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><section id="viajes" class="contenido-grupo"></section></details>
-  <details name="panel-principal" class="grupo creditos-app"><summary><span class="icono-grupo" aria-hidden="true">i</span><span class="texto-grupo"><strong>Información y créditos</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary><p><strong>Versión 4.10 · Europa</strong><br>Idea y desarrollo propiedad de Rafa Galdó</p><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p><details class="detalle-resultados" id="cobertura-europa"><summary><span>Europa · Fuentes gratuitas</span><span class="apertura-europa" aria-hidden="true">⌄</span></summary><p class="ayuda">Rutas por carretera y búsqueda internacional de cargadores: España, Portugal, Francia, Alemania, Italia, Benelux, Austria, Suiza, Reino Unido, Irlanda y países nórdicos, según cobertura de OpenStreetMap/OSRM y Open Charge Map. Escribe el país para evitar localidades homónimas.</p><p class="ayuda">La presencia en el mapa no confirma disponibilidad ni varios puntos operativos. Esta publicación no conecta al servidor REVE. Los precios, la disponibilidad en directo y los servicios de las estaciones quedan pendientes de confirmar.</p><p class="ayuda">Irlanda y Reino Unido: puedes planificar sus tramos de carretera. Los cruces en ferry o tren se planifican por separado; no se incluyen reservas, horarios ni coste de la travesía.</p></details></details>
+  <details name="panel-principal" class="grupo creditos-app"><summary><span class="icono-grupo" aria-hidden="true">i</span><span class="texto-grupo"><strong>Información y créditos</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary><p><strong>Versión 4.11 · Europa</strong><br>Idea y desarrollo propiedad de Rafa Galdó</p><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p><details class="detalle-resultados" id="cobertura-europa"><summary><span>Europa · Fuentes gratuitas</span><span class="apertura-europa" aria-hidden="true">⌄</span></summary><p class="ayuda">Rutas por carretera y búsqueda internacional de cargadores: España, Portugal, Francia, Alemania, Italia, Benelux, Austria, Suiza, Reino Unido, Irlanda y países nórdicos, según cobertura de OpenStreetMap/OSRM y Open Charge Map. Escribe el país para evitar localidades homónimas.</p><p class="ayuda">La presencia en el mapa no confirma disponibilidad ni varios puntos operativos. Esta publicación no conecta al servidor REVE. Los precios, la disponibilidad en directo y los servicios de las estaciones quedan pendientes de confirmar.</p><p class="ayuda">Irlanda y Reino Unido: puedes planificar sus tramos de carretera. Los cruces en ferry o tren se planifican por separado; no se incluyen reservas, horarios ni coste de la travesía.</p></details></details>
 </section>
 <section id="datos" class="panel oculto">
   <div id="barra"><h2>Ruta seleccionada</h2><div class="acciones-ruta"><button id="abrir" class="oculto" aria-label="Editar viaje">editar</button><button id="plegar" aria-label="Plegar resultados" aria-expanded="true">−</button></div></div>
@@ -1655,7 +1655,7 @@ function moverPunto(p, paso) {
   const i = puntosEditables.indexOf(p), j = i + paso;
   if (i < 0 || j < 0 || j >= puntosEditables.length) return;
   [puntosEditables[i], puntosEditables[j]] = [puntosEditables[j], puntosEditables[i]];
-  puntosEditables.forEach(x => $("puntos-ruta").appendChild(x.fila)); actualizarResumenes();
+  puntosEditables.forEach(x => $("puntos-ruta").appendChild(x.fila)); actualizarResumenes(); activarCampoUbicacion(campoUbicacionActivo);
   (paso < 0 ? (p.subir.disabled ? p.bajar : p.subir) : (p.bajar.disabled ? p.subir : p.bajar)).focus();
 }
 function agregarPunto(dato = {}, enfocar = true) {
@@ -1666,10 +1666,11 @@ function agregarPunto(dato = {}, enfocar = true) {
   const boton = (texto, accion) => { const b = document.createElement("button"); b.type = "button"; b.textContent = texto; b.onclick = accion; controles.appendChild(b); return b; };
   const p = {fila,label,input};
   p.subir = boton("↑", () => moverPunto(p,-1)); p.bajar = boton("↓", () => moverPunto(p,1));
-  p.quitar = boton("Quitar", () => { const i = puntosEditables.indexOf(p); p.sugeridor.destruir(); puntosEditables.splice(i,1); fila.remove(); actualizarResumenes(); (puntosEditables[Math.min(i,puntosEditables.length-1)]?.input || $("anadir-punto")).focus(); });
+  p.quitar = boton("Quitar", () => { const i = puntosEditables.indexOf(p); p.sugeridor.destruir(); cancelarUbicacionPendiente(); if (campoUbicacionActivo === input.id) activarCampoUbicacion('origen'); if (modoElegir === input.id) modoElegir = false; puntosEditables.splice(i,1); fila.remove(); actualizarResumenes(); (puntosEditables[Math.min(i,puntosEditables.length-1)]?.input || $("anadir-punto")).focus(); });
   puntosEditables.push(p); $("puntos-ruta").appendChild(fila); p.sugeridor = registrarSugerencias(input); fila.appendChild(controles);
   if (coordenadasValidas(dato.pos)) seleccionDirecciones.set(input, {texto:input.value,pos:dato.pos.slice()});
-  input.addEventListener("input", actualizarPuntos); actualizarResumenes(); if (enfocar) input.focus();
+  input.addEventListener("focus", () => activarCampoUbicacion(input.id));
+  input.addEventListener("input", () => { cancelarUbicacionPendiente(); actualizarPuntos(); }); actualizarResumenes(); if (enfocar) input.focus();
 }
 function normalizarPuntos(datos) {
   const lista = Array.isArray(datos) ? datos : String(datos || "").split(";").map(texto => ({texto:texto.trim()}));
@@ -1809,11 +1810,19 @@ cargarPrefs(); pintarViajes(); actualizarResumenes();
 $("perfil-ev").addEventListener("change", guardarPerfilEV);
 
 let campoUbicacionActivo = 'origen';
+function campoSeleccionable(campo) {
+  return ['origen','destino'].includes(campo) || (typeof puntosEditables !== 'undefined' && puntosEditables.some(p => p.input.id === campo));
+}
+function etiquetaCampo(campo) {
+  if (campo === 'origen') return 'Desde';
+  if (campo === 'destino') return 'Hasta';
+  return 'Punto ' + (puntosEditables.findIndex(p => p.input.id === campo) + 1);
+}
 function activarCampoUbicacion(campo) {
-  if(!['origen','destino'].includes(campo))return;
+  if (!campoSeleccionable(campo)) return;
   campoUbicacionActivo=campo;
   ['origen','destino'].forEach(id=>$(id).closest('.lugar')?.classList.toggle('seleccion-activa',id===campo));
-  const etiqueta=campo==='origen'?'Desde':'Hasta';
+  const etiqueta=etiquetaCampo(campo);
   $('miub').setAttribute('aria-label','Mi ubicación para '+etiqueta);
   $('miub').title='Rellenar '+etiqueta+' con mi ubicación';
   $('elegirdest').setAttribute('aria-label','Selec Mapa para '+etiqueta);
@@ -1826,13 +1835,14 @@ $("destino").addEventListener("input", () => { cancelarUbicacionPendiente(); if 
 $("miub").onclick = () => {
   if (!window.isSecureContext || !navigator.geolocation) return fallo("La ubicación solo funciona en páginas https y con un navegador compatible.");
   cerrarSugerencias();
-  const campo = campoUbicacionActivo, revision = ++revisionUbicacion;
+  const campo = campoUbicacionActivo, input = $(campo), revision = ++revisionUbicacion;
+  if (!campoSeleccionable(campo) || !input) return;
   modoElegir = false;
   estado("Obteniendo tu ubicación...");
   navigator.geolocation.getCurrentPosition(p => {
-    if (revision !== revisionUbicacion) return;
+    if (revision !== revisionUbicacion || !campoSeleccionable(campo) || $(campo) !== input) return;
     const punto = {pos:[p.coords.longitude,p.coords.latitude],texto:'Mi ubicación actual'};
-    if(campo==='origen')origenFijo=punto;else destinoFijo=punto;
+    if(campo==='origen')origenFijo=punto;else if(campo==='destino')destinoFijo=punto;
     $(campo).value=punto.texto;seleccionDirecciones.set($(campo),punto);
     pintarPuntos();actualizarResumenes();estado('');
     map.setView([p.coords.latitude, p.coords.longitude], Math.max(map.getZoom(), 10));
@@ -1841,26 +1851,26 @@ $("miub").onclick = () => {
   {enableHighAccuracy: true, timeout: 12000, maximumAge: 60000});
 };
 function iniciarSeleccionMapa(campo) {
-  if (!['origen','destino'].includes(campo)) return;
+  if (!campoSeleccionable(campo)) return;
   cerrarSugerencias();
   cancelarUbicacionPendiente();
   modoElegir = campo;
-  $('elegir').querySelector('span').textContent = campo==='origen' ? 'Toca el mapa para elegir el punto de salida' : 'Toca el mapa para elegir el destino';
+  $('elegir').querySelector('span').textContent = campo==='origen' ? 'Toca el mapa para elegir el punto de salida' : campo==='destino' ? 'Toca el mapa para elegir el destino' : 'Toca el mapa para elegir '+etiquetaCampo(campo).toLowerCase();
   vista('mapa');
 }
 $('elegirdest').onclick = () => iniciarSeleccionMapa(campoUbicacionActivo);
 $('cancelarmapa').onclick = () => { modoElegir = false; vista('form'); };
 map.on('click', async ev => {
   const campo = modoElegir;
-  if (!['origen','destino'].includes(campo)) return;
+  if (!campoSeleccionable(campo)) return;
   modoElegir = false;
   const pos = [ev.latlng.lng,ev.latlng.lat], d = {pos,texto:`Punto del mapa (${ev.latlng.lat.toFixed(4)}, ${ev.latlng.lng.toFixed(4)})`};
-  if(campo==='origen')origenFijo=d;else destinoFijo=d;
+  if(campo==='origen')origenFijo=d;else if(campo==='destino')destinoFijo=d;
   $(campo).value=d.texto;seleccionDirecciones.set($(campo),d);
   pintarPuntos();actualizarResumenes();vista('form');
   try {
     const nombre = await nombreLugar(pos);
-    const vigente = campo==='origen' ? origenFijo : destinoFijo;
+    const vigente = campo==='origen' ? origenFijo : campo==='destino' ? destinoFijo : (campoSeleccionable(campo) ? seleccionDirecciones.get($(campo)) : null);
     if(vigente===d && $(campo).value===d.texto){d.texto=nombre;$(campo).value=nombre;actualizarResumenes();}
   }catch{/* Si no se encuentra nombre, se conservan las coordenadas elegidas. */}
 });
