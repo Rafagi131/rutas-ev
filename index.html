@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="rutaev-version" content="4.12-pages">
+<meta name="rutaev-version" content="4.13-pages">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ruta EV · Planificador · v4.12</title>
+<title>Ruta EV · Planificador · v4.13</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Montserrat:wght@400;500;600;700;800&display=swap">
 <style>
@@ -861,6 +861,9 @@ body:has(#progreso-cargadores:not([hidden])) #estado:not(.error){display:none}
 .acciones-estacion .boton-favorito[aria-pressed="true"]{color:var(--acc);box-shadow:var(--hundido)}
 #formulario .cabecera-viaje{container-type:inline-size;width:100%}
 #formulario .cabecera-viaje h1{width:100%;font-size:clamp(38px,18cqw,68px);font-weight:800;letter-spacing:-.055em;line-height:1;white-space:nowrap}
+
+/* 4.13: pastillas sin marco exterior. */
+.resumen-principal{border:0;outline:0}
 </style></head>
 <body><dialog id="confirmar-borrado" aria-labelledby="titulo-borrado"><h2 id="titulo-borrado">¿Borrar los viajes guardados?</h2><p>Se borrará el historial de este navegador. No se puede deshacer.</p><div class="acciones-confirmacion"><button type="button" id="cancelar-borrado" autofocus>Cancelar</button><button type="button" id="aceptar-borrado">Borrar viajes</button></div></dialog>
 <header class="marca-app" aria-label="Ruta EV">
@@ -918,7 +921,7 @@ body:has(#progreso-cargadores:not([hidden])) #estado:not(.error){display:none}
         <div class="dos-columnas"><label class="campo"><span>Mínimo al llegar a cargadores (%)</span><input id="min" type="number" value="10"></label> <label class="campo"><span>Cargar hasta (%)</span><input id="max" type="number" value="80"></label></div>
         <label class="campo"><span>Tiempo máximo por recarga (min)</span><input id="tmax" type="number" value="40"></label>
         <h2>Otros ajustes de recarga</h2>
-        <label class="campo"><span>Margen para el tiempo de recarga (%)</span><input id="margenCarga" type="number" min="0" max="100" value="20"><small>20 % adicional sobre la curva estimada. Es un margen de planificación, no un dato medido del EV3. Auméntalo si observas cargas más lentas.</small></label><p class="ayuda">La batería fría o caliente y la potencia compartida pueden alargar más la carga. La previsión meteorológica no mide la temperatura de la batería. El tiempo extra por parada (5 min por defecto) se suma aparte para acceso, conexión y preparación; no incluyen colas.</p><label class="campo"><span>Recarga mínima deseada (min)</span><input id="tmin" type="number" value="15"></label> <label class="campo"><span>Distancia máxima entre paradas (km, 0 = sin límite)</span><input id="maxkm" type="number" value="300"></label> <label class="campo"><span>Tiempo extra por parada (min)</span><input id="extra" type="number" value="5"></label> <input id="pen" type="hidden" value="8"> <label class="campo"><span>Potencia mínima (kW)</span><input id="minkw" type="number" value="50"></label> <label class="campo"><span>Operadores (separados por comas; vacío = todos)</span><input id="ops" type="text" placeholder="Ej: Iberdrola, Zunder"></label>
+        <label class="campo"><span>Margen para el tiempo de recarga (%)</span><input id="margenCarga" type="number" min="0" max="100" value="20"><small>20 % adicional sobre la curva estimada. Es un margen de planificación, no un dato medido del EV3. Auméntalo si observas cargas más lentas.</small></label><p class="ayuda">La batería fría o caliente y la potencia compartida pueden alargar más la carga. La previsión meteorológica no mide la temperatura de la batería. El tiempo extra por parada (5 min por defecto) se suma aparte para acceso, conexión y preparación; no incluyen colas.</p><label class="campo"><span>Tiempo mínimo de recarga (min)</span><input id="tmin" type="number" min="0" value="15"><small>Si basta con menos energía, se carga más hasta alcanzar este tiempo, respetando el porcentaje máximo de batería. El tiempo extra por parada se suma aparte.</small></label> <label class="campo"><span>Distancia máxima entre paradas (km, 0 = sin límite)</span><input id="maxkm" type="number" value="300"></label> <label class="campo"><span>Tiempo extra por parada (min)</span><input id="extra" type="number" value="5"></label> <input id="pen" type="hidden" value="8"> <label class="campo"><span>Potencia mínima (kW)</span><input id="minkw" type="number" value="50"></label> <label class="campo"><span>Operadores (separados por comas; vacío = todos)</span><input id="ops" type="text" placeholder="Ej: Iberdrola, Zunder"></label>
         </div></details>
       </div>
     </details>
@@ -953,7 +956,7 @@ body:has(#progreso-cargadores:not([hidden])) #estado:not(.error){display:none}
   </details>
   <details name="panel-principal" class="grupo" id="favoritos-panel"><summary><span class="icono-grupo" aria-hidden="true">☆</span><span class="texto-grupo"><strong>Estaciones favoritas</strong><small id="favoritos-resumen">Tus paradas para futuros viajes</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><div class="contenido-grupo"><p class="ayuda">Los favoritos no añaden puntos obligatorios ni paradas. Solo podrán aparecer como recarga si el cálculo encuentra esa estación entre los cargadores viables. No se fuerza su selección.</p><div id="favoritos-lista"></div><p id="favoritos-estado" class="ayuda" role="status"></p><div id="favorito-migjorn"></div></div></details>
   <details name="panel-principal" class="grupo" id="historial" hidden><summary><span class="icono-grupo" aria-hidden="true">↶</span><span class="texto-grupo"><strong>Viajes recientes</strong><small id="resumen-historial">Recuperar un viaje guardado</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><section id="viajes" class="contenido-grupo"></section></details>
-  <details name="panel-principal" class="grupo creditos-app"><summary><span class="icono-grupo" aria-hidden="true">i</span><span class="texto-grupo"><strong>Información y créditos</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary><p><strong>Versión 4.12 · Europa</strong><br>Idea y desarrollo propiedad de Rafa Galdó</p><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p><details class="detalle-resultados" id="cobertura-europa"><summary><span>Europa · Fuentes gratuitas</span><span class="apertura-europa" aria-hidden="true">⌄</span></summary><p class="ayuda">Rutas por carretera y búsqueda internacional de cargadores: España, Portugal, Francia, Alemania, Italia, Benelux, Austria, Suiza, Reino Unido, Irlanda y países nórdicos, según cobertura de OpenStreetMap/OSRM y Open Charge Map. Escribe el país para evitar localidades homónimas.</p><p class="ayuda">La presencia en el mapa no confirma disponibilidad ni varios puntos operativos. Esta publicación no conecta al servidor REVE. Los precios, la disponibilidad en directo y los servicios de las estaciones quedan pendientes de confirmar.</p><p class="ayuda">Irlanda y Reino Unido: puedes planificar sus tramos de carretera. Los cruces en ferry o tren se planifican por separado; no se incluyen reservas, horarios ni coste de la travesía.</p></details></details>
+  <details name="panel-principal" class="grupo creditos-app"><summary><span class="icono-grupo" aria-hidden="true">i</span><span class="texto-grupo"><strong>Información y créditos</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary><p><strong>Versión 4.13 · Europa</strong><br>Idea y desarrollo propiedad de Rafa Galdó</p><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p><details class="detalle-resultados" id="cobertura-europa"><summary><span>Europa · Fuentes gratuitas</span><span class="apertura-europa" aria-hidden="true">⌄</span></summary><p class="ayuda">Rutas por carretera y búsqueda internacional de cargadores: España, Portugal, Francia, Alemania, Italia, Benelux, Austria, Suiza, Reino Unido, Irlanda y países nórdicos, según cobertura de OpenStreetMap/OSRM y Open Charge Map. Escribe el país para evitar localidades homónimas.</p><p class="ayuda">La presencia en el mapa no confirma disponibilidad ni varios puntos operativos. Esta publicación no conecta al servidor REVE. Los precios, la disponibilidad en directo y los servicios de las estaciones quedan pendientes de confirmar.</p><p class="ayuda">Irlanda y Reino Unido: puedes planificar sus tramos de carretera. Los cruces en ferry o tren se planifican por separado; no se incluyen reservas, horarios ni coste de la travesía.</p></details></details>
 </section>
 <section id="datos" class="panel oculto">
   <div id="barra"><h2>Ruta seleccionada</h2><div class="acciones-ruta"><button id="abrir" class="oculto" aria-label="Editar viaje">editar</button><button id="plegar" aria-label="Plegar resultados" aria-expanded="true">−</button></div></div>
@@ -1340,12 +1343,11 @@ async function perfilDesnivel(coords, acum, cons, masa) {
 
 // Optimizador: busca el plan de MENOR tiempo total (carga + tiempo extra por parada).
 //  - El tiempo máximo por recarga y la distancia máxima entre paradas se cumplen siempre.
-//  - El tiempo mínimo es una preferencia: una parada más corta que el mínimo tiene una pequeña
-//    penalización (ajustable) al comparar planes, así que solo sale si no se puede evitar (por ejemplo,
-//    juntando esa carga en la parada anterior o en la siguiente sin pasar del máximo).
+//  - Cada recarga alcanza el tiempo mínimo añadiendo energía, salvo que llegue antes
+//    al porcentaje máximo permitido. La carga adicional se propaga al resto del viaje.
 // Programación dinámica sobre (cargador, % de batería al llegar), en pasos de 1 % (redondeo a la baja).
 function optimizar(total, socIni, cargadores, P, perfil, tmax, maxkm) {
-  const tmin = P.tmin || 0; // preferencia: una recarga más corta que esto se penaliza
+  const tmin = P.tmin || 0;
   const bat = P.bat, INF = 1e18;
   const minimoDestino = P.minDestino ?? P.min;
   const smin = Math.ceil(P.min), smax = Math.min(100, Math.floor(P.max));
@@ -1393,10 +1395,12 @@ function optimizar(total, socIni, cargadores, P, perfil, tmax, maxkm) {
     for (let sa = smin; sa <= 100; sa++) {
       const c0 = mejor[i][sa];
       if (c0 >= INF) continue;
+      const minimoCarga = Math.min(tmin, Math.max(0, T[smax] - T[sa]));
       for (let st = sa + 1; st <= smax; st++) {
         const ct = T[st] - T[sa];
         if (ct > tmax) break;
-        const c = c0 + ct + P.extra + (ct < tmin ? (P.pen === undefined ? 8 : P.pen) : 0); // parada corta: penalización pequeña
+        if (ct < minimoCarga - 1e-9) continue;
+        const c = c0 + ct + P.extra;
         if (c < dep[st]) { dep[st] = c; depArg[i][st] = sa; }
       }
     }
@@ -1428,9 +1432,9 @@ function planificar(total, socIni, cargadores, P, perfil) {
     if (r) aviso = `No hay plan con ${P.maxkm} km como máximo entre paradas; se muestra el mejor sin ese límite (el máximo de ${P.tmax} min por recarga se mantiene).`;
   }
   if (r) {
-    const cortas = r.map((p, i) => p.minutos < P.tmin - 0.5 ? i + 1 : 0).filter(Boolean);
+    const cortas = r.map((p, i) => p.minutos < P.tmin - 1e-9 ? i + 1 : 0).filter(Boolean);
     const lista = cortas.length > 1 ? cortas.slice(0, -1).join(", ") + " y " + cortas[cortas.length - 1] : cortas[0];
-    if (cortas.length) aviso = [aviso, `${cortas.length > 1 ? "Las paradas " + lista + " duran" : "La parada " + lista + " dura"} menos de ${P.tmin} min: evitarlo alargaba el viaje o exigía pasar de ${P.tmax} min en alguna recarga.`].filter(Boolean).join(" ");
+    if (cortas.length) aviso = [aviso, `${cortas.length > 1 ? "Las paradas " + lista + " duran" : "La parada " + lista + " dura"} menos de ${P.tmin} min porque se alcanza el límite de batería del ${P.max} %. Se conserva ese límite.`].filter(Boolean).join(" ");
     return {paradas: r, ok: true, aviso: aviso || undefined};
   }
   const v = planificarVoraz(total, socIni, cargadores, P, perfil); // solo para explicar el motivo
@@ -1952,7 +1956,7 @@ $("calc").onclick = async () => {
     const P = {bat: +$("bat").value, cons: consumoAjustado(), maxkw: +$("maxkw").value, margenCarga: num("margenCarga", MARGEN_CARGA_DEF),
                min: +$("min").value, minDestino: reservaDestinoActual(), max: +$("max").value,
                tmin: num("tmin", 15), pen: num("pen", 8), tmax: num("tmax", 40), maxkm: num("maxkm", 300) || Infinity, extra: num("extra", 5)};
-    if (!(P.bat > 0 && P.cons > 0 && P.maxkw > 0 && P.maxkw <= LIMITE_DC_EV3 && P.margenCarga >= 0 && P.margenCarga <= 100 && P.min >= 0 && Number.isFinite(P.minDestino) && P.minDestino >= 0 && P.minDestino <= 100 && P.max > P.min && P.max <= 100 && P.tmax > 0 && P.extra >= 0 && P.tmin >= 0 && P.pen >= 0 && P.maxkm > 0 && num("minkw", 50) > 0 && num("velref", 100) > 0 && num("vel", 100) > 0 && num("masa", 1950) > 0)) throw new Error("Revisa los ajustes: batería, consumo, potencias y tiempos deben ser válidos; el máximo de batería debe superar al mínimo.");
+    if (!(P.bat > 0 && P.cons > 0 && P.maxkw > 0 && P.maxkw <= LIMITE_DC_EV3 && P.margenCarga >= 0 && P.margenCarga <= 100 && P.min >= 0 && Number.isFinite(P.minDestino) && P.minDestino >= 0 && P.minDestino <= 100 && P.max > P.min && P.max <= 100 && P.tmax > 0 && P.extra >= 0 && P.tmin >= 0 && P.tmin <= P.tmax && P.pen >= 0 && P.maxkm > 0 && num("minkw", 50) > 0 && num("velref", 100) > 0 && num("vel", 100) > 0 && num("masa", 1950) > 0)) throw new Error("Revisa los ajustes: batería, consumo, potencias y tiempos deben ser válidos; la recarga mínima no puede superar la máxima y el máximo de batería debe superar al mínimo.");
     $("res").textContent = ""; capas.clearLayers(); limitesRuta = null; hayDatos = false;
     const margen = num("margen", 10), socIni = +$("soc").value;
     if (margen < 0 || margen > 50) throw new Error("El margen de tiempo debe estar entre 0 y 50 %.");
