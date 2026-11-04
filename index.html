@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="rutaev-version" content="4.11-pages">
+<meta name="rutaev-version" content="4.12-pages">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ruta EV · Planificador · v4.11</title>
+<title>Ruta EV · Planificador · v4.12</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Montserrat:wght@400;500;600;700;800&display=swap">
 <style>
@@ -852,7 +852,7 @@ input[type=range]::-moz-range-track,input[type=range]::-moz-range-progress{heigh
 #avance-cargadores::-webkit-progress-bar{background:var(--line)}
 #avance-cargadores::-webkit-progress-value{background:var(--acc);transition:width .2s ease}
 #avance-cargadores::-moz-progress-bar{background:var(--acc)}
-body:has(#progreso-cargadores:not([hidden])) #estado{bottom:calc(48px + env(safe-area-inset-bottom))}
+body:has(#progreso-cargadores:not([hidden])) #estado:not(.error){display:none}
 
 /* 4.10: acciones de estación en una fila y título proporcional al panel. */
 .acciones-estacion{display:flex;align-items:center;gap:10px;margin-top:12px}
@@ -953,7 +953,7 @@ body:has(#progreso-cargadores:not([hidden])) #estado{bottom:calc(48px + env(safe
   </details>
   <details name="panel-principal" class="grupo" id="favoritos-panel"><summary><span class="icono-grupo" aria-hidden="true">☆</span><span class="texto-grupo"><strong>Estaciones favoritas</strong><small id="favoritos-resumen">Tus paradas para futuros viajes</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><div class="contenido-grupo"><p class="ayuda">Los favoritos no añaden puntos obligatorios ni paradas. Solo podrán aparecer como recarga si el cálculo encuentra esa estación entre los cargadores viables. No se fuerza su selección.</p><div id="favoritos-lista"></div><p id="favoritos-estado" class="ayuda" role="status"></p><div id="favorito-migjorn"></div></div></details>
   <details name="panel-principal" class="grupo" id="historial" hidden><summary><span class="icono-grupo" aria-hidden="true">↶</span><span class="texto-grupo"><strong>Viajes recientes</strong><small id="resumen-historial">Recuperar un viaje guardado</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><section id="viajes" class="contenido-grupo"></section></details>
-  <details name="panel-principal" class="grupo creditos-app"><summary><span class="icono-grupo" aria-hidden="true">i</span><span class="texto-grupo"><strong>Información y créditos</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary><p><strong>Versión 4.11 · Europa</strong><br>Idea y desarrollo propiedad de Rafa Galdó</p><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p><details class="detalle-resultados" id="cobertura-europa"><summary><span>Europa · Fuentes gratuitas</span><span class="apertura-europa" aria-hidden="true">⌄</span></summary><p class="ayuda">Rutas por carretera y búsqueda internacional de cargadores: España, Portugal, Francia, Alemania, Italia, Benelux, Austria, Suiza, Reino Unido, Irlanda y países nórdicos, según cobertura de OpenStreetMap/OSRM y Open Charge Map. Escribe el país para evitar localidades homónimas.</p><p class="ayuda">La presencia en el mapa no confirma disponibilidad ni varios puntos operativos. Esta publicación no conecta al servidor REVE. Los precios, la disponibilidad en directo y los servicios de las estaciones quedan pendientes de confirmar.</p><p class="ayuda">Irlanda y Reino Unido: puedes planificar sus tramos de carretera. Los cruces en ferry o tren se planifican por separado; no se incluyen reservas, horarios ni coste de la travesía.</p></details></details>
+  <details name="panel-principal" class="grupo creditos-app"><summary><span class="icono-grupo" aria-hidden="true">i</span><span class="texto-grupo"><strong>Información y créditos</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary><p><strong>Versión 4.12 · Europa</strong><br>Idea y desarrollo propiedad de Rafa Galdó</p><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p><details class="detalle-resultados" id="cobertura-europa"><summary><span>Europa · Fuentes gratuitas</span><span class="apertura-europa" aria-hidden="true">⌄</span></summary><p class="ayuda">Rutas por carretera y búsqueda internacional de cargadores: España, Portugal, Francia, Alemania, Italia, Benelux, Austria, Suiza, Reino Unido, Irlanda y países nórdicos, según cobertura de OpenStreetMap/OSRM y Open Charge Map. Escribe el país para evitar localidades homónimas.</p><p class="ayuda">La presencia en el mapa no confirma disponibilidad ni varios puntos operativos. Esta publicación no conecta al servidor REVE. Los precios, la disponibilidad en directo y los servicios de las estaciones quedan pendientes de confirmar.</p><p class="ayuda">Irlanda y Reino Unido: puedes planificar sus tramos de carretera. Los cruces en ferry o tren se planifican por separado; no se incluyen reservas, horarios ni coste de la travesía.</p></details></details>
 </section>
 <section id="datos" class="panel oculto">
   <div id="barra"><h2>Ruta seleccionada</h2><div class="acciones-ruta"><button id="abrir" class="oculto" aria-label="Editar viaje">editar</button><button id="plegar" aria-label="Plegar resultados" aria-expanded="true">−</button></div></div>
@@ -1193,7 +1193,6 @@ async function buscarCargadores(coords, acum, minkw, key, cache = new Map(), ava
   let ultimo = -999;
   const puntos = coords.filter((c, i) => { if (acum[i] - ultimo >= 35) { ultimo = acum[i]; return true; } return false; });
   for (let i = 0; i < puntos.length; i++) {
-    estado(`Buscando cargadores (${i+1}/${puntos.length})...`);
     const p = puntos[i];
     const u = `https://api.openchargemap.io/v3/poi/?output=json&latitude=${p[1]}&longitude=${p[0]}&distance=6&distanceunit=KM&minpowerkw=${minkw}&connectiontypeid=33&maxresults=30&verbose=false&key=${encodeURIComponent(key)}`;
     const cacheKey = p.join(",");
@@ -2014,6 +2013,7 @@ $("calc").onclick = async () => {
         catch (e) { falloAltitud = true; }
       }
     }
+    estado("");
     progresoCargadores(0);
     // La comparación usa la misma base: si falta altitud en una ruta, ninguna obtiene ventaja por ello.
     for (const op of preparadas) {
@@ -2026,7 +2026,6 @@ $("calc").onclick = async () => {
       let plan = planificar(op.r.total, socIni, [], P, op.perfil);
       if (!plan.ok || plan.aviso) {
         try {
-          estado(`Ruta ${op.numero}/${rutas.length}: buscando recargas...`);
           if (!soloPrecio && !ocmKey) throw new Error("Falta la clave de Open Charge Map; introdúcela en Ajustes para buscar recargas");
           const cargadores = soloPrecio ? cargadoresConPrecio(estacionesConPrecio,op.r.coords,op.acum,+$("minkw").value) : await buscarCargadores(op.r.coords, op.acum, +$("minkw").value, ocmKey, cache, fraccion => progresoCargadores(Math.min(99, 100 * (indiceCarga + fraccion) / preparadas.length)));
           filtrados = ops.length ? cargadores.filter(c => ops.some(o => c.op.toLowerCase().includes(o))) : cargadores;
