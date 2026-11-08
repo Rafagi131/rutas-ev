@@ -2,11 +2,11 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="rutaev-version" content="4.13-pages">
+<meta name="rutaev-version" content="4.14-pages">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ruta EV · Planificador · v4.13</title>
+<title>We're off! · Ruta EV · v4.14</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Montserrat:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Montserrat:wght@400;500;600;700;800;900&display=swap">
 <style>
 :root{--bg:#eef2f7;--card:rgba(255,255,255,.88);--solid:#fff;--ink:#0f172a;--mute:#64748b;--line:#e2e8f0;--field:rgba(100,116,139,.11);--acc:#059669;--acc2:#0284c7;--amber:#f59e0b;--accsoft:#dcf5ec;--err:#dc2626;--grad:linear-gradient(135deg,#047857,#0369a1)}
 @media (prefers-color-scheme:dark){:root{--bg:#0b1220;--card:rgba(17,24,39,.88);--solid:#111827;--ink:#e6ebf3;--mute:#94a3b8;--line:#243044;--field:rgba(148,163,184,.13);--acc:#34d399;--acc2:#38bdf8;--amber:#fbbf24;--accsoft:#0f2e2a;--err:#f87171}}
@@ -327,6 +327,7 @@ input[type=range]{accent-color:var(--acc)}
 .diferencia-ruta{font-weight:600;color:var(--acc)}
 
 .acciones-trayecto{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ida-vuelta-control{grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:var(--field);cursor:pointer}.ida-vuelta-control span{display:grid;gap:2px}.ida-vuelta-control strong{font-size:12px;font-weight:600}.ida-vuelta-control small{font-size:10px;line-height:1.4;color:var(--mute)}
 #invertir-trayecto{min-height:44px;padding:8px;border:1px solid var(--line);border-radius:2px;background:var(--field);color:var(--acc);font:600 12px "Montserrat",system-ui,sans-serif;cursor:pointer}
 #invertir-trayecto:disabled{opacity:.4;cursor:default}
 .creditos-app{border-top:1px solid var(--line);margin-top:8px;color:var(--mute)}
@@ -782,9 +783,6 @@ input[type=range]::-moz-range-track,input[type=range]::-moz-range-progress{heigh
 </style><style>
 #formulario .cabecera-viaje .acciones-cabecera{display:flex;flex-direction:row;align-self:flex-end;justify-content:flex-end;gap:10px;width:min(100%,260px);margin-left:auto}
 #formulario .acciones-cabecera #nueva-ruta,#formulario .acciones-cabecera #ver-mapa,#formulario .acciones-cabecera #cerrar{flex:1 1 0;width:0;min-width:0;height:30px;padding:0 7px;white-space:nowrap}
-#formulario .acciones-cabecera #nueva-ruta{order:1}
-#formulario .acciones-cabecera #ver-mapa{order:2}
-#formulario .acciones-cabecera #cerrar{order:3}
 #formulario .acciones-cabecera:has(#nueva-ruta[hidden]){width:80px}
 .selectores-trayecto .mini{min-height:44px}
 .lugar.seleccion-activa{outline:1px solid var(--acc);outline-offset:2px}
@@ -840,8 +838,8 @@ input[type=range]::-moz-range-track,input[type=range]::-moz-range-progress{heigh
 .resumen-principal>div:nth-child(odd){border-right:0}
 /* 4.7: dos filas; Recargas y Batería comparten la mitad derecha. */
 .resumen-principal{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,.8fr) minmax(0,1.2fr)}
-.resumen-principal>div{grid-column:span 2;min-width:0}
-.resumen-principal>div:nth-child(n+4){grid-column:span 1;padding:12px 6px}
+.resumen-principal>div{grid-column:span 2;min-width:0;text-align:left}
+.resumen-principal>div:nth-child(n+4){grid-column:span 1}
 .resumen-principal>div:nth-child(n+4) strong{white-space:nowrap}
 .resumen-principal>div:nth-child(n+4) span{overflow-wrap:normal}
 
@@ -864,14 +862,35 @@ body:has(#progreso-cargadores:not([hidden])) #estado:not(.error){display:none}
 
 /* 4.13: pastillas sin marco exterior. */
 .resumen-principal{border:0;outline:0}
+
+/* Cabecera y controles del trayecto. */
+.marca-inicio{font-family:"Montserrat",system-ui,sans-serif;font-size:clamp(28px,10vw,52px);font-weight:900;gap:10px}
+.marca-inicio .marca-simbolo{width:1cap;height:1cap}
+.marca-nombre{font-family:inherit;font-weight:inherit;text-transform:none}
+.marca-derecha .marca-descripcion{display:block;text-align:right;text-align-last:auto;letter-spacing:.04em}
+.trayecto{padding:12px}
+.trayecto::before{content:none}
+.campos-trayecto{position:relative;padding-left:22px;border-block:1px solid var(--line);padding-block:8px}
+.campos-trayecto::before{content:"";position:absolute;left:7px;top:20px;bottom:20px;border-left:1px solid var(--line)}
+.acciones-trayecto{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:8px}
+.ida-vuelta-control{grid-column:auto;justify-content:center;gap:4px;padding:4px;background:none}
+.ida-vuelta-control strong{font-size:10px;line-height:1.2}
+#ida-vuelta{width:28px!important;min-width:28px;height:18px;margin:0}
+#ida-vuelta::before{width:12px;height:12px;font-size:8px}
+#ida-vuelta:checked::before{transform:translateX(10px)}
+.acciones-trayecto #anadir-punto,.acciones-trayecto #invertir-trayecto{padding-inline:4px}
+.grupos-configuracion{display:grid;gap:10px;padding:4px 10px 12px}
+#formulario .selectores-trayecto.acciones-cabecera{
+  width:100%;justify-content:flex-end;flex-wrap:wrap;gap:14px 6px;
+}
 </style></head>
 <body><dialog id="confirmar-borrado" aria-labelledby="titulo-borrado"><h2 id="titulo-borrado">¿Borrar los viajes guardados?</h2><p>Se borrará el historial de este navegador. No se puede deshacer.</p><div class="acciones-confirmacion"><button type="button" id="cancelar-borrado" autofocus>Cancelar</button><button type="button" id="aceptar-borrado">Borrar viajes</button></div></dialog>
-<header class="marca-app" aria-label="Ruta EV">
-  <button class="marca-inicio" id="marca-inicio" type="button" aria-label="Ruta EV · Abrir planificación">
+<header class="marca-app" aria-label="We're off! · ruta EV">
+  <button class="marca-inicio" id="marca-inicio" type="button" aria-label="We're off! · Abrir planificación">
     <svg class="marca-simbolo" viewBox="0 0 36 36" aria-hidden="true" focusable="false"><rect x="0" y="0" width="10" height="10" fill="#397fff"/><rect x="13" y="0" width="10" height="10" fill="#ffffff"/><rect x="26" y="0" width="10" height="10" fill="#ffffff"/><rect x="0" y="13" width="10" height="10" fill="#ffffff"/><rect x="13" y="13" width="10" height="10" fill="#ffffff"/><rect x="26" y="13" width="10" height="10" fill="#ffffff"/><rect x="0" y="26" width="10" height="10" fill="#ffffff"/><rect x="13" y="26" width="10" height="10" fill="#ffffff"/><rect x="26" y="26" width="10" height="10" fill="#ffffff"/></svg>
-    <img class="marca-referencia" src="data:image/png;base64,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" alt="Ruta EV">
+    <span class="marca-nombre" lang="en">We're off!</span>
   </button>
-  <span class="marca-derecha"><span class="marca-descripcion" aria-label="planificador"><span aria-hidden="true">p</span><span aria-hidden="true">l</span><span aria-hidden="true">a</span><span aria-hidden="true">n</span><span aria-hidden="true">i</span><span aria-hidden="true">f</span><span aria-hidden="true">i</span><span aria-hidden="true">c</span><span aria-hidden="true">a</span><span aria-hidden="true">d</span><span aria-hidden="true">o</span><span aria-hidden="true">r</span></span><span class="marca-vehiculo"><img class="logo-kia" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANIAAAA2CAMAAACFkjfkAAAChVBMVEVHcEz///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////8MZ0GGAAAA1nRSTlMAH3Fh7Ez5bdfYKdno+gQqB+nn+yD+9/wNAQgGC4v1HkAhBVYifg4MKIiO9rDyA/EsAtv9fS0rGh1Kx+DM3bLc0vPlu+MYJ78JL0VcrtpwS1FYD15bST4ZeHNHV2luN1VkGzRss8Oxo6TB0+aBwPil1JO+5PS9yuqsPNHth5biNZHWr01gMFJnf2M6LhA9F05daz9yMVoSdnRTJUEWT3szQgoTI2ZffFkURHlGemKSrY+2gt+dwqruuMSNzqbVoKfvtajGiZvQvPChyJjegJDFolS6OUiEqpJ8swAABLtJREFUeJzt2udfFEcYB/DnEIgcAqeB40A4lF6kI0YEBKMoINiNXaPGFhM1Mfbe0qumanrTdE3vXdN75u/J5zjC7e3+ZnZmZ/LCfHxezjwzu9+9Z/dm547oSlymcbQlpDW+btaxYeKYPdbIiRYePxE/b5Ef5hWvZczn/TA5c/Yw98h6I4d0o+b2Sc6J35zhyMu9I8h0SN03MLm4UxNE3a1w3gp7XlLbQLtX0ty3siVF7LweKHAhDc/bEJ83tn2w3SNp3kh0kOnw0MO1RHcN512qRmtabkmk5ryT7oY1t2c37UXtqRqgvEONPBFjlrxZk2PNHkillajmavtriBINk3re5oMspMx11mZ10vxRaPr10yJ9Zkn3vCMCDZECTVVMhzT+XTR5x73RXqOk2fDaOUgLLDXngVRaeTWYujYhnYyT7nvPBRQlFYxzNCuReuF12zBQc4ZJ8+CTxkG6/32mQ6rbiObdtNCSAkkp6qCCD9xBEdIDqNlnquYMknIe7JQRMSru1CHNvxGN3nBdfJYRUteHUiDGaDPzTqq7CY3d9JA9zwApfdHNkiJGrZ5JoY9QzVWfjKs5Q6RTH8uCGKMRXkkPw5rbYqs5I6TAPnDxGg/1cEhp3kjNcC26dQxM1iTtTgHDD/9JPg6JeSGF8mHNLXbWnD6pbFuWc3Da3wEySpozBY35ZAIvX4e0BLy5stbuSJc5UsYtaMSnuOY0SY98BkYGH60hk6QyWHOdj3FqTo/0OHp4bXxisNcQaSmsuc+5NadDmjYTDKteNrQPY4SEay71tMu5eSMN+wKM+vKaWIIBUlk+fuIvo/+AlHktGJPYG5eiTSq6Feey5CTjpPrl28GQr87EJel+Sv7bOCAJkzLJ/zUYMOVJW5Yeqewbzq6ZlClRbdOr8Cm0RP12LpkkcWtOzqRGevoiyG57xpmoQSq/5AJyM6mQcivA3llj5bNkkJRXIaw5GZMCaWEfSN26AuZ6Ja2cKgMSm6RJof1oibp5NBkkdaFvB2WTLGniAZC3YzxvWkyqFpJwzYW3jVA0yZGeWw+yqhZHl6jypEki0u+w5mYWUPkoNZMUqQj96jH9eS6IRxrHJ3X9gTr6lkQmUzRJkCY4t0cZq31B+FOhD57DizxS3r5k0Fz1UiA6m1/J5E5a9R3IaL9eBCJMaknnkPajG5UdiT0I/Sr3kxupGC22dr4sBhFcth72EYeEomGBdT4Vk5hUnxAG3VvOuokIfErf55E8qappsOY8mISk5h9A51S3xT0kpZwbaJcUrcske8ibBKTCEnDPZv1YSuqk7YsGv5KlQJMnoimlTXzSwQ7Q0yDYmeGTdg2970qAgiW5BCND0sQjzcgHS9TsfOefMdxJqT2xdndRO//PMRkjpUwc0pgG0Nyxmns0Pin8inUZCNaJcdEmvFHlTDtRSvAIOHRySSGpk3ZZ9liI6CchKPgzp+aUTDuYZLRkyIPoX1Lqq7b2X0SHWFvsOm+zhKlJDhTurydlUvg1x6tHiP/68Ct8ztmjHP5uxlhy7Lk1Gi3g7JH9m+of2jKji2gQK16/CsSaldz3FHscXLo8wRn9dZaU1asSxLEmyWVBB6KA9f1F/6+o77UtaK4EXTbxD/tBFBoL+SjoAAAAAElFTkSuQmCC" alt="Kia" width="210" height="54"> <span>EV3</span></span></span>
+  <span class="marca-derecha"><span class="marca-descripcion">ruta EV</span><span class="marca-vehiculo"><img class="logo-kia" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANIAAAA2CAMAAACFkjfkAAAChVBMVEVHcEz///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////8MZ0GGAAAA1nRSTlMAH3Fh7Ez5bdfYKdno+gQqB+nn+yD+9/wNAQgGC4v1HkAhBVYifg4MKIiO9rDyA/EsAtv9fS0rGh1Kx+DM3bLc0vPlu+MYJ78JL0VcrtpwS1FYD15bST4ZeHNHV2luN1VkGzRss8Oxo6TB0+aBwPil1JO+5PS9yuqsPNHth5biNZHWr01gMFJnf2M6LhA9F05daz9yMVoSdnRTJUEWT3szQgoTI2ZffFkURHlGemKSrY+2gt+dwqruuMSNzqbVoKfvtajGiZvQvPChyJjegJDFolS6OUiEqpJ8swAABLtJREFUeJzt2udfFEcYB/DnEIgcAqeB40A4lF6kI0YEBKMoINiNXaPGFhM1Mfbe0qumanrTdE3vXdN75u/J5zjC7e3+ZnZmZ/LCfHxezjwzu9+9Z/dm547oSlymcbQlpDW+btaxYeKYPdbIiRYePxE/b5Ef5hWvZczn/TA5c/Yw98h6I4d0o+b2Sc6J35zhyMu9I8h0SN03MLm4UxNE3a1w3gp7XlLbQLtX0ty3siVF7LweKHAhDc/bEJ83tn2w3SNp3kh0kOnw0MO1RHcN512qRmtabkmk5ryT7oY1t2c37UXtqRqgvEONPBFjlrxZk2PNHkillajmavtriBINk3re5oMspMx11mZ10vxRaPr10yJ9Zkn3vCMCDZECTVVMhzT+XTR5x73RXqOk2fDaOUgLLDXngVRaeTWYujYhnYyT7nvPBRQlFYxzNCuReuF12zBQc4ZJ8+CTxkG6/32mQ6rbiObdtNCSAkkp6qCCD9xBEdIDqNlnquYMknIe7JQRMSru1CHNvxGN3nBdfJYRUteHUiDGaDPzTqq7CY3d9JA9zwApfdHNkiJGrZ5JoY9QzVWfjKs5Q6RTH8uCGKMRXkkPw5rbYqs5I6TAPnDxGg/1cEhp3kjNcC26dQxM1iTtTgHDD/9JPg6JeSGF8mHNLXbWnD6pbFuWc3Da3wEySpozBY35ZAIvX4e0BLy5stbuSJc5UsYtaMSnuOY0SY98BkYGH60hk6QyWHOdj3FqTo/0OHp4bXxisNcQaSmsuc+5NadDmjYTDKteNrQPY4SEay71tMu5eSMN+wKM+vKaWIIBUlk+fuIvo/+AlHktGJPYG5eiTSq6Feey5CTjpPrl28GQr87EJel+Sv7bOCAJkzLJ/zUYMOVJW5Yeqewbzq6ZlClRbdOr8Cm0RP12LpkkcWtOzqRGevoiyG57xpmoQSq/5AJyM6mQcivA3llj5bNkkJRXIaw5GZMCaWEfSN26AuZ6Ja2cKgMSm6RJof1oibp5NBkkdaFvB2WTLGniAZC3YzxvWkyqFpJwzYW3jVA0yZGeWw+yqhZHl6jypEki0u+w5mYWUPkoNZMUqQj96jH9eS6IRxrHJ3X9gTr6lkQmUzRJkCY4t0cZq31B+FOhD57DizxS3r5k0Fz1UiA6m1/J5E5a9R3IaL9eBCJMaknnkPajG5UdiT0I/Sr3kxupGC22dr4sBhFcth72EYeEomGBdT4Vk5hUnxAG3VvOuokIfErf55E8qappsOY8mISk5h9A51S3xT0kpZwbaJcUrcske8ibBKTCEnDPZv1YSuqk7YsGv5KlQJMnoimlTXzSwQ7Q0yDYmeGTdg2970qAgiW5BCND0sQjzcgHS9TsfOefMdxJqT2xdndRO//PMRkjpUwc0pgG0Nyxmns0Pin8inUZCNaJcdEmvFHlTDtRSvAIOHRySSGpk3ZZ9liI6CchKPgzp+aUTDuYZLRkyIPoX1Lqq7b2X0SHWFvsOm+zhKlJDhTurydlUvg1x6tHiP/68Ct8ztmjHP5uxlhy7Lk1Gi3g7JH9m+of2jKji2gQK16/CsSaldz3FHscXLo8wRn9dZaU1asSxLEmyWVBB6KA9f1F/6+o77UtaK4EXTbxD/tBFBoL+SjoAAAAAElFTkSuQmCC" alt="Kia" width="210" height="54"> <span>EV3</span></span></span>
 </header>
 
 <div id="map"></div>
@@ -881,26 +900,31 @@ body:has(#progreso-cargadores:not([hidden])) #estado:not(.error){display:none}
 
 <button id="preparar" class="oculto">Preparar viaje</button>
 <section id="formulario" class="panel" aria-label="Preparar viaje">
-  <header class="cabecera-viaje">
-    <h1 lang="en">We're off!</h1>
-    <div class="acciones-cabecera"><button type="button" id="nueva-ruta" class="insignia" hidden>Nueva ruta</button><button type="button" id="ver-mapa" class="insignia" aria-label="Ver mapa">Mapa</button><button type="button" id="cerrar" class="oculto" aria-label="Volver a la ruta">Volver</button></div>
-  </header>
   <div class="form">
     <p class="proposito">Tu próximo viaje, con menos energía y tiempo.</p>
     <div class="trayecto">
-      <div class="selectores-trayecto" role="group" aria-label="Elegir ubicaciones"><button type="button" id="miub" class="mini">Mi ubicación</button><button type="button" id="elegirdest" class="mini">Selec Mapa</button></div>
-      <div class="lugar origen-lugar"><div class="etiqueta-lugar"><label for="origen">Desde</label></div><textarea id="origen" rows="1" placeholder="Ciudad o dirección y país" autocomplete="off" spellcheck="false"></textarea></div>
-      <div id="puntos-ruta"></div><input id="vias" type="hidden" value="">
-      <div class="lugar destino-lugar" id="fila-destino" data-num="02"><div class="etiqueta-lugar"><label for="destino">Hasta</label></div><textarea id="destino" rows="1" placeholder="Destino y país" autocomplete="off" spellcheck="false"></textarea></div>
+      <div class="selectores-trayecto acciones-cabecera" role="group" aria-label="Controles de ruta"><button type="button" id="miub" class="mini">Mi ubicación</button><button type="button" id="elegirdest" class="mini">Selec Mapa</button><button type="button" id="nueva-ruta" class="insignia" hidden>Nueva ruta</button><button type="button" id="ver-mapa" class="insignia" aria-label="Ver mapa">Mapa</button><button type="button" id="cerrar" class="oculto" aria-label="Volver a la ruta">Volver</button></div>
+      <div class="campos-trayecto">
+        <div class="lugar origen-lugar"><div class="etiqueta-lugar"><label for="origen">Desde</label></div><textarea id="origen" rows="1" placeholder="Ciudad o dirección y país" autocomplete="off" spellcheck="false"></textarea></div>
+        <div id="puntos-ruta"></div><input id="vias" type="hidden" value="">
+        <div class="lugar destino-lugar" id="fila-destino" data-num="02"><div class="etiqueta-lugar"><label for="destino">Hasta</label></div><textarea id="destino" rows="1" placeholder="Destino y país" autocomplete="off" spellcheck="false"></textarea></div>
+      </div>
+      <div class="acciones-trayecto" role="group" aria-label="Acciones del trayecto">
+        <label class="ida-vuelta-control"><input type="checkbox" id="ida-vuelta"><strong>Ida y vuelta</strong></label>
+        <button type="button" id="anadir-punto" aria-controls="puntos-ruta" aria-label="Añadir punto en la ruta">＋ Añadir punto</button><button type="button" id="invertir-trayecto" aria-label="Intercambiar origen y destino" title="Intercambiar origen y destino e invertir los puntos intermedios">⇅ Invertir</button>
+      </div>
     </div>
-    <div class="acciones-trayecto"><button type="button" id="anadir-punto" aria-controls="puntos-ruta" aria-label="Añadir punto en la ruta">＋ Añadir punto</button><button type="button" id="invertir-trayecto" aria-label="Intercambiar origen y destino" title="Intercambiar origen y destino e invertir los puntos intermedios">⇅ Invertir trayecto</button></div>
-    <p id="ayuda-punto" class="ayuda" hidden>Los puntos se visitan en este orden, sin añadir tiempo de estancia. Máximo 8 puntos.</p>
+    <p id="ayuda-punto" class="ayuda" hidden>Los puntos se visitan en este orden, sin añadir tiempo de estancia. Máximo <span id="limite-puntos">8</span> puntos.</p>
     <label class="campo bateria-inicial"><span>Batería al salir <output id="socv">90 %</output></span><input id="soc" type="range" min="11" max="100" value="90"></label>
     <label class="check" hidden><input type="checkbox" id="solo-con-precio"> Calcular solo con recargas con precio REVE disponible</label><p class="ayuda" hidden>Modo de prueba con cobertura limitada a las tarifas descargadas. No busca la estación más barata.</p>
     <label class="check" hidden><input type="checkbox" id="mostrar-precios" checked> Mostrar precios disponibles de REVE</label>
     <button id="calc">Buscar ruta <span aria-hidden="true">→</span></button>
     <div id="aviso-precios" hidden><p class="ayuda">No hemos podido completar este trayecto con las tarifas descargadas. Esto no demuestra que falten cargadores ni precios en REVE.</p><button type="button" id="buscar-sin-precio" class="boton-favorito">Buscar ruta sin exigir precio</button></div>
-    <details name="panel-principal" class="grupo" id="opciones-viaje">
+  </div>
+  <details name="panel-principal" class="grupo" id="configuracion">
+    <summary><span class="icono-grupo" aria-hidden="true">⚙</span><span class="texto-grupo"><strong>Configuración</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary>
+    <div class="grupos-configuracion">
+    <details name="panel-configuracion" class="grupo" id="opciones-viaje">
       <summary><span class="icono-grupo" aria-hidden="true">↗</span><span class="texto-grupo"><strong>Para este viaje</strong><small id="resumen-viaje">18 °C · 100 km/h · Sin paradas</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
       <div class="contenido-grupo">
         <input id="minvia" type="hidden" value="0">
@@ -925,7 +949,7 @@ body:has(#progreso-cargadores:not([hidden])) #estado:not(.error){display:none}
         </div></details>
       </div>
     </details>
-    <details name="panel-principal" class="grupo" id="ajustes-ev">
+    <details name="panel-configuracion" class="grupo" id="ajustes-ev">
       <summary><span class="icono-grupo" aria-hidden="true">ϟ</span><span class="texto-grupo"><strong>Mi vehículo</strong><small id="resumen-ev">Cargadores 10 % · Destino 20 %</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
       <div class="contenido-grupo">
         <p class="ayuda">Tu perfil del EV3 se conserva en este navegador. Abre los datos solo cuando necesites cambiarlos.</p>
@@ -942,21 +966,22 @@ body:has(#progreso-cargadores:not([hidden])) #estado:not(.error){display:none}
         </div></details>
       </div>
     </details>
-  </div>
-  <details name="panel-principal" class="grupo" id="laboratorio-reve" hidden>
-    <summary><span class="icono-grupo" aria-hidden="true">＋</span><span class="texto-grupo"><strong>REVE · En pruebas</strong><small>Conexión y datos de cargadores</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
-    <div class="contenido-grupo">
-      <p class="ayuda">La v2 tiene sus propios ajustes e historial. Las rutas siguen usando Open Charge Map mientras validamos REVE.</p>
-      <button type="button" id="reve-comprobar">Comprobar servicio REVE</button>
-      <button type="button" id="reve-catalogo" disabled>Consultar catálogo REVE</button>
-      <button type="button" id="reve-validacion">Ver estaciones contrastadas</button><button type="button" id="estudio-ida">Migjorn 4 · Ver ida</button><button type="button" id="estudio-vuelta">Migjorn 4 · Ver vuelta</button><div id="estudio-mapa" style="height:260px;margin:10px 0" hidden aria-label="Mapa del estudio por Migjorn 4"></div><div id="estudio-resumen" class="ayuda" aria-live="polite"></div><div id="reve-estaciones" class="ayuda" aria-live="polite"></div>
-      <p id="reve-estado" class="ayuda" role="status">Pendiente de comprobar. La clave se configura solo en el servidor.</p>
-      <p class="ayuda">Se muestran las tarifas REVE completas disponibles por conector. La comparación con Kia Charge sigue pendiente.</p>
+    <details name="panel-configuracion" class="grupo" id="laboratorio-reve" hidden>
+      <summary><span class="icono-grupo" aria-hidden="true">＋</span><span class="texto-grupo"><strong>REVE · En pruebas</strong><small>Conexión y datos de cargadores</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
+      <div class="contenido-grupo">
+        <p class="ayuda">La v2 tiene sus propios ajustes e historial. Las rutas siguen usando Open Charge Map mientras validamos REVE.</p>
+        <button type="button" id="reve-comprobar">Comprobar servicio REVE</button>
+        <button type="button" id="reve-catalogo" disabled>Consultar catálogo REVE</button>
+        <button type="button" id="reve-validacion">Ver estaciones contrastadas</button><button type="button" id="estudio-ida">Migjorn 4 · Ver ida</button><button type="button" id="estudio-vuelta">Migjorn 4 · Ver vuelta</button><div id="estudio-mapa" style="height:260px;margin:10px 0" hidden aria-label="Mapa del estudio por Migjorn 4"></div><div id="estudio-resumen" class="ayuda" aria-live="polite"></div><div id="reve-estaciones" class="ayuda" aria-live="polite"></div>
+        <p id="reve-estado" class="ayuda" role="status">Pendiente de comprobar. La clave se configura solo en el servidor.</p>
+        <p class="ayuda">Se muestran las tarifas REVE completas disponibles por conector. La comparación con Kia Charge sigue pendiente.</p>
+      </div>
+    </details>
+    <details name="panel-configuracion" class="grupo" id="favoritos-panel"><summary><span class="icono-grupo" aria-hidden="true">☆</span><span class="texto-grupo"><strong>Estaciones favoritas</strong><small id="favoritos-resumen">Tus paradas para futuros viajes</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><div class="contenido-grupo"><p class="ayuda">Los favoritos no añaden puntos obligatorios ni paradas. Solo podrán aparecer como recarga si el cálculo encuentra esa estación entre los cargadores viables. No se fuerza su selección.</p><div id="favoritos-lista"></div><p id="favoritos-estado" class="ayuda" role="status"></p><div id="favorito-migjorn"></div></div></details>
     </div>
   </details>
-  <details name="panel-principal" class="grupo" id="favoritos-panel"><summary><span class="icono-grupo" aria-hidden="true">☆</span><span class="texto-grupo"><strong>Estaciones favoritas</strong><small id="favoritos-resumen">Tus paradas para futuros viajes</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><div class="contenido-grupo"><p class="ayuda">Los favoritos no añaden puntos obligatorios ni paradas. Solo podrán aparecer como recarga si el cálculo encuentra esa estación entre los cargadores viables. No se fuerza su selección.</p><div id="favoritos-lista"></div><p id="favoritos-estado" class="ayuda" role="status"></p><div id="favorito-migjorn"></div></div></details>
   <details name="panel-principal" class="grupo" id="historial" hidden><summary><span class="icono-grupo" aria-hidden="true">↶</span><span class="texto-grupo"><strong>Viajes recientes</strong><small id="resumen-historial">Recuperar un viaje guardado</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><section id="viajes" class="contenido-grupo"></section></details>
-  <details name="panel-principal" class="grupo creditos-app"><summary><span class="icono-grupo" aria-hidden="true">i</span><span class="texto-grupo"><strong>Información y créditos</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary><p><strong>Versión 4.13 · Europa</strong><br>Idea y desarrollo propiedad de Rafa Galdó</p><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p><details class="detalle-resultados" id="cobertura-europa"><summary><span>Europa · Fuentes gratuitas</span><span class="apertura-europa" aria-hidden="true">⌄</span></summary><p class="ayuda">Rutas por carretera y búsqueda internacional de cargadores: España, Portugal, Francia, Alemania, Italia, Benelux, Austria, Suiza, Reino Unido, Irlanda y países nórdicos, según cobertura de OpenStreetMap/OSRM y Open Charge Map. Escribe el país para evitar localidades homónimas.</p><p class="ayuda">La presencia en el mapa no confirma disponibilidad ni varios puntos operativos. Esta publicación no conecta al servidor REVE. Los precios, la disponibilidad en directo y los servicios de las estaciones quedan pendientes de confirmar.</p><p class="ayuda">Irlanda y Reino Unido: puedes planificar sus tramos de carretera. Los cruces en ferry o tren se planifican por separado; no se incluyen reservas, horarios ni coste de la travesía.</p></details></details>
+  <details name="panel-principal" class="grupo creditos-app"><summary><span class="icono-grupo" aria-hidden="true">i</span><span class="texto-grupo"><strong>Información y créditos</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary><p><strong>Versión 4.14 · Europa</strong><br>Idea y desarrollo propiedad de Rafa Galdó</p><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p><details class="detalle-resultados" id="cobertura-europa"><summary><span>Europa · Fuentes gratuitas</span><span class="apertura-europa" aria-hidden="true">⌄</span></summary><p class="ayuda">Rutas por carretera y búsqueda internacional de cargadores: España, Portugal, Francia, Alemania, Italia, Benelux, Austria, Suiza, Reino Unido, Irlanda y países nórdicos, según cobertura de OpenStreetMap/OSRM y Open Charge Map. Escribe el país para evitar localidades homónimas.</p><p class="ayuda">La presencia en el mapa no confirma disponibilidad ni varios puntos operativos. Esta publicación no conecta al servidor REVE. Los precios, la disponibilidad en directo y los servicios de las estaciones quedan pendientes de confirmar.</p><p class="ayuda">Irlanda y Reino Unido: puedes planificar sus tramos de carretera. Los cruces en ferry o tren se planifican por separado; no se incluyen reservas, horarios ni coste de la travesía.</p></details></details>
 </section>
 <section id="datos" class="panel oculto">
   <div id="barra"><h2>Ruta seleccionada</h2><div class="acciones-ruta"><button id="abrir" class="oculto" aria-label="Editar viaje">editar</button><button id="plegar" aria-label="Plegar resultados" aria-expanded="true">−</button></div></div>
@@ -1011,14 +1036,19 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") ocultarAlert
 const fallo = t => {
   $("estado").textContent = t; $("estado").className = "error"; $("estado").setAttribute("role","alert"); vista("form");
   if (/clave de Open Charge Map|rechazado el acceso a los cargadores/i.test(t)) {
+    $("configuracion").open = true;
     $("ajustes-ev").open = true; $("conexion-carga").open = true;
     $("ocmKey").scrollIntoView({block:"center"}); $("ocmKey").focus({preventScroll:true});
   } else if (/Revisa los ajustes/.test(t)) {
+    $("configuracion").open = true;
     const perfilInvalido = ["bat","cons","maxkw","masa"].some(id => !Number.isFinite(+$(id).value) || +$(id).value <= 0) || +$("maxkw").value > 128;
     if (perfilInvalido) { $("ajustes-ev").open = true; $("perfil-ev").open = true; }
     else { $("opciones-viaje").open = true; $("recargas-viaje").open = true; }
   }
-  else if (/margen de tiempo/.test(t)) $("opciones-viaje").open = true;
+  else if (/margen de tiempo/.test(t)) {
+    $("configuracion").open = true;
+    $("opciones-viaje").open = true;
+  }
 };
 let hayDatos = false, limitesRuta = null;
 // Encuadra la ruta en el hueco libre del mapa, midiendo el panel real (no un tamaño estimado).
@@ -1032,7 +1062,7 @@ function centrarRuta() {
 }
 addEventListener("resize", () => { if (hayDatos) setTimeout(centrarRuta, 150); });
 // Puntos elegidos sin escribir: "Mi ubicación" (origen) y un toque en el mapa (destino).
-let origenFijo = null, destinoFijo = null, modoElegir = false, revisionUbicacion = 0;
+let origenFijo = null, destinoFijo = null, modoElegir = false, revisionUbicacion = 0, destinoPrevioIdaVuelta = null;
 const capaPuntos = L.layerGroup().addTo(map);
 function pintarPuntos() {
   ajustarDirecciones();
@@ -1646,9 +1676,12 @@ function seleccionDe(input) { const p = seleccionDirecciones.get(input); return 
 // Cada punto es independiente; el campo oculto mantiene compatibilidad con los viajes antiguos.
 let puntosEditables = [], siguientePunto = 0;
 function puntosGuardados() { return puntosEditables.filter(p => p.input.value.trim()).map(p => ({texto:p.input.value.trim(), pos:seleccionDe(p.input)?.pos || null})); }
+function limitePuntos() { return $("ida-vuelta").checked ? 9 : 8; }
 function actualizarPuntos() {
   $("vias").value = puntosEditables.map(p => p.input.value.trim()).filter(Boolean).join(";");
-  $("anadir-punto").disabled = puntosEditables.length >= 8;
+  const limite = limitePuntos();
+  $("limite-puntos").textContent = limite;
+  $("anadir-punto").disabled = puntosEditables.length >= limite;
   $("ayuda-punto").hidden = !puntosEditables.length;
   puntosEditables.forEach((p,i) => { p.fila.dataset.num = String(i + 2).padStart(2,"0"); p.label.textContent = "Punto " + (i+1); p.subir.disabled = i === 0; p.bajar.disabled = i === puntosEditables.length - 1; p.subir.setAttribute("aria-label", "Subir punto " + (i+1)); p.bajar.setAttribute("aria-label", "Bajar punto " + (i+1)); p.quitar.setAttribute("aria-label", "Quitar punto " + (i+1)); });
   $("fila-destino").dataset.num = String(puntosEditables.length + 2).padStart(2,"0");
@@ -1662,7 +1695,7 @@ function moverPunto(p, paso) {
   (paso < 0 ? (p.subir.disabled ? p.bajar : p.subir) : (p.bajar.disabled ? p.subir : p.bajar)).focus();
 }
 function agregarPunto(dato = {}, enfocar = true) {
-  if (puntosEditables.length >= 8) return;
+  if (puntosEditables.length >= limitePuntos()) return;
   const fila = document.createElement("div"), label = document.createElement("label"), input = document.createElement("input"), controles = document.createElement("div");
   fila.className = "lugar punto-lugar"; input.id = "punto-" + (++siguientePunto); input.type = "text"; input.autocomplete = "off"; input.placeholder = "Ciudad o dirección intermedia"; input.value = dato.texto || ""; label.htmlFor = input.id;
   const etiqueta = document.createElement("div"); etiqueta.className = "etiqueta-lugar"; etiqueta.appendChild(label); fila.append(etiqueta,input); controles.className = "controles-punto";
@@ -1677,7 +1710,7 @@ function agregarPunto(dato = {}, enfocar = true) {
 }
 function normalizarPuntos(datos) {
   const lista = Array.isArray(datos) ? datos : String(datos || "").split(";").map(texto => ({texto:texto.trim()}));
-  return lista.filter(p => p && typeof p.texto === "string" && p.texto.trim()).slice(0,8).map(p => ({texto:p.texto.trim(),pos:coordenadasValidas(p.pos)?p.pos.slice():null}));
+  return lista.filter(p => p && typeof p.texto === "string" && p.texto.trim()).slice(0,limitePuntos()).map(p => ({texto:p.texto.trim(),pos:coordenadasValidas(p.pos)?p.pos.slice():null}));
 }
 function restaurarPuntos(datos) {
   puntosEditables.forEach(p => p.sugeridor.destruir()); puntosEditables = []; $("puntos-ruta").textContent = "";
@@ -1706,6 +1739,46 @@ function intercambiarTrayecto() {
 }
 $("invertir-trayecto").onclick = intercambiarTrayecto;
 $("anadir-punto").onclick = () => agregarPunto();
+$("ida-vuelta").addEventListener("change", () => {
+  cerrarSugerencias(); cancelarUbicacionPendiente();
+  const destino = $("destino");
+  if ($("ida-vuelta").checked) {
+    destinoPrevioIdaVuelta = { texto:destino.value, fijo:fijoValido(destino, destinoFijo) };
+    if (campoUbicacionActivo === "destino") activarCampoUbicacion("origen");
+    if (destinoPrevioIdaVuelta.texto.trim()) {
+      agregarPunto({texto:destinoPrevioIdaVuelta.texto.trim(), pos:destinoPrevioIdaVuelta.fijo?.pos}, false);
+    }
+  } else {
+    destino.readOnly = false;
+    const ultimoIndice = puntosEditables.reduce((ultimo, punto, i) => punto.input.value.trim() ? i : ultimo, -1);
+    if (ultimoIndice >= 0) {
+      const ultimo = puntosEditables[ultimoIndice];
+      destino.value = ultimo.input.value.trim();
+      destinoFijo = fijoValido(ultimo.input, null);
+      if (destinoFijo) destinoFijo.texto = destino.value;
+      seleccionDirecciones.delete(destino);
+      if (destinoFijo) seleccionDirecciones.set(destino, destinoFijo);
+      if (campoUbicacionActivo === ultimo.input.id) activarCampoUbicacion("origen");
+      ultimo.sugeridor.destruir();
+      ultimo.fila.remove();
+      puntosEditables.splice(ultimoIndice, 1);
+    } else {
+      destino.value = destinoPrevioIdaVuelta?.texto || "";
+      destinoFijo = destinoPrevioIdaVuelta?.fijo || null;
+      seleccionDirecciones.delete(destino);
+      if (destinoFijo) seleccionDirecciones.set(destino, destinoFijo);
+    }
+    if (puntosEditables.length > limitePuntos()) {
+      const vacio = puntosEditables.pop();
+      if (campoUbicacionActivo === vacio.input.id) activarCampoUbicacion("origen");
+      vacio.sugeridor.destruir();
+      vacio.fila.remove();
+    }
+    destinoPrevioIdaVuelta = null;
+  }
+  actualizarResumenes();
+  pintarPuntos();
+});
 registrarSugerencias($("origen"), p => { origenFijo = p; pintarPuntos(); });
 registrarSugerencias($("destino"), p => { destinoFijo = p; pintarPuntos(); });
 
@@ -1727,10 +1800,20 @@ function ajustarDirecciones() {
   });
 }
 function actualizarResumenes() {
+  const idaVuelta = $("ida-vuelta").checked;
+  const destino = $("destino");
+  destino.readOnly = idaVuelta;
+  if (idaVuelta) {
+    destino.value = $("origen").value;
+    destinoFijo = fijoValido($("origen"), origenFijo);
+    seleccionDirecciones.delete(destino);
+    if (destinoFijo) seleccionDirecciones.set(destino, destinoFijo);
+    pintarPuntos();
+  }
   ajustarDirecciones();
   actualizarPuntos();
   const paradas = puntosGuardados().length;
-  $("invertir-trayecto").disabled = !$("origen").value.trim() && !$("destino").value.trim() && !paradas;
+  $("invertir-trayecto").disabled = idaVuelta || (!$("origen").value.trim() && !$("destino").value.trim() && !paradas);
   $("resumen-viaje").textContent = `${$("tempAuto").checked ? "Meteo automática" : num("temp",18) + " °C"} · ${num("vel",100)} km/h · ${paradas ? paradas + (paradas === 1 ? " punto" : " puntos") + " · " : ""}Llegada ≥ ${reservaDestinoActual()} %${esDestinoCasa($("destino").value) && $("reservaCasa").value !== "general" ? " · Casa" : ""}`;
   $("ayuda-tiempo").textContent = $("modoTiempo").value === "media"
     ? `Tiempo calculado con ${num("vel",100)} km/h de media en todo el recorrido, sin recargas. Es una hipótesis personal: no incorpora tráfico ni velocidades por carretera.`
@@ -1740,13 +1823,9 @@ function actualizarResumenes() {
   $("resumen-ev").textContent = `EV3 · ${num("bat",78).toLocaleString("es-ES")} kWh útiles · ${num("cons",16.5).toLocaleString("es-ES")} kWh/100 km`;
   $("estado-clave").textContent = $("ocmKey").value.trim() ? "Clave introducida" : "Clave pendiente";
 }
-$("formulario").addEventListener("input", actualizarResumenes);
-$("formulario").addEventListener("toggle", ev => {
-  const elegido = ev.target;
-  if (!elegido.open || !elegido.matches("details")) return;
-  const selector = elegido.classList.contains("grupo") ? "details.grupo" : "details.subgrupo";
-  $("formulario").querySelectorAll(selector).forEach(d => { if (d !== elegido) d.open = false; });
-}, true);
+$("formulario").addEventListener("input", ev => {
+  if (ev.target !== $("ida-vuelta")) actualizarResumenes();
+});
 function cargarPrefs() {
   try { const p = JSON.parse(localStorage.getItem("rutaev:prefs") || "{}"); PREFS.forEach(i => { if (p[i] !== undefined) $(i).value = p[i]; });
     if (!["10","15","general"].includes($("reservaCasa").value)) $("reservaCasa").value = "15";
@@ -1793,10 +1872,10 @@ function pintarViajes() {
   const h = document.createElement("strong"); h.textContent = "Viajes guardados"; c.appendChild(h);
   l.forEach(v => {
     const b = document.createElement("button");
-    b.textContent = `${v.o} → ${v.d} (${v.km} km, ${v.p} paradas)`;
+    b.textContent = `${v.o} ${v.idaVuelta ? "↻" : "→"} ${v.idaVuelta ? "ida y vuelta" : v.d} (${v.km} km, ${v.p} paradas)`;
     const identificador = JSON.stringify([v.o,v.d]); b.dataset.viaje = identificador; b.setAttribute("aria-pressed",String(viajeRecienteSeleccionado === identificador));
     b.onclick = () => { viajeRecienteSeleccionado = identificador; c.querySelectorAll("button[data-viaje]").forEach(boton => boton.setAttribute("aria-pressed",String(boton === b))); cerrarSugerencias(); cancelarUbicacionPendiente(); origenFijo = v.o !== "Mi ubicación actual" && coordenadasValidas(v.op) ? {texto:v.o,pos:v.op} : null; $("origen").value = v.o === "Mi ubicación actual" ? "" : v.o; // la ubicación actual hay que volver a pedirla
-    destinoFijo = v.d !== "Mi ubicación actual" && coordenadasValidas(v.dp) ? {pos: v.dp, texto: v.d} : null; $("destino").value = v.d === "Mi ubicación actual" ? "" : v.d; pintarPuntos(); $("soc").value = v.soc; restaurarPuntos(v.vp || v.v || ""); pintaSoc(); actualizarResumenes(); };
+    destinoFijo = v.d !== "Mi ubicación actual" && coordenadasValidas(v.dp) ? {pos: v.dp, texto: v.d} : null; $("destino").value = v.d === "Mi ubicación actual" ? "" : v.d; $("ida-vuelta").checked = v.idaVuelta === true; destinoPrevioIdaVuelta = null; $("destino").readOnly = v.idaVuelta === true; pintarPuntos(); $("soc").value = v.soc; restaurarPuntos(v.vp || v.v || ""); pintaSoc(); actualizarResumenes(); };
     c.appendChild(b);
   });
   const x = document.createElement("button"); x.type = "button"; x.className = "borrar-viajes"; x.textContent = "Borrar viajes guardados";
@@ -1814,7 +1893,7 @@ $("perfil-ev").addEventListener("change", guardarPerfilEV);
 
 let campoUbicacionActivo = 'origen';
 function campoSeleccionable(campo) {
-  return ['origen','destino'].includes(campo) || (typeof puntosEditables !== 'undefined' && puntosEditables.some(p => p.input.id === campo));
+  return campo === 'origen' || (campo === 'destino' && !$('ida-vuelta').checked) || (typeof puntosEditables !== 'undefined' && puntosEditables.some(p => p.input.id === campo));
 }
 function etiquetaCampo(campo) {
   if (campo === 'origen') return 'Desde';
@@ -1883,7 +1962,7 @@ $("ver-mapa").onclick = () => vista("explorar");
 function nuevaRuta() {
   $("aviso-precios").hidden = true;
   cerrarSugerencias(); cancelarUbicacionPendiente(); modoElegir = false;
-  origenFijo = null; destinoFijo = null;
+  origenFijo = null; destinoFijo = null; destinoPrevioIdaVuelta = null;
   ["origen", "destino"].forEach(id => { $(id).value = ""; seleccionDirecciones.delete($(id)); });
   $("vias").value = ""; restaurarPuntos([]);
   capas.clearLayers(); capaPuntos.clearLayers(); limitesRuta = null; hayDatos = false;
@@ -1961,10 +2040,12 @@ $("calc").onclick = async () => {
     const margen = num("margen", 10), socIni = +$("soc").value;
     if (margen < 0 || margen > 50) throw new Error("El margen de tiempo debe estar entre 0 y 50 %.");
     if (!$("origen").value.trim() || !$("destino").value.trim()) throw new Error("Introduce un origen y un destino.");
+    const idaVuelta = $("ida-vuelta").checked;
+    if (idaVuelta && puntosGuardados().length === 0) throw new Error("Añade al menos un punto intermedio para calcular la ida y vuelta.");
     estado("Buscando direcciones...");
     const a = origenFijo ? origenFijo.pos : await geocodificar($("origen").value);
-    if (!origenFijo && !destinoFijo) await sleep(1100); // Nominatim pide máximo 1 consulta por segundo
-    const b = destinoFijo ? destinoFijo.pos : await geocodificar($("destino").value);
+    if (!idaVuelta && !origenFijo && !destinoFijo) await sleep(1100); // Nominatim pide máximo 1 consulta por segundo
+    const b = idaVuelta ? a : (destinoFijo ? destinoFijo.pos : await geocodificar($("destino").value));
     const minVia = 0, puntosVia = [];
     for (const p of puntosGuardados()) {
       estado("Buscando " + p.texto + "...");
@@ -1975,8 +2056,8 @@ $("calc").onclick = async () => {
     const rutas = await ruta(a, b, puntosVia.map(v => v.pos));
     await mostrarTrazadoPrevio(rutas);
 
-    const sesion = {a, b, P, minVia, margen, socIni, puntosVia, total:rutas.length, opciones:[], descartes:[...(rutas.notas||[])], salida:Date.now(),
-      origenTexto:$("origen").value, destinoTexto:$("destino").value, viasTexto:$("vias").value, puntosTexto:puntosGuardados(), op:origenFijo ? origenFijo.pos : null, dp:destinoFijo ? destinoFijo.pos : null};
+    const sesion = {a, b, P, minVia, margen, socIni, puntosVia, idaVuelta, total:rutas.length, opciones:[], descartes:[...(rutas.notas||[])], salida:Date.now(),
+      origenTexto:$("origen").value, destinoTexto:$("destino").value, viasTexto:$("vias").value, puntosTexto:puntosGuardados(), op:origenFijo ? origenFijo.pos : null, dp:idaVuelta ? (origenFijo ? origenFijo.pos : null) : (destinoFijo ? destinoFijo.pos : null)};
     const ops = $("ops").value.toLowerCase().split(",").map(x => x.trim()).filter(Boolean);
     const soloPrecio=false;
     let estacionesConPrecio=[];
@@ -2292,7 +2373,7 @@ function mostrarOpcion(sesion, op) {
       $("res").insertBefore(av, detalle);
     }
     hayDatos = true; $("datos").classList.remove("plegado"); $("plegar").textContent = "−"; $("plegar").setAttribute("aria-expanded","true"); vista("datos"); setTimeout(centrarRuta, 80);
-    guardarViaje({o: sesion.origenTexto, d: sesion.destinoTexto, soc: sesion.socIni, km: Math.round(r.total), p: plan.paradas.length, v: sesion.viasTexto, vp:sesion.puntosTexto, op:sesion.op, dp: sesion.dp});
+    guardarViaje({o: sesion.origenTexto, d: sesion.destinoTexto, idaVuelta:sesion.idaVuelta, soc: sesion.socIni, km: Math.round(r.total), p: plan.paradas.length, v: sesion.viasTexto, vp:sesion.puntosTexto, op:sesion.op, dp: sesion.dp});
 }
 </script>
 <script>pintarFavoritos();</script>
