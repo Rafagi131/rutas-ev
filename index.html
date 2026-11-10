@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="rutaev-version" content="4.16-pages">
+<meta name="rutaev-version" content="4.17-pages">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>We're off! · Ruta EV · v4.16</title>
+<title>We're off! · Ruta EV · v4.17</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Montserrat:wght@400;500;600;700;800;900&display=swap">
 <style>
@@ -67,16 +67,15 @@ summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--acc2);padding:
 .exportar a:nth-of-type(2){background:color-mix(in srgb,var(--acc2) 15%,transparent);color:color-mix(in srgb,var(--acc2) 78%,var(--ink))}
 .exportar a:nth-of-type(3){background:color-mix(in srgb,var(--acc) 15%,transparent);color:color-mix(in srgb,var(--acc) 78%,var(--ink))}
 .wz{align-self:flex-start;margin-top:4px;background:var(--field);color:var(--ink)}
-.paradas{list-style:none;margin:10px 0 0 12px;padding:0 0 0 14px;border-left:2px solid var(--line);counter-reset:p}
-.paradas li{position:relative;padding:0 0 14px 4px;display:flex;flex-direction:column;gap:2px;counter-increment:p}
-.paradas li::before{content:counter(p);position:absolute;left:-30px;top:0;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#3b2300;background:var(--amber);box-shadow:0 0 0 3px var(--solid)}
+.paradas{list-style:none;margin:10px 0 0 12px;padding:0 0 0 14px;border-left:2px solid var(--line)}
+.paradas li{position:relative;padding:0 0 14px 4px;display:flex;flex-direction:column;gap:2px}
+.paradas .numero-parada{cursor:pointer;padding:0;position:absolute;left:-30px;top:0;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#3b2300;background:var(--amber);box-shadow:0 0 0 3px var(--solid)}
 .paradas strong{font-size:14px;padding-top:2px}
 .mini{font:inherit;font-size:11px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--acc2);background:none;border:0;padding:0;cursor:pointer}
 #elegir{position:fixed;z-index:1300;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:var(--solid);border:1px solid var(--line);border-radius:999px;padding:6px 6px 6px 16px;font-weight:600;font-size:13px;box-shadow:0 8px 24px rgba(15,23,42,.25);white-space:nowrap}
 #elegir button{font:inherit;font-size:12px;font-weight:700;color:var(--ink);background:var(--field);border:0;border-radius:999px;padding:6px 12px;cursor:pointer}
 .pin.dest{background:#dc2626;color:#fff}
-.paradas li.via{counter-increment:none}
-.paradas li.via::before{content:"★";background:var(--acc2);color:#fff;font-size:12px}
+.paradas li.via .numero-parada{background:var(--acc2);color:#fff}
 .pin.via{background:#0284c7;color:#fff}
 .fila-chips{display:flex;gap:6px;margin:3px 0}
 .barra-soc{position:relative;height:6px;border-radius:4px;background:var(--field);margin:4px 0 3px;overflow:hidden}
@@ -240,7 +239,7 @@ button.insignia{min-height:44px;border-radius:12px;background:var(--field);font-
 .icono-grupo{background:var(--field)}
 .chip.n,.chip.min{background:var(--field);color:var(--ink)}
 .barra-soc span{background:linear-gradient(90deg,#9ca3af,var(--acc))}
-.pin,.paradas li::before{background:var(--acc);color:var(--solid)}
+.pin,.paradas .numero-parada{background:var(--acc);color:var(--solid)}
 
 /* Dirección visual: geometría lineal, contraste editorial y azul de acción. */
 :root{--alto-marca:calc(72px + env(safe-area-inset-top,0px));--bg:#e5e7eb;--solid:#fcfcfd;--card:#fcfcfd;--field:#eff0f2;--ink:#181c23;--mute:#59616f;--line:#d3d7de;--acc:#145bda;--acc2:#145bda;--accsoft:#eaf0fc;--grad:linear-gradient(100deg,#145bda,#145bda)}
@@ -596,9 +595,11 @@ input[type=range]::-moz-range-thumb{width:23px;height:23px;border:0;border-radiu
 .ruta-opcion{border:0;border-radius:14px;box-shadow:var(--relieve);margin:0;padding:13px}
 .ruta-opcion[aria-pressed=true]{border:0;box-shadow:var(--hundido);background:#d9e4e8}
 .ruta-opcion[aria-pressed=true] strong{color:#145e9a}
-.paradas{border-color:#b1b8b0;padding-left:18px;margin:16px 0 8px 13px}
+.paradas{border:0;padding-left:20px;margin:16px 0 8px 13px}
+.paradas li:not(:last-child)::after{content:"";position:absolute;left:-19px;top:12px;width:2px;height:100%;background:#b1b8b0}
+.paradas .numero-parada{z-index:1}
 .paradas li{padding:0 0 20px 4px}
-.paradas li::before{background:var(--bg);color:var(--ink);box-shadow:var(--relieve);border:0}
+.paradas .numero-parada{background:var(--bg);color:var(--ink);box-shadow:var(--relieve);border:0}
 .chip,.alt{border:0;border-radius:9px;background:#dddfd7;color:var(--ink)}
 .alt{padding:10px;margin-top:9px;box-shadow:var(--hundido)}
 .exportar{gap:13px;margin:15px 0}
@@ -664,7 +665,9 @@ input[type=range]::-moz-range-track,input[type=range]::-moz-range-progress{heigh
 .acciones-ruta{display:flex;align-items:center;gap:10px;flex:none}
 #datos #barra #abrir{position:static;inset:auto;transform:none;margin:0;padding:7px 12px;min-height:34px;font:600 11px/1.2 "Montserrat",system-ui,sans-serif;box-shadow:var(--relieve);border-radius:18px;background:linear-gradient(135deg,#dadbd5,#cbcdc5);color:var(--ink)}
 #datos #barra{gap:9px}
-#datos #barra h2{font-size:18px;min-width:0}
+#datos #barra h2{font-size:16px;min-width:0}
+.titulos-ruta{min-width:0}
+#localidades-ruta{margin:0 0 2px;font-size:12px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ruta-opcion[aria-pressed=true]{background:linear-gradient(140deg,#898e88,#737b73);border:0;box-shadow:var(--hundido);color:#fff}
 .ruta-opcion[aria-pressed=true] span,.ruta-opcion[aria-pressed=true] .meta{color:#fff}
 .ruta-opcion[aria-pressed=true] strong,.ruta-opcion[aria-pressed=true] .diferencia-ruta{color:#080b09}
@@ -981,10 +984,10 @@ body:has(#progreso-cargadores:not([hidden])) #estado:not(.error){display:none}
     </div>
   </details>
   <details name="panel-principal" class="grupo" id="historial" hidden><summary><span class="icono-grupo" aria-hidden="true">↶</span><span class="texto-grupo"><strong>Viajes recientes</strong><small id="resumen-historial">Recuperar un viaje guardado</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><section id="viajes" class="contenido-grupo"></section></details>
-  <details name="panel-principal" class="grupo creditos-app"><summary><span class="icono-grupo" aria-hidden="true">i</span><span class="texto-grupo"><strong>Información y créditos</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary><p><strong>Versión 4.16 · Open Charge Map y REVE · Europa</strong><br>Idea y desarrollo propiedad de Rafa Galdó</p><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p><details class="detalle-resultados" id="cobertura-europa"><summary><span>Europa · Fuentes gratuitas</span><span class="apertura-europa" aria-hidden="true">⌄</span></summary><p class="ayuda">Rutas por carretera y búsqueda internacional de cargadores: España, Portugal, Francia, Alemania, Italia, Benelux, Austria, Suiza, Reino Unido, Irlanda y países nórdicos, según cobertura de OpenStreetMap/OSRM y Open Charge Map. Escribe el país para evitar localidades homónimas.</p><p class="ayuda">La presencia en el mapa no confirma disponibilidad ni varios puntos operativos. Esta publicación no conecta al servidor REVE. Los precios, la disponibilidad en directo y los servicios de las estaciones quedan pendientes de confirmar.</p><p class="ayuda">Irlanda y Reino Unido: puedes planificar sus tramos de carretera. Los cruces en ferry o tren se planifican por separado; no se incluyen reservas, horarios ni coste de la travesía.</p></details></details>
+  <details name="panel-principal" class="grupo creditos-app"><summary><span class="icono-grupo" aria-hidden="true">i</span><span class="texto-grupo"><strong>Información y créditos</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary><p><strong>Versión 4.17 · Open Charge Map y REVE · Europa</strong><br>Idea y desarrollo propiedad de Rafa Galdó</p><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p><details class="detalle-resultados" id="cobertura-europa"><summary><span>Europa · Fuentes gratuitas</span><span class="apertura-europa" aria-hidden="true">⌄</span></summary><p class="ayuda">Rutas por carretera y búsqueda internacional de cargadores: España, Portugal, Francia, Alemania, Italia, Benelux, Austria, Suiza, Reino Unido, Irlanda y países nórdicos, según cobertura de OpenStreetMap/OSRM y Open Charge Map. Escribe el país para evitar localidades homónimas.</p><p class="ayuda">La presencia en el mapa no confirma disponibilidad ni varios puntos operativos. Esta publicación no conecta al servidor REVE. Los precios, la disponibilidad en directo y los servicios de las estaciones quedan pendientes de confirmar.</p><p class="ayuda">Irlanda y Reino Unido: puedes planificar sus tramos de carretera. Los cruces en ferry o tren se planifican por separado; no se incluyen reservas, horarios ni coste de la travesía.</p></details></details>
 </section>
 <section id="datos" class="panel oculto">
-  <div id="barra"><h2>Ruta seleccionada</h2><div class="acciones-ruta"><button id="abrir" class="oculto" aria-label="Editar viaje">editar</button><button id="plegar" aria-label="Plegar resultados" aria-expanded="true">−</button></div></div>
+  <div id="barra"><div class="titulos-ruta"><p id="localidades-ruta"></p><h2>Ruta seleccionada</h2></div><div class="acciones-ruta"><button id="abrir" class="oculto" aria-label="Editar viaje">editar</button><button id="plegar" aria-label="Plegar resultados" aria-expanded="true">−</button></div></div>
   <div id="res"></div>
 </section>
 
@@ -1070,16 +1073,22 @@ function pintarPuntos() {
   if (origenFijo) L.circleMarker([origenFijo.pos[1], origenFijo.pos[0]], {radius: 8, color: "#fff", weight: 3, fillColor: "#0284c7", fillOpacity: 1}).addTo(capaPuntos);
   if (destinoFijo) L.marker([destinoFijo.pos[1], destinoFijo.pos[0]], {icon: L.divIcon({className: "", html: '<div class="pin dest">⚑</div>', iconSize: [30, 30], iconAnchor: [15, 15]})}).addTo(capaPuntos);
 }
-async function nombreLugar(pos) { // nombre aproximado del punto (Nominatim inverso)
+function localidadNominatim(direccion = {}) {
+  return direccion.city || direccion.town || direccion.village || direccion.hamlet || direccion.municipality || "";
+}
+async function nombreLugar(pos, soloLocalidad = false) { // nombre aproximado del punto (Nominatim inverso)
   const r = await fetchConLimite(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=16&lat=${pos[1]}&lon=${pos[0]}`);
   if (!r.ok) throw new Error("error " + r.status);
   const j = await r.json(), a = j.address || {};
-  const nombre = [a.road || j.name || "", a.city || a.town || a.village || a.municipality || a.hamlet || ""].filter(Boolean).join(", ");
+  if (soloLocalidad) return localidadNominatim(a);
+  const nombre = [a.road || j.name || "", localidadNominatim(a)].filter(Boolean).join(", ");
   if (!nombre) throw new Error("sin nombre");
   return nombre;
 }
 // Pantallas: "form" (formulario), "calculando" (solo mapa) y "datos" (panel de la ruta + botón Editar viaje)
+let mapaDesdeParada = false;
 function vista(m) {
+  mapaDesdeParada = m === "parada";
   requestAnimationFrame(ajustarDirecciones);
   if (m !== "mapa") modoElegir = false;
   $("nueva-ruta").hidden = !hayDatos;
@@ -1088,17 +1097,22 @@ function vista(m) {
   $("abrir").classList.toggle("oculto", m !== "datos");
   $("cerrar").classList.toggle("oculto", !(m === "form" && hayDatos));
   $("elegir").classList.toggle("oculto", m !== "mapa");
-  $("preparar").classList.toggle("oculto", m !== "explorar");
+  $("preparar").classList.toggle("oculto", m !== "explorar" && !mapaDesdeParada);
+  $("preparar").textContent = mapaDesdeParada ? "Volver a la ruta" : "Preparar viaje";
 }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function geocodificar(texto) {
-  const u = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(texto)}`;
+  const u = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=1&q=${encodeURIComponent(texto)}`;
   const r = await fetchConLimite(u);
   if (!r.ok) throw new Error("Búsqueda de dirección falló (" + r.status + ")");
   const j = await r.json();
   if (!j.length) throw new Error("No encuentro: " + texto);
-  return [parseFloat(j[0].lon), parseFloat(j[0].lat)];
+  const lugar = j[0], direccion = lugar.address || {};
+  return {
+    pos:[parseFloat(lugar.lon), parseFloat(lugar.lat)],
+    localidad:localidadNominatim(direccion)
+  };
 }
 
 function trazadosDistintos(a,b) {
@@ -1143,11 +1157,10 @@ async function pedirTrazados(puntos, alternativas=2, opciones={}) {
   if (!j.routes || !j.routes.length) throw new Error("El servicio no devolvió rutas.");
   return j;
 }
-function kilometrosIntermedios(rutaOSRM) {
-  let metros = 0;
-  return (rutaOSRM.legs || []).slice(0, -1).map(tramo => (metros += tramo.distance) / 1000);
+function acumularIntermedios(rutaOSRM, campo, unidad) {
+  let acumulado = 0;
+  return (rutaOSRM.legs || []).slice(0, -1).map(tramo => (acumulado += tramo[campo]) / unidad);
 }
-
 async function ruta(a, b, vias = []) {
   const respuesta=await pedirTrazados([a,...vias,b],vias.length?'false':2);
   const raw=respuesta.routes.filter((r,i,all)=>all.slice(0,i).every(prev=>trazadosDistintos({coords:r.geometry.coordinates},{coords:prev.geometry.coordinates}))).slice(0,3);
@@ -1193,7 +1206,7 @@ async function ruta(a, b, vias = []) {
   const terrestres=raw.filter(r=>!requiereTravesia(r));
   if(terrestres.length!==raw.length)notas.push('Se han omitido opciones con ferry o tren: requieren reservar el cruce y planificar sus tramos de carretera por separado.');
   if(!terrestres.length)throw new Error('Este recorrido incluye ferry o tren. Para viajar a Irlanda o cruzar el canal, calcula por separado los trayectos de carretera antes y después del puerto o terminal. Los horarios, la espera y el precio del cruce todavía no están integrados.');
-  const resultado=terrestres.slice(0,3).map(f => ({...aplicarTiempo({coords:f.geometry.coordinates,total:f.distance/1000,min:f.duration/60},$('modoTiempo').value,num('vel',100)),varianteCorredor:!!f.varianteCorredor,corredorVia:f.corredorVia,corredorNombre:f.corredorNombre, kmIntermedios:kilometrosIntermedios(f)}));
+  const resultado=terrestres.slice(0,3).map(f => ({...aplicarTiempo({coords:f.geometry.coordinates,total:f.distance/1000,min:f.duration/60},$('modoTiempo').value,num('vel',100)),varianteCorredor:!!f.varianteCorredor,corredorVia:f.corredorVia,corredorNombre:f.corredorNombre, kmIntermedios:acumularIntermedios(f, "distance", 1000), minIntermedios:acumularIntermedios(f, "duration", 60)}));
   resultado.notas=notas;
   return resultado;
 }
@@ -1233,7 +1246,7 @@ async function buscarCargadores(coords, acum, minkw, key, cache = new Map(), ava
   const puntos = coords.filter((c, i) => { if (acum[i] - ultimo >= 35) { ultimo = acum[i]; return true; } return false; });
   for (let i = 0; i < puntos.length; i++) {
     const p = puntos[i];
-    const u = `https://api.openchargemap.io/v3/poi/?output=json&latitude=${p[1]}&longitude=${p[0]}&distance=6&distanceunit=KM&minpowerkw=${minkw}&connectiontypeid=33&maxresults=30&verbose=false&key=${encodeURIComponent(key)}`;
+    const u = `https://api.openchargemap.io/v3/poi/?output=json&latitude=${p[1]}&longitude=${p[0]}&distance=6&distanceunit=KM&minpowerkw=${minkw}&connectiontypeid=33&maxresults=30&verbose=true&key=${encodeURIComponent(key)}`;
     const cacheKey = p.join(",");
     let datos = cache.get(cacheKey);
     if (!datos) {
@@ -1246,8 +1259,14 @@ async function buscarCargadores(coords, acum, minkw, key, cache = new Map(), ava
   }
   const lista = [];
   for (const c of vistos.values()) {
-    if (c.StatusType?.IsOperational === false) continue;
-    const kw = Math.max(0, ...c.Connections.filter(x => x.ConnectionTypeID === 33 && x.StatusType?.IsOperational !== false).map(x => x.PowerKW || 0));
+    if (c.StatusType?.IsOperational === false || c.UsageType?.IsPrivateIndividual) continue;
+    const conexiones = c.Connections || [];
+    const ccs = conexiones.filter(x => x.ConnectionTypeID === 33 && x.StatusType?.IsOperational !== false);
+    const kw = Math.max(0, ...ccs.map(x => x.PowerKW || 0));
+    // En OCM, Quantity cuenta conectores y NumberOfPoints cuenta plazas del emplazamiento.
+    // Solo usamos el cruce cuando todos los conectores están en un único grupo CCS2.
+    const puntosCCS = conexiones.length === 1 && ccs.length === 1
+      ? Math.min(c.NumberOfPoints || 0, ccs[0].Quantity || 0) : 0;
     if (kw < minkw) continue;
     const pos = [c.AddressInfo.Longitude, c.AddressInfo.Latitude];
     let mejor = 1e9, idx = 0;
@@ -1255,7 +1274,7 @@ async function buscarCargadores(coords, acum, minkw, key, cache = new Map(), ava
     if (mejor > 6) continue;
     lista.push({id: c.ID, nombre: c.AddressInfo.Title, pueblo: c.AddressInfo.Town || "",
       op: c.OperatorInfo ? c.OperatorInfo.Title : "Operador desconocido",
-      kw, pos, along: acum[idx], desvio: mejor});
+      kw, pos, along: acum[idx], desvio: mejor, puntosCCS});
   }
   return lista;
 }
@@ -1606,7 +1625,7 @@ function direccionPhoton(f) {
   const calle = [p.street, p.housenumber].filter(Boolean).join(" ");
   const partes = [p.name, calle, p.postcode, p.city || p.town || p.village, p.state, p.country].filter(Boolean);
   const texto = [...new Set(partes)].join(", ");
-  return texto ? {texto, pos} : null;
+  return texto ? {texto, pos, localidad:p.city || p.town || p.village} : null;
 }
 async function buscarSugerencias(texto, vigente = () => true) {
   const clave = texto.trim().toLocaleLowerCase();
@@ -1730,7 +1749,7 @@ function cancelarUbicacionPendiente() {
 function fijoValido(input, fijo) {
   const seleccionado = seleccionDe(input);
   const p = fijo && fijo.texto === input.value ? fijo : seleccionado;
-  return p && coordenadasValidas(p.pos) ? {texto:input.value,pos:p.pos.slice()} : null;
+  return p && coordenadasValidas(p.pos) ? {texto:input.value,pos:p.pos.slice(),localidad:p.localidad} : null;
 }
 function intercambiarTrayecto() {
   cerrarSugerencias(); cancelarUbicacionPendiente(); modoElegir = false;
@@ -1978,7 +1997,12 @@ function nuevaRuta() {
   $("formulario").scrollTop = 0; activarCampoUbicacion('origen'); $("origen").focus();
 }
 $("nueva-ruta").onclick = nuevaRuta;
-$("preparar").onclick = () => vista("form");
+$("preparar").onclick = () => {
+  if (mapaDesdeParada) {
+    vista("datos");
+    centrarRuta();
+  } else vista("form");
+};
 
 $("cerrar").onclick = () => { vista("datos"); setTimeout(centrarRuta, 80); };
 $("plegar").onclick = () => { const p = $("datos").classList.toggle("plegado"); $("plegar").textContent = p ? "+" : "−"; $("plegar").setAttribute("aria-label",p ? "Desplegar resultados" : "Plegar resultados"); $("plegar").setAttribute("aria-expanded",String(!p)); setTimeout(centrarRuta, 80); };
@@ -2016,18 +2040,20 @@ async function trazarRecargas(a, b, op, paradas) {
   }
   const corredor = corredoresMediterraneo(a, b).find(c => c.nombre === op.r.corredorNombre);
   if (corredor && !verificarPasoCorredor(trazado, corredor)) throw new Error("No se pudo conservar el corredor al incluir las recargas.");
-  const distancias = kilometrosIntermedios(trazado), vias = [], cargadores = [];
+  const distancias = acumularIntermedios(trazado, "distance", 1000);
+  const tiempos = acumularIntermedios(trazado, "duration", 60);
+  const vias = [], cargadores = [];
   let kmCorredor;
   intermedios.forEach(({punto, recarga, corredor}, i) => {
     const km = distancias[i];
     if (corredor) kmCorredor = km;
-    else if (!recarga) vias.push({...punto, km});
+    else if (!recarga) vias.push({...punto, km, minOSRM:tiempos[i]});
     else {
       const acceso = respuesta.waypoints?.[i + 1];
       if (!coordenadasValidas(acceso?.location) || !(acceso.distance >= 0 && acceso.distance <= accesoMaximo)) {
         throw new Error("No se pudo confirmar un acceso por carretera próximo a " + punto.nombre + ".");
       }
-      cargadores.push({...punto, along:km, acceso:acceso.location, distanciaAcceso:acceso.distance});
+      cargadores.push({...punto, along:km, minOSRM:tiempos[i], acceso:acceso.location, distanciaAcceso:acceso.distance});
     }
   });
   const r = {...op.r, ...aplicarTiempo({
@@ -2091,6 +2117,9 @@ function fusionarCatalogos(ocm, reve) {
     if (coincidencias.length === 1) {
       coincidencias[0].fuente = "Open Charge Map y REVE";
       coincidencias[0].fechaREVE = estacion.fecha;
+      coincidencias[0].potenciasCCS = estacion.potenciasCCS;
+      coincidencias[0].acceso24h = estacion.acceso24h;
+      coincidencias[0].supermercado = estacion.supermercado;
     } else {
       fusion.push({...estacion, fuente:"REVE", fechaREVE:estacion.fecha});
     }
@@ -2098,6 +2127,16 @@ function fusionarCatalogos(ocm, reve) {
   return fusion;
 }
 
+function estacionAdmisible(estacion, minimo) {
+  const supermercado = estacion.supermercado ||
+    /supermercad|hipermercad|\b(consum|mercadona|lidl|aldi|carrefour|alcampo|eroski|bonpreu|esclat)\b/i.test(estacion.nombre);
+  return puntosCompatibles(estacion, minimo) >= 2 && estacion.acceso24h !== false && (!supermercado || estacion.acceso24h === true);
+}
+function puntosCompatibles(estacion, minimo) {
+  return estacion.potenciasCCS
+    ? estacion.potenciasCCS.filter(kw => kw >= minimo).length
+    : estacion.puntosCCS;
+}
 function compararConRecomendada(otra, referencia) {
   const t = otra.tTotal - referencia.tTotal, energia = otra.energia - referencia.energia;
   return `${Math.abs(t) < .5 ? "Mismo tiempo" : Math.round(Math.abs(t)) + " min " + (t < 0 ? "menos" : "más")} · ${Math.abs(energia) < .05 ? "Mismo consumo" : Math.abs(energia).toFixed(1) + " kWh " + (energia < 0 ? "menos" : "más")} que la recomendada`;
@@ -2129,21 +2168,27 @@ $("calc").onclick = async () => {
     const idaVuelta = $("ida-vuelta").checked;
     if (idaVuelta && puntosGuardados().length === 0) throw new Error("Añade al menos un punto intermedio para calcular la ida y vuelta.");
     estado("Buscando direcciones...");
-    const a = origenFijo ? origenFijo.pos : await geocodificar($("origen").value);
+    const origen = origenFijo || await geocodificar($("origen").value);
     if (!idaVuelta && !origenFijo && !destinoFijo) await sleep(1100); // Nominatim pide máximo 1 consulta por segundo
-    const b = idaVuelta ? a : (destinoFijo ? destinoFijo.pos : await geocodificar($("destino").value));
+    const destino = idaVuelta ? origen : destinoFijo || await geocodificar($("destino").value);
+    const a = origen.pos, b = destino.pos;
     const minVia = 0, puntosVia = [];
     for (const p of puntosGuardados()) {
       estado("Buscando " + p.texto + "...");
       if (!p.pos) await sleep(1100);
-      puntosVia.push({nombre:p.texto,pos:p.pos || await geocodificar(p.texto)});
+      puntosVia.push({nombre:p.texto,pos:p.pos || (await geocodificar(p.texto)).pos});
+    }
+    for (const extremo of new Set([origen, destino])) {
+      if (extremo.localidad) continue;
+      await sleep(1100);
+      extremo.localidad = await nombreLugar(extremo.pos, true).catch(() => "");
     }
     estado("Buscando rutas alternativas...");
     const rutas = await ruta(a, b, puntosVia.map(v => v.pos));
     await mostrarTrazadoPrevio(rutas);
 
     const sesion = {a, b, P, minVia, margen, socIni, puntosVia, idaVuelta, total:rutas.length, opciones:[], descartes:[...(rutas.notas||[])], salida:Date.now(),
-      origenTexto:$("origen").value, destinoTexto:$("destino").value, viasTexto:$("vias").value, puntosTexto:puntosGuardados(), op:origenFijo ? origenFijo.pos : null, dp:idaVuelta ? (origenFijo ? origenFijo.pos : null) : (destinoFijo ? destinoFijo.pos : null)};
+      origenTexto:$("origen").value, destinoTexto:$("destino").value, localidadOrigen:origen.localidad, localidadDestino:destino.localidad, viasTexto:$("vias").value, puntosTexto:puntosGuardados(), op:origenFijo ? origenFijo.pos : null, dp:idaVuelta ? (origenFijo ? origenFijo.pos : null) : (destinoFijo ? destinoFijo.pos : null)};
     const ops = $("ops").value.toLowerCase().split(",").map(x => x.trim()).filter(Boolean);
     const soloPrecio=false;
     let estacionesConPrecio=[];
@@ -2157,7 +2202,7 @@ $("calc").onclick = async () => {
       let acum;
       try { acum = distanciaAcumulada(r.coords, r.total); }
       catch { sesion.descartes.push(`Ruta ${i + 1}: recorrido sin distancia válida.`); continue; }
-      const vias = puntosVia.map((v, j) => ({...v, km:r.kmIntermedios[j]}));
+      const vias = puntosVia.map((v, j) => ({...v, km:r.kmIntermedios[j], minOSRM:r.minIntermedios[j]}));
       preparadas.push({r, acum, vias, numero:i + 1});
     }
     let falloMeteo = false;
@@ -2194,7 +2239,7 @@ $("calc").onclick = async () => {
       if (!plan.ok || plan.aviso) {
         try {
           if (!catalogoREVE) {
-            catalogoREVE = await fetchConLimite("catalogo-reve-4.16.json", 5000).then(async respuesta => {
+            catalogoREVE = await fetchConLimite("catalogo-reve-4.17.json", 5000).then(async respuesta => {
               if (!respuesta.ok) throw new Error("Catálogo no disponible");
               const estaciones = await respuesta.json();
               if (!Array.isArray(estaciones)) throw new Error("Catálogo no válido");
@@ -2220,7 +2265,10 @@ $("calc").onclick = async () => {
           } else {
             errorOCM = new Error("Falta la clave de Open Charge Map; introdúcela en Configuración → Mi vehículo → Cargadores para ampliar la búsqueda.");
           }
-          const cargadores = fusionarCatalogos(ocm, reve);
+          const cargadores = fusionarCatalogos(ocm, reve).filter(c => estacionAdmisible(c, minimo));
+          if (!cargadores.length && !errorOCM) {
+            throw new Error("No se encontraron estaciones con al menos dos puntos CCS2 a la potencia indicada que cumplan el filtro de acceso.");
+          }
           filtrados = ops.length ? cargadores.filter(c => ops.some(o => c.op.toLowerCase().includes(o))) : cargadores;
           plan = planificar(op.r.total, socIni, filtrados, P, op.perfil);
           if (errorOCM) {
@@ -2355,6 +2403,10 @@ function pintarFavoritos() {
 function mostrarOpcion(sesion, op) {
     const {a, b, P, minVia} = sesion;
     const {r, acum, vias, perfil, plan, notaDesnivel} = op;
+    const localidades = $("localidades-ruta");
+    localidades.textContent = [sesion.localidadOrigen, sesion.localidadDestino].filter(Boolean).join(" – ");
+    localidades.hidden = !localidades.textContent;
+    localidades.title = localidades.textContent;
     $("res").textContent = ""; capas.clearLayers();
     sesion.opciones.forEach(otra => {
       if (otra !== op) L.polyline(otra.r.coords.map(c => [c[1], c[0]]), {color:"#7a827f", weight:4, opacity:.65}).addTo(capas);
@@ -2370,8 +2422,22 @@ function mostrarOpcion(sesion, op) {
       fuerte.textContent = valor; etiqueta.textContent = texto; dato.append(fuerte, etiqueta); principal.appendChild(dato);
     });
     $("res").appendChild(principal);
-    const distancia = document.createElement("p"); distancia.className = "meta"; distancia.textContent = `Llegada estimada ${new Date(sesion.salida + op.tTotal * 60000).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})} si sales ahora · Sin tráfico en directo.`; $("res").appendChild(distancia);
-    const alternativas = document.createElement("details"), tituloAlternativas = document.createElement("summary"); alternativas.id = "alternativas-ruta"; alternativas.className = "detalle-resultados"; tituloAlternativas.textContent = `Comparar alternativas (${sesion.opciones.length})`; alternativas.appendChild(tituloAlternativas); alternativas.open = true; $("res").appendChild(alternativas);
+    if (perfil.alt) {
+      const tg = document.createElement("p"); tg.className = "meta";
+      tg.textContent = "Altitud a lo largo de la ruta. Las líneas verticales indican los puntos numerados del viaje. Pasa el cursor o el dedo por encima para ver el valor y su posición en el mapa.";
+      let marca = null;
+      const alMover = km => {
+        if (marca) { capas.removeLayer(marca); marca = null; }
+        if (km === null) return;
+        let lo = 0, hi = acum.length - 1;
+        while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (acum[mid] <= km) lo = mid; else hi = mid; }
+        marca = L.circleMarker([r.coords[lo][1], r.coords[lo][0]], {radius: 7, color: "#f59e0b", fillOpacity: 1}).addTo(capas);
+      };
+      const puntosPerfil = [...plan.paradas, ...vias].sort((a,b) => a.km - b.km)
+        .map((p, i) => ({...p, etiqueta:String(i + 2)}));
+      $("res").append(tg, dibujarPerfil(perfil, puntosPerfil, alMover));
+    }
+    const alternativas = document.createElement("details"), tituloAlternativas = document.createElement("summary"); alternativas.id = "alternativas-ruta"; alternativas.className = "detalle-resultados"; tituloAlternativas.textContent = `Comparar alternativas (${sesion.opciones.length})`; alternativas.appendChild(tituloAlternativas); $("res").appendChild(alternativas);
     const info = document.createElement("details"), tituloInfo = document.createElement("summary"); info.className = "detalle-resultados"; info.id = "detalles-calculo"; tituloInfo.textContent = "Detalles del cálculo"; info.appendChild(tituloInfo);
     const intro = document.createElement("p"); intro.className = "explicacion";
     intro.textContent = sesion.opciones.length > 1 ? explicarEquilibrio(sesion.eleccion, sesion.margen) : "Solo hay una opción viable evaluada; no podemos comparar el equilibrio entre rutas alternativas.";
@@ -2398,7 +2464,7 @@ function mostrarOpcion(sesion, op) {
     });
     alternativas.appendChild(lista);
     const limites = document.createElement("p"); limites.className = "meta";
-    limites.textContent = "La búsqueda combina Open Charge Map con una copia parcial del catálogo CCS2 de Mapa REVE (Red Eléctrica), descargada el 28/10 y el 08/11/2026. Se prueban hasta tres planes por trazado base. Se recalculan por carretera los accesos a las recargas y se revisan las reservas de batería. El extra fijo cubre la preparación de cada parada. Estimaciones sin tráfico ni disponibilidad en directo.";
+    limites.textContent = "Se exigen al menos dos puntos CCS2 a la potencia mínima indicada. Los supermercados solo entran si el acceso 24 h figura en el catálogo. La búsqueda combina Open Charge Map con una copia parcial del catálogo CCS2 de Mapa REVE (Red Eléctrica), descargada el 28/10 y el 08/11/2026. Se prueban hasta tres planes por trazado base. Se recalculan por carretera los accesos a las recargas y se revisan las reservas de batería. El extra fijo cubre la preparación de cada parada. Estimaciones sin tráfico ni disponibilidad en directo.";
     const alcance = document.createElement("p"); alcance.className = "meta";
     alcance.textContent = `${sesion.opciones.length} ${sesion.opciones.length === 1 ? "plan viable" : "planes viables"} · ${sesion.total} ${sesion.total === 1 ? "trazado base" : "trazados base"} · Tiempo ${r.modoTiempo === "media" ? "según tu media" : "OSRM"}.`;
     info.appendChild(alcance);
@@ -2407,11 +2473,12 @@ function mostrarOpcion(sesion, op) {
     if (sesion.opciones.length === 1) {
       const aviso = document.createElement("p"); aviso.className = "aviso";
       aviso.textContent = "Solo se encontró un plan viable entre las opciones evaluadas.";
-      $("res").appendChild(aviso);
+      alternativas.appendChild(aviso);
     }
-    sesion.descartes.forEach(texto => { const aviso = document.createElement("p"); aviso.className = "aviso"; aviso.textContent = texto; $("res").appendChild(aviso); });
-    let detalle = null;
-    if (plan.paradas.length || vias.length) { detalle = document.createElement("h2"); detalle.textContent = "Paradas del viaje"; $("res").appendChild(detalle); }
+    sesion.descartes.forEach(texto => { const aviso = document.createElement("p"); aviso.className = "aviso"; aviso.textContent = texto; alternativas.appendChild(aviso); });
+    const detalle = document.createElement("h2");
+    detalle.textContent = "Paradas del viaje";
+    $("res").appendChild(detalle);
     const nP = plan.paradas.length;
     const cab = document.createElement("div"); cab.className = "resumen";
     const chip = (txt, cls) => { const e = document.createElement("span"); e.className = "chip " + cls; e.textContent = txt; return e; };
@@ -2447,7 +2514,7 @@ function mostrarOpcion(sesion, op) {
       info.appendChild(contraste);
     }
     const llegada = document.createElement("p"); llegada.className = "explicacion";
-    llegada.textContent = `Batería estimada al destino: ${op.socFinal.toFixed(0)} % (mínimo pedido: ${P.minDestino} %) · Mínimo estimado en ruta: ${Math.floor(op.socMinimo + 1e-9)} % · Llegada estimada si sales al calcular: ${new Date(sesion.salida + op.tTotal * 60000).toLocaleTimeString("es-ES", {hour:"2-digit", minute:"2-digit"})}.`;
+    llegada.textContent = `Batería estimada al destino: ${op.socFinal.toFixed(0)} % (mínimo pedido: ${P.minDestino} %) · Mínimo estimado en ruta: ${Math.floor(op.socMinimo + 1e-9)} %.`;
     info.appendChild(llegada);
     const puntosCorredor=[];
     if(r.corredorVia){let idx=0,menor=Infinity;r.coords.forEach((q,j)=>{const d=km(q,r.corredorVia);if(d<menor){menor=d;idx=j;}});puntosCorredor.push({pos:r.corredorVia,km:r.kmCorredor ?? op.acum[idx]});}
@@ -2460,27 +2527,40 @@ function mostrarOpcion(sesion, op) {
       const l = document.createElement("a"); l.href = url; l.target = "_blank"; l.rel = "noopener"; l.textContent = nombre; ex.appendChild(l);
     });
 
-    if (perfil.alt) {
-      const tg = document.createElement("p"); tg.className = "meta";
-      tg.textContent = "Altitud a lo largo de la ruta. Las líneas verticales numeradas indican las recargas; ★ señala las paradas elegidas. Pasa el cursor o el dedo por encima para ver el valor y su posición en el mapa.";
-      let marca = null;
-      const alMover = km => {
-        if (marca) { capas.removeLayer(marca); marca = null; }
-        if (km === null) return;
-        let lo = 0, hi = acum.length - 1;
-        while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (acum[mid] <= km) lo = mid; else hi = mid; }
-        marca = L.circleMarker([r.coords[lo][1], r.coords[lo][0]], {radius: 7, color: "#f59e0b", fillOpacity: 1}).addTo(capas);
-      };
-      info.appendChild(tg); info.appendChild(dibujarPerfil(perfil, [...plan.paradas.map((p,i) => ({...p,etiqueta:String(i+1)})), ...vias.map(v => ({...v,etiqueta:"★"}))].sort((a,b)=>a.km-b.km), alMover));
-    }
     const ol = document.createElement("ol"); ol.className = "paradas"; $("res").appendChild(ol);
     const items = [];
+    const extremos = (tipo, nombre, km, minOSRM, pos) => {
+      const li = document.createElement("li");
+      const titulo = document.createElement("strong");
+      titulo.textContent = nombre || tipo;
+      const meta = document.createElement("span");
+      meta.className = "meta";
+      meta.textContent = tipo;
+      li.append(titulo, meta);
+      return {km, minOSRM, li, meta, pos, nombre:titulo.textContent};
+    };
+    const mostrarPunto = ({li, pos, nombre}, numero) => {
+      const boton = document.createElement("button");
+      boton.type = "button";
+      boton.className = "numero-parada";
+      boton.textContent = numero;
+      boton.setAttribute("aria-label", `Ver en el mapa el punto ${numero}: ${nombre}`);
+      boton.onclick = () => {
+        vista("parada");
+        map.setView([pos[1], pos[0]], 17);
+        $("preparar").focus({preventScroll:true});
+      };
+      li.prepend(boton);
+      ol.appendChild(li);
+    };
+    mostrarPunto(extremos("Origen", sesion.origenTexto, 0, 0, r.coords[0]), 1);
     plan.paradas.forEach((p, i) => {
       const acceso = p.acceso || p.pos;
-      L.marker([acceso[1], acceso[0]], {icon: L.divIcon({className: "", html: `<div class="pin">${i + 1}</div>`, iconSize: [30, 30], iconAnchor: [15, 15]})}).addTo(capas).bindPopup(`${i+1}. ${p.nombre} (${p.kw} kW)`);
+      const numero = i + 2 + vias.filter(v => v.km < p.km).length;
+      L.marker([acceso[1], acceso[0]], {icon: L.divIcon({className: "", html: `<div class="pin">${numero}</div>`, iconSize: [30, 30], iconAnchor: [15, 15]})}).addTo(capas).bindPopup(`${numero}. ${p.nombre} (${p.kw} kW)`);
       const li = document.createElement("li");
       const t = document.createElement("strong"); t.textContent = p.nombre + (p.pueblo ? ", " + p.pueblo : "");
-      const m = document.createElement("span"); m.className = "meta"; m.textContent = `Km ${p.km.toFixed(0)}, ${p.op}${p.distanciaAcceso > 15 ? ` · Acceso cartografiado a ${Math.round(p.distanciaAcceso)} m del punto de recarga` : ""}`;
+      const m = document.createElement("span"); m.className = "meta"; m.textContent = `${p.op}${p.distanciaAcceso > 15 ? ` · Acceso cartografiado a ${Math.round(p.distanciaAcceso)} m del punto de recarga` : ""}`;
       const kw = document.createElement("span"); kw.className = "chip kw"; kw.textContent = `${p.kw} kW · cargador CCS2`;
       const tm = document.createElement("span"); tm.className = "chip min"; tm.textContent = `${Math.ceil(p.minutos)} min estimados`;
       const fila = document.createElement("div"); fila.className = "fila-chips"; fila.append(kw, tm);
@@ -2490,31 +2570,46 @@ function mostrarOpcion(sesion, op) {
       c.textContent = `Llegas con ${p.llegada.toFixed(0)} %, cargas hasta ${p.objetivo.toFixed(0)} % (${p.kwh.toFixed(0)} kWh). Potencia media estimada hacia la batería: ${(p.kwh / p.minutos * 60).toFixed(0)} kW${p.objetivo > 80 ? ". Por encima del 80 % la estimación es menos fiable" : ""}`;
       const fuente = document.createElement("span");
       fuente.className = "meta";
-      fuente.textContent = `Fuente: ${p.fuente || "Open Charge Map"}${p.fechaREVE ? ` · Catálogo REVE descargado el ${new Date(p.fechaREVE).toLocaleDateString("es-ES")}` : ""}`;
+      fuente.textContent = `${puntosCompatibles(p, +$("minkw").value)} puntos CCS2 según catálogo · ${p.acceso24h === true ? "Acceso 24 h declarado" : "Horario sin confirmar"} · Fuente: ${p.fuente || "Open Charge Map"}${p.fechaREVE ? ` · Catálogo REVE descargado el ${new Date(p.fechaREVE).toLocaleDateString("es-ES")}` : ""}`;
       li.append(t, m, fuente, fila, bar, c, notaFiabilidad(p), ($("mostrar-precios").checked ? notaPrecio(p) : document.createTextNode("")), notaServicios(p.pos));
       const w = document.createElement("a"); w.className = "wz"; w.href = en.waze(p.pos); w.target = "_blank"; w.rel = "noopener";
       w.textContent = "Ir aquí con Waze";
       const acciones = document.createElement("div"); acciones.className = "acciones-estacion";
       acciones.append(botonFavorito({id:String(p.id).startsWith("reve:") ? p.id : "ocm:"+p.id,nombre:p.nombre,pos:p.pos,operador:p.op,kw:p.kw}), w);
       li.appendChild(acciones);
-      items.push({km: p.km, li});
+      items.push({km:p.km, minOSRM:p.minOSRM, li, meta:m, pos:acceso, nombre:p.nombre});
     });
-    vias.forEach(v => {
-      L.marker([v.pos[1], v.pos[0]], {icon: L.divIcon({className: "", html: '<div class="pin via">★</div>', iconSize: [30, 30], iconAnchor: [15, 15]})}).addTo(capas).bindPopup("Parada: " + v.nombre);
+    vias.forEach((v, i) => {
+      const numero = i + 2 + plan.paradas.filter(p => p.km <= v.km).length;
+      L.marker([v.pos[1], v.pos[0]], {icon: L.divIcon({className: "", html: `<div class="pin via">${numero}</div>`, iconSize: [30, 30], iconAnchor: [15, 15]})}).addTo(capas).bindPopup("Parada: " + v.nombre);
       const li = document.createElement("li"); li.className = "via";
       const t = document.createElement("strong"); t.textContent = v.nombre;
-      const m = document.createElement("span"); m.className = "meta"; m.textContent = `Km ${v.km.toFixed(0)}, parada elegida, sin tiempo de estancia añadido`;
+      const m = document.createElement("span"); m.className = "meta"; m.textContent = "Parada elegida, sin tiempo de estancia añadido";
       const w = document.createElement("a"); w.className = "wz"; w.href = en.waze(v.pos); w.target = "_blank"; w.rel = "noopener"; w.textContent = "Ir aquí con Waze";
-      li.append(t, m, w); items.push({km: v.km, li});
+      li.append(t, m, w); items.push({km:v.km, minOSRM:v.minOSRM, li, meta:m, pos:v.pos, nombre:v.nombre});
     });
-    items.sort((x, y) => x.km - y.km).forEach(x => ol.appendChild(x.li));
+    let kmAnterior = 0, minAnterior = 0;
+    items.sort((x, y) => x.km - y.km);
+    items.push(extremos(`Destino · Llegas con ${op.socFinal.toFixed(0)} %`, sesion.destinoTexto, r.total, r.osrmMin, r.coords.at(-1)));
+    items.forEach((punto, i) => {
+      const {km, minOSRM, meta} = punto;
+      const desde = i === 0 ? "el origen" : "la parada anterior";
+      const distancia = km - kmAnterior;
+      const minutos = r.modoTiempo === "media" ? distancia / r.mediaPrevista * 60 : minOSRM - minAnterior;
+      const tiempo = Math.max(0, Math.round(minutos));
+      const conduccion = tiempo < 60 ? `${tiempo} min` : duracion(tiempo);
+      meta.prepend(`${distancia.toFixed(0)} km · ${conduccion} desde ${desde} · `);
+      mostrarPunto(punto, i + 2);
+      kmAnterior = km;
+      minAnterior = minOSRM;
+    });
     $("res").append(ex,info);
 
     estado("");
     const msgAviso = plan.ok ? plan.aviso : "Aviso: " + plan.motivo;
     if (msgAviso) {
       const av = document.createElement("p"); av.className = "aviso"; av.textContent = msgAviso;
-      $("res").insertBefore(av, detalle);
+      alternativas.appendChild(av);
     }
     hayDatos = true; $("datos").classList.remove("plegado"); $("plegar").textContent = "−"; $("plegar").setAttribute("aria-expanded","true"); vista("datos"); setTimeout(centrarRuta, 80);
     guardarViaje({o: sesion.origenTexto, d: sesion.destinoTexto, idaVuelta:sesion.idaVuelta, soc: sesion.socIni, km: Math.round(r.total), p: plan.paradas.length, v: sesion.viasTexto, vp:sesion.puntosTexto, op:sesion.op, dp: sesion.dp});
