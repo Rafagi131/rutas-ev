@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="rutaev-version" content="4.17-pages">
+<meta name="rutaev-version" content="4.18-pages">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>We're off! · Ruta EV · v4.17</title>
+<title>We're off! · Ruta EV · v4.18</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Montserrat:wght@400;500;600;700;800;900&display=swap">
 <style>
@@ -984,7 +984,7 @@ body:has(#progreso-cargadores:not([hidden])) #estado:not(.error){display:none}
     </div>
   </details>
   <details name="panel-principal" class="grupo" id="historial" hidden><summary><span class="icono-grupo" aria-hidden="true">↶</span><span class="texto-grupo"><strong>Viajes recientes</strong><small id="resumen-historial">Recuperar un viaje guardado</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><section id="viajes" class="contenido-grupo"></section></details>
-  <details name="panel-principal" class="grupo creditos-app"><summary><span class="icono-grupo" aria-hidden="true">i</span><span class="texto-grupo"><strong>Información y créditos</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary><p><strong>Versión 4.17 · Open Charge Map y REVE · Europa</strong><br>Idea y desarrollo propiedad de Rafa Galdó</p><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p><details class="detalle-resultados" id="cobertura-europa"><summary><span>Europa · Fuentes gratuitas</span><span class="apertura-europa" aria-hidden="true">⌄</span></summary><p class="ayuda">Rutas por carretera y búsqueda internacional de cargadores: España, Portugal, Francia, Alemania, Italia, Benelux, Austria, Suiza, Reino Unido, Irlanda y países nórdicos, según cobertura de OpenStreetMap/OSRM y Open Charge Map. Escribe el país para evitar localidades homónimas.</p><p class="ayuda">La presencia en el mapa no confirma disponibilidad ni varios puntos operativos. Esta publicación no conecta al servidor REVE. Los precios, la disponibilidad en directo y los servicios de las estaciones quedan pendientes de confirmar.</p><p class="ayuda">Irlanda y Reino Unido: puedes planificar sus tramos de carretera. Los cruces en ferry o tren se planifican por separado; no se incluyen reservas, horarios ni coste de la travesía.</p></details></details>
+  <details name="panel-principal" class="grupo creditos-app"><summary><span class="icono-grupo" aria-hidden="true">i</span><span class="texto-grupo"><strong>Información y créditos</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary><p><strong>Versión 4.18 · Open Charge Map y REVE · Europa</strong><br>Idea y desarrollo propiedad de Rafa Galdó</p><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p><details class="detalle-resultados" id="cobertura-europa"><summary><span>Europa · Fuentes gratuitas</span><span class="apertura-europa" aria-hidden="true">⌄</span></summary><p class="ayuda">Rutas por carretera y búsqueda internacional de cargadores: España, Portugal, Francia, Alemania, Italia, Benelux, Austria, Suiza, Reino Unido, Irlanda y países nórdicos, según cobertura de OpenStreetMap/OSRM y Open Charge Map. Escribe el país para evitar localidades homónimas.</p><p class="ayuda">La presencia en el mapa no confirma disponibilidad ni varios puntos operativos. Esta publicación no conecta al servidor REVE. Los precios, la disponibilidad en directo y los servicios de las estaciones quedan pendientes de confirmar.</p><p class="ayuda">Irlanda y Reino Unido: puedes planificar sus tramos de carretera. Los cruces en ferry o tren se planifican por separado; no se incluyen reservas, horarios ni coste de la travesía.</p></details></details>
 </section>
 <section id="datos" class="panel oculto">
   <div id="barra"><div class="titulos-ruta"><p id="localidades-ruta"></p><h2>Ruta seleccionada</h2></div><div class="acciones-ruta"><button id="abrir" class="oculto" aria-label="Editar viaje">editar</button><button id="plegar" aria-label="Plegar resultados" aria-expanded="true">−</button></div></div>
@@ -1901,7 +1901,10 @@ function pintarViajes() {
     b.textContent = `${v.o} ${v.idaVuelta ? "↻" : "→"} ${v.idaVuelta ? "ida y vuelta" : v.d} (${v.km} km, ${v.p} paradas)`;
     const identificador = JSON.stringify([v.o,v.d]); b.dataset.viaje = identificador; b.setAttribute("aria-pressed",String(viajeRecienteSeleccionado === identificador));
     b.onclick = () => { viajeRecienteSeleccionado = identificador; c.querySelectorAll("button[data-viaje]").forEach(boton => boton.setAttribute("aria-pressed",String(boton === b))); cerrarSugerencias(); cancelarUbicacionPendiente(); origenFijo = v.o !== "Mi ubicación actual" && coordenadasValidas(v.op) ? {texto:v.o,pos:v.op} : null; $("origen").value = v.o === "Mi ubicación actual" ? "" : v.o; // la ubicación actual hay que volver a pedirla
-    destinoFijo = v.d !== "Mi ubicación actual" && coordenadasValidas(v.dp) ? {pos: v.dp, texto: v.d} : null; $("destino").value = v.d === "Mi ubicación actual" ? "" : v.d; $("ida-vuelta").checked = v.idaVuelta === true; destinoPrevioIdaVuelta = null; $("destino").readOnly = v.idaVuelta === true; pintarPuntos(); $("soc").value = v.soc; restaurarPuntos(v.vp || v.v || ""); pintaSoc(); actualizarResumenes(); };
+    destinoFijo = v.d !== "Mi ubicación actual" && coordenadasValidas(v.dp) ? {pos: v.dp, texto: v.d} : null; $("destino").value = v.d === "Mi ubicación actual" ? "" : v.d; $("ida-vuelta").checked = v.idaVuelta === true; destinoPrevioIdaVuelta = null; $("destino").readOnly = v.idaVuelta === true; pintarPuntos(); $("soc").value = v.soc; restaurarPuntos(v.vp || v.v || ""); pintaSoc(); actualizarResumenes();
+      activarCampoUbicacion("origen");
+      $("formulario").scrollTop = 0;
+    };
     c.appendChild(b);
   });
   const x = document.createElement("button"); x.type = "button"; x.className = "borrar-viajes"; x.textContent = "Borrar viajes guardados";
