@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="rutaev-version" content="4.18-pages">
+<meta name="rutaev-version" content="4.19-pages">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>We're off! · Ruta EV · v4.18</title>
+<title>We're off! · Ruta EV · v4.19</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Montserrat:wght@400;500;600;700;800;900&display=swap">
 <style>
@@ -742,6 +742,13 @@ input[type=range]::-moz-range-track,input[type=range]::-moz-range-progress{heigh
 .selectores-trayecto .mini{min-height:44px}
 .lugar.seleccion-activa{outline:1px solid var(--acc);outline-offset:2px}
 </style><style>
+#viajes .viaje-reciente{position:relative;overflow:hidden;margin:0 0 11px;border-radius:13px}
+#viajes .viaje-reciente button[data-viaje]{position:relative;z-index:1;margin:0;min-height:44px;touch-action:pan-y;transition:transform .18s ease}
+#viajes .viaje-reciente button.borrar-viaje{position:absolute;inset:0 0 0 auto;width:80px;margin:0;padding:0;text-align:center;background:#a52c2c;color:#fff;font-weight:700}
+#viajes .viaje-reciente.deslizado button[data-viaje],
+#viajes .viaje-reciente:has(.borrar-viaje:focus-visible) button[data-viaje]{transform:translateX(-80px)}
+#viajes .viaje-reciente:has(.borrar-viaje:focus-visible) button.borrar-viaje{outline-offset:-4px}
+@media(prefers-reduced-motion:reduce){#viajes .viaje-reciente button[data-viaje]{transition:none}}
 #viajes button.borrar-viajes{display:flex;justify-content:center;align-items:center;width:100%;min-height:36px;padding:8px 14px;line-height:1.3;text-align:center;white-space:normal;border-radius:20px;margin:14px 0 4px}
 #nueva-ruta,.nueva-ruta-resultados{border:0;border-radius:20px;background:linear-gradient(135deg,#dadbd5,#cbcdc5);box-shadow:var(--relieve);color:var(--ink);padding:8px 12px;font:600 11px/1.3 "Montserrat",sans-serif;cursor:pointer}
 .nueva-ruta-resultados{display:block;width:100%;margin:14px 0;min-height:38px}
@@ -887,7 +894,7 @@ body:has(#progreso-cargadores:not([hidden])) #estado:not(.error){display:none}
   width:100%;justify-content:flex-end;flex-wrap:wrap;gap:14px 6px;
 }
 </style></head>
-<body><dialog id="confirmar-borrado" aria-labelledby="titulo-borrado"><h2 id="titulo-borrado">¿Borrar los viajes guardados?</h2><p>Se borrará el historial de este navegador. No se puede deshacer.</p><div class="acciones-confirmacion"><button type="button" id="cancelar-borrado" autofocus>Cancelar</button><button type="button" id="aceptar-borrado">Borrar viajes</button></div></dialog>
+<body><dialog id="confirmar-borrado" aria-labelledby="titulo-borrado"><h2 id="titulo-borrado">¿Borrar los viajes guardados?</h2><p id="texto-borrado">Se borrará el historial de este navegador. No se puede deshacer.</p><div class="acciones-confirmacion"><button type="button" id="cancelar-borrado" autofocus>Cancelar</button><button type="button" id="aceptar-borrado">Borrar viajes</button></div></dialog>
 <header class="marca-app" aria-label="We're off! · ruta EV">
   <button class="marca-inicio" id="marca-inicio" type="button" aria-label="We're off! · Abrir planificación">
     <svg class="marca-simbolo" viewBox="0 0 36 36" aria-hidden="true" focusable="false"><rect x="0" y="0" width="10" height="10" fill="#397fff"/><rect x="13" y="0" width="10" height="10" fill="#ffffff"/><rect x="26" y="0" width="10" height="10" fill="#ffffff"/><rect x="0" y="13" width="10" height="10" fill="#ffffff"/><rect x="13" y="13" width="10" height="10" fill="#ffffff"/><rect x="26" y="13" width="10" height="10" fill="#ffffff"/><rect x="0" y="26" width="10" height="10" fill="#ffffff"/><rect x="13" y="26" width="10" height="10" fill="#ffffff"/><rect x="26" y="26" width="10" height="10" fill="#ffffff"/></svg>
@@ -984,7 +991,7 @@ body:has(#progreso-cargadores:not([hidden])) #estado:not(.error){display:none}
     </div>
   </details>
   <details name="panel-principal" class="grupo" id="historial" hidden><summary><span class="icono-grupo" aria-hidden="true">↶</span><span class="texto-grupo"><strong>Viajes recientes</strong><small id="resumen-historial">Recuperar un viaje guardado</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><section id="viajes" class="contenido-grupo"></section></details>
-  <details name="panel-principal" class="grupo creditos-app"><summary><span class="icono-grupo" aria-hidden="true">i</span><span class="texto-grupo"><strong>Información y créditos</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary><p><strong>Versión 4.18 · Open Charge Map y REVE · Europa</strong><br>Idea y desarrollo propiedad de Rafa Galdó</p><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p><details class="detalle-resultados" id="cobertura-europa"><summary><span>Europa · Fuentes gratuitas</span><span class="apertura-europa" aria-hidden="true">⌄</span></summary><p class="ayuda">Rutas por carretera y búsqueda internacional de cargadores: España, Portugal, Francia, Alemania, Italia, Benelux, Austria, Suiza, Reino Unido, Irlanda y países nórdicos, según cobertura de OpenStreetMap/OSRM y Open Charge Map. Escribe el país para evitar localidades homónimas.</p><p class="ayuda">La presencia en el mapa no confirma disponibilidad ni varios puntos operativos. Esta publicación no conecta al servidor REVE. Los precios, la disponibilidad en directo y los servicios de las estaciones quedan pendientes de confirmar.</p><p class="ayuda">Irlanda y Reino Unido: puedes planificar sus tramos de carretera. Los cruces en ferry o tren se planifican por separado; no se incluyen reservas, horarios ni coste de la travesía.</p></details></details>
+  <details name="panel-principal" class="grupo creditos-app"><summary><span class="icono-grupo" aria-hidden="true">i</span><span class="texto-grupo"><strong>Información y créditos</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary><p><strong>Versión 4.19 · Open Charge Map y REVE · Europa</strong><br>Idea y desarrollo propiedad de Rafa Galdó</p><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p><details class="detalle-resultados" id="cobertura-europa"><summary><span>Europa · Fuentes gratuitas</span><span class="apertura-europa" aria-hidden="true">⌄</span></summary><p class="ayuda">Rutas por carretera y búsqueda internacional de cargadores: España, Portugal, Francia, Alemania, Italia, Benelux, Austria, Suiza, Reino Unido, Irlanda y países nórdicos, según cobertura de OpenStreetMap/OSRM y Open Charge Map. Escribe el país para evitar localidades homónimas.</p><p class="ayuda">La presencia en el mapa no confirma disponibilidad ni varios puntos operativos. Esta publicación no conecta al servidor REVE. Los precios, la disponibilidad en directo y los servicios de las estaciones quedan pendientes de confirmar.</p><p class="ayuda">Irlanda y Reino Unido: puedes planificar sus tramos de carretera. Los cruces en ferry o tren se planifican por separado; no se incluyen reservas, horarios ni coste de la travesía.</p></details></details>
 </section>
 <section id="datos" class="panel oculto">
   <div id="barra"><div class="titulos-ruta"><p id="localidades-ruta"></p><h2>Ruta seleccionada</h2></div><div class="acciones-ruta"><button id="abrir" class="oculto" aria-label="Editar viaje">editar</button><button id="plegar" aria-label="Plegar resultados" aria-expanded="true">−</button></div></div>
@@ -1892,29 +1899,81 @@ function guardarViaje(v) {
   pintarViajes();
 }
 let viajeRecienteSeleccionado = null;
+let viajePendienteDeBorrar = null;
+function confirmarBorradoViajes(identificador = null, nombre = "") {
+  viajePendienteDeBorrar = identificador;
+  $("titulo-borrado").textContent = identificador ? "¿Borrar este viaje?" : "¿Borrar los viajes guardados?";
+  $("texto-borrado").textContent = identificador
+    ? nombre + ". Se borrará de Viajes recientes."
+    : "Se borrará el historial de este navegador. No se puede deshacer.";
+  $("aceptar-borrado").textContent = identificador ? "Borrar viaje" : "Borrar viajes";
+  $("confirmar-borrado").showModal();
+}
 function pintarViajes() {
   const c = $("viajes"); c.textContent = "";
   const l = leerViajes(); $("historial").hidden = !l.length; $("resumen-historial").textContent = l.length + (l.length === 1 ? " viaje guardado" : " viajes guardados"); if (!l.length) return;
   const h = document.createElement("strong"); h.textContent = "Viajes guardados"; c.appendChild(h);
   l.forEach(v => {
     const b = document.createElement("button");
+    b.type = "button";
     b.textContent = `${v.o} ${v.idaVuelta ? "↻" : "→"} ${v.idaVuelta ? "ida y vuelta" : v.d} (${v.km} km, ${v.p} paradas)`;
     const identificador = JSON.stringify([v.o,v.d]); b.dataset.viaje = identificador; b.setAttribute("aria-pressed",String(viajeRecienteSeleccionado === identificador));
-    b.onclick = () => { viajeRecienteSeleccionado = identificador; c.querySelectorAll("button[data-viaje]").forEach(boton => boton.setAttribute("aria-pressed",String(boton === b))); cerrarSugerencias(); cancelarUbicacionPendiente(); origenFijo = v.o !== "Mi ubicación actual" && coordenadasValidas(v.op) ? {texto:v.o,pos:v.op} : null; $("origen").value = v.o === "Mi ubicación actual" ? "" : v.o; // la ubicación actual hay que volver a pedirla
+    const fila = document.createElement("div");
+    fila.className = "viaje-reciente";
+    const borrar = document.createElement("button");
+    borrar.type = "button";
+    borrar.className = "borrar-viaje";
+    borrar.textContent = "Borrar";
+    borrar.setAttribute("aria-label", "Borrar viaje: " + b.textContent);
+    borrar.onclick = () => confirmarBorradoViajes(identificador, b.textContent);
+    let inicio, deslizado = false;
+    b.addEventListener("pointerdown", ev => {
+      if (!ev.isPrimary || ev.button !== 0) return;
+      inicio = {id:ev.pointerId, x:ev.clientX, y:ev.clientY};
+      deslizado = false;
+    });
+    b.addEventListener("pointercancel", () => { inicio = null; });
+    b.addEventListener("pointerup", ev => {
+      if (inicio?.id !== ev.pointerId) return;
+      const dx = ev.clientX - inicio.x, dy = ev.clientY - inicio.y;
+      inicio = null;
+      deslizado = Math.abs(dx) >= 45 && Math.abs(dx) > Math.abs(dy) * 1.3;
+      if (!deslizado) return;
+      c.querySelector(".viaje-reciente.deslizado")?.classList.remove("deslizado");
+      fila.classList.toggle("deslizado", dx < 0);
+    });
+    b.onclick = ev => {
+      if (deslizado && ev.detail !== 0) { deslizado = false; return; }
+      fila.classList.remove("deslizado");
+      viajeRecienteSeleccionado = identificador; c.querySelectorAll("button[data-viaje]").forEach(boton => boton.setAttribute("aria-pressed",String(boton === b))); cerrarSugerencias(); cancelarUbicacionPendiente(); origenFijo = v.o !== "Mi ubicación actual" && coordenadasValidas(v.op) ? {texto:v.o,pos:v.op} : null; $("origen").value = v.o === "Mi ubicación actual" ? "" : v.o; // la ubicación actual hay que volver a pedirla
     destinoFijo = v.d !== "Mi ubicación actual" && coordenadasValidas(v.dp) ? {pos: v.dp, texto: v.d} : null; $("destino").value = v.d === "Mi ubicación actual" ? "" : v.d; $("ida-vuelta").checked = v.idaVuelta === true; destinoPrevioIdaVuelta = null; $("destino").readOnly = v.idaVuelta === true; pintarPuntos(); $("soc").value = v.soc; restaurarPuntos(v.vp || v.v || ""); pintaSoc(); actualizarResumenes();
       activarCampoUbicacion("origen");
       $("formulario").scrollTop = 0;
+      if (v.o === "Mi ubicación actual") $("miub").click();
     };
-    c.appendChild(b);
+    fila.append(b, borrar);
+    c.appendChild(fila);
   });
   const x = document.createElement("button"); x.type = "button"; x.className = "borrar-viajes"; x.textContent = "Borrar viajes guardados";
-  x.onclick = () => $("confirmar-borrado").showModal();
+  x.onclick = () => confirmarBorradoViajes();
   c.appendChild(x);
 }
 $("cancelar-borrado").onclick = () => $("confirmar-borrado").close();
 $("aceptar-borrado").onclick = () => {
-  try { localStorage.removeItem("rutaev:viajes"); } catch (e) { $("confirmar-borrado").close(); estado("No se pudieron borrar los viajes guardados."); return; }
-  $("confirmar-borrado").close(); viajeRecienteSeleccionado = null; pintarViajes();
+  const identificador = viajePendienteDeBorrar;
+  try {
+    if (identificador) {
+      const restantes = leerViajes().filter(v => JSON.stringify([v.o, v.d]) !== identificador);
+      localStorage.setItem("rutaev:viajes", JSON.stringify(restantes));
+    } else localStorage.removeItem("rutaev:viajes");
+  } catch (e) {
+    $("confirmar-borrado").close();
+    estado(identificador ? "No se pudo borrar el viaje." : "No se pudieron borrar los viajes guardados.");
+    return;
+  }
+  $("confirmar-borrado").close();
+  if (!identificador || viajeRecienteSeleccionado === identificador) viajeRecienteSeleccionado = null;
+  pintarViajes();
 };
 new ResizeObserver(ajustarDirecciones).observe($('formulario'));
 cargarPrefs(); pintarViajes(); actualizarResumenes();
