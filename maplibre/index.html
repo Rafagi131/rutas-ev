@@ -438,6 +438,9 @@ body{line-height:var(--interlineado)}
 
 .punto-maplibre{border-radius:50%;box-sizing:content-box;box-shadow:0 1px 5px #0005}
 .numero-maplibre .pin{box-sizing:border-box}
+.numero-maplibre[hidden]{display:none!important}
+.numero-maplibre .pin.recarga{width:44px;height:38px;border-radius:14px;background:#ffcf46;color:#172d3c;display:flex;gap:2px;align-items:center;justify-content:center;font-size:14px;box-shadow:0 3px 12px #0005}
+.prueba-maplibre input[type=checkbox]{width:20px;height:20px;flex:none;accent-color:#247bd1}
 .maplibregl-ctrl-bottom-right{bottom:20px;right:8px}
 .maplibregl-ctrl-attrib{font:10px system-ui,sans-serif;max-width:calc(100vw - 70px)}
 .maplibregl-ctrl-scale{font:10px system-ui,sans-serif}
@@ -929,6 +932,8 @@ body:has(#progreso-cargadores:not([hidden])) #estado:not(.error){display:none}
 <strong>Prueba · MapLibre</strong>
 <p>Mapa vectorial con OpenFreeMap. Mismo cálculo de rutas y batería.</p>
 <label for="estilo-mapa">Mapa <select id="estilo-mapa"><option value="positron">Claro</option><option value="liberty">Detallado</option></select></label>
+<label><input id="mostrar-ec-seleccionadas" type="checkbox" checked>Mostrar EC seleccionadas</label>
+<p>⚡ Solo las recargas incluidas en tu ruta. Pulsa su marcador para ver la estación.</p>
 <p id="estado-mapa-prueba" role="status">Cargando mapa vectorial…</p>
 <p>Amplía y gira con dos dedos. La brújula recupera el norte.</p>
 <a href="../">Abrir versión habitual</a>
@@ -1073,12 +1078,22 @@ const MapaEV = (() => {
         el.className = 'numero-maplibre';
         el.innerHTML = this.opciones.icon?.html || '';
       }
-      el.addEventListener('click', ev => ev.stopPropagation());
+      this.esRecarga = !!el.querySelector?.('.recarga');
+      if (this.esRecarga) {
+        el.classList.add('ec-seleccionada');
+        el.hidden = !document.getElementById('mostrar-ec-seleccionadas').checked;
+        this.mapa.recargas.add(this);
+      }
+      el.addEventListener('click', ev => {
+        ev.stopPropagation();
+        if (this.popup) this.marca.togglePopup();
+      });
       this.marca = new maplibregl.Marker({element:el,anchor:'center'}).setLngLat(lonlat(this.pos)).addTo(this.mapa.gl);
     }
     bindTooltip(texto) { this.marca.getElement().title = texto; return this; }
     bindPopup(texto) {
       const popup = new maplibregl.Popup({offset:20}).setText(texto);
+      this.popup = popup;
       this.marca.setPopup(popup);
       this.marca.getElement().setAttribute('role','button');
       this.marca.getElement().setAttribute('tabindex','0');
@@ -1088,12 +1103,13 @@ const MapaEV = (() => {
       });
       return this;
     }
-    quitar() { this.marca?.remove(); }
+    quitar() { this.mapa.recargas.delete(this); this.marca?.remove(); }
   }
   class Mapa {
     constructor(id) {
       const inicio = performance.now();
       this.lineas = new Set();
+      this.recargas = new Set();
       this.gl = new maplibregl.Map({container:id,style:'https://tiles.openfreemap.org/styles/positron',
         center:[2,41.4],zoom:7,attributionControl:false,maxPitch:60});
       this.gl.addControl(new maplibregl.NavigationControl({visualizePitch:true}), 'bottom-right');
@@ -1109,6 +1125,12 @@ const MapaEV = (() => {
       });
       this.gl.getCanvas().addEventListener('webglcontextlost', () => {
         document.getElementById('estado-mapa-prueba').textContent = 'El mapa ha perdido la imagen. Recarga la prueba o abre la versión habitual.';
+      });
+      document.getElementById('mostrar-ec-seleccionadas').addEventListener('change', ev => {
+        for (const recarga of this.recargas) {
+          recarga.marca.getElement().hidden = !ev.target.checked;
+          if (!ev.target.checked) recarga.popup?.remove();
+        }
       });
       document.getElementById('estilo-mapa').addEventListener('change', ev => this.estilo(ev.target.value));
     }
@@ -2938,7 +2960,7 @@ function mostrarOpcion(sesion, op) {
     plan.paradas.forEach((p, i) => {
       const acceso = p.acceso || p.pos;
       const numero = i + 2 + vias.filter(v => v.km < p.km).length;
-      MapaEV.marker([acceso[1], acceso[0]], {icon: MapaEV.divIcon({className: "", html: `<div class="pin">${numero}</div>`, iconSize: [30, 30], iconAnchor: [15, 15]})}).addTo(capas).bindPopup(`${numero}. ${p.nombre} (${p.kw} kW)`);
+      MapaEV.marker([acceso[1], acceso[0]], {icon: MapaEV.divIcon({className: "", html: `<div class="pin recarga"><span aria-hidden="true">⚡</span><span>${numero}</span></div>`, iconSize: [30, 30], iconAnchor: [15, 15]})}).addTo(capas).bindPopup(`${numero}. ${p.nombre} (${p.kw} kW)`);
       const li = document.createElement("li");
       const t = document.createElement("strong"); t.textContent = p.nombre + (p.pueblo ? ", " + p.pueblo : "");
       const m = document.createElement("span"); m.className = "meta"; m.textContent = `${p.op}${p.distanciaAcceso > 15 ? ` · Acceso cartografiado a ${Math.round(p.distanciaAcceso)} m del punto de recarga` : ""}`;
