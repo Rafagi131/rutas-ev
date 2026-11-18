@@ -932,7 +932,7 @@ body:has(#progreso-cargadores:not([hidden])) #estado:not(.error){display:none}
 <aside class="prueba-maplibre" aria-label="Prueba gratuita de MapLibre">
 <strong>Prueba · MapLibre</strong>
 <p>Mapa vectorial con OpenFreeMap. Mismo cálculo de rutas y batería.</p>
-<label for="estilo-mapa">Mapa <select id="estilo-mapa"><option value="positron">Claro</option><option value="liberty">Detallado</option></select></label>
+<label for="estilo-mapa">Mapa <select id="estilo-mapa"><option value="positron">Claro</option><option value="bright">Bright</option><option value="liberty">Detallado</option><option value="dark">Oscuro</option></select></label>
 <label><input id="mostrar-ec-seleccionadas" type="checkbox" checked>Mostrar EC seleccionadas</label>
 <p>⚡ Solo las recargas incluidas en tu ruta. Pulsa su marcador para ver la estación.</p>
 <p id="estado-mapa-prueba" role="status">Cargando mapa vectorial…</p>
@@ -1155,7 +1155,7 @@ const MapaEV = (() => {
         resolve();
         for (const linea of this.lineas) linea.dibujar();
       }));
-      this.gl.setStyle('https://tiles.openfreemap.org/styles/' + (nombre === 'liberty' ? 'liberty' : 'positron'), {diff:false});
+      this.gl.setStyle('https://tiles.openfreemap.org/styles/' + (['positron','bright','liberty','dark'].includes(nombre) ? nombre : 'positron'), {diff:false});
     }
   }
   return {map:id => new Mapa(id),layerGroup:() => new Grupo(),latLngBounds:p => new Limites(p),
