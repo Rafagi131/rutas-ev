@@ -1872,26 +1872,18 @@ function enlaces(origen, destino, paradas = []) {
   apple.searchParams.set('destination',ll(destino));
   apple.searchParams.set('mode','driving');
   pts.forEach(p => apple.searchParams.append('waypoint',ll(p)));
-  // Tres puntos intermedios es el límite documentado para navegadores móviles.
-  const googleCompleta = pts.length <= 3;
-  const siguiente = pts[0] || destino;
   const google = new URL('https://www.google.com/maps/dir/');
   google.searchParams.set('api','1');
   google.searchParams.set('origin',ll(origen));
-  google.searchParams.set('destination',ll(googleCompleta ? destino : siguiente));
-  if (googleCompleta && pts.length) google.searchParams.set('waypoints',pts.map(ll).join('|'));
+  google.searchParams.set('destination',ll(destino));
+  if (pts.length) google.searchParams.set('waypoints',pts.map(ll).join('|'));
   google.searchParams.set('travelmode','driving');
-  return {apple:apple.href,google:google.href,googleCompleta,
-    siguiente,waze:p => 'https://waze.com/ul?ll='+encodeURIComponent(ll(p))+'&navigate=yes'};
+  return {apple:apple.href,google:google.href,googleCompleta:pts.length <= 9,
+    waze:p => 'https://waze.com/ul?ll='+encodeURIComponent(ll(p))+'&navigate=yes'};
 }
 function destinosEstacion(p) {
   const coordenadas = ll(p.pos);
-  const apple = new URL('https://maps.apple.com/');
-  apple.searchParams.set('daddr',coordenadas); apple.searchParams.set('dirflg','d');
-  const google = new URL('https://www.google.com/maps/dir/');
-  google.searchParams.set('api','1');google.searchParams.set('destination',coordenadas);
-  google.searchParams.set('travelmode','driving');google.searchParams.set('dir_action','navigate');
-  return [['Apple Maps',apple.href],['Google Maps',google.href],['Waze','https://waze.com/ul?ll='+encodeURIComponent(coordenadas)+'&navigate=yes']];
+  return [['Waze','https://waze.com/ul?ll='+encodeURIComponent(coordenadas)+'&navigate=yes']];
 }
 function accionesNavegacionEC(p) {
   const bloque = document.createElement('div'); bloque.className = 'navegacion-ec';
@@ -1901,7 +1893,7 @@ function accionesNavegacionEC(p) {
   bloque.append(titulo,detalle);
   const botones = document.createElement('div');botones.className='acciones-estacion';
   for (const [nombre,url] of destinosEstacion(p)) {
-    const a = document.createElement('a');a.className='wz';a.textContent=nombre;a.href=url;a.target='_blank';a.rel='noopener';
+    const a = document.createElement('a');a.className='wz';a.textContent='Ir aquí con Waze';a.href=url;a.target='_blank';a.rel='noopener';
     a.setAttribute('aria-label',`Llegar a ${p.nombre} con ${nombre}`);botones.appendChild(a);
   }
   bloque.appendChild(botones);
@@ -2968,12 +2960,13 @@ function mostrarOpcion(sesion, op) {
     const todos = [...plan.paradas, ...vias].sort((x, y) => x.km - y.km);
     const en = enlaces(a, b, todos);
     const ex = document.createElement("div"); ex.className = "exportar";
-    const tx = document.createElement("span"); tx.className = "meta"; tx.textContent = "Navegar: comprueba las paradas al abrir. Waze recibe solo la primera parada; Google en móvil recibe solo la primera si hay más de tres. El navegador puede cambiar el recorrido.";
+    const tx = document.createElement("span"); tx.className = "meta"; tx.textContent = "Ruta completa · Apple Maps y Google Maps. Comprueba las paradas al abrir; el navegador puede cambiar el recorrido.";
     ex.appendChild(tx);
-    [["Apple Maps", en.apple], [en.googleCompleta ? "Google Maps" : "Google · primera parada", en.google], [todos.length ? "Waze · primera parada" : "Waze · destino", en.waze(en.siguiente)]].forEach(([nombre, url]) => {
+    [["Apple Maps", en.apple], ...(en.googleCompleta ? [["Google Maps", en.google]] : [])].forEach(([nombre, url]) => {
       const l = document.createElement("a"); l.href = url; l.target = "_blank"; l.rel = "noopener"; l.textContent = nombre; ex.appendChild(l);
     });
 
+    if (todos.length > 3) { const aviso = document.createElement("p"); aviso.className = "meta"; aviso.textContent = en.googleCompleta ? "Para conservar todas las paradas, abre Google Maps en su aplicación. El navegador móvil admite hasta tres puntos intermedios." : "Este viaje supera los nueve puntos intermedios que admite el enlace de Google Maps. Utiliza Apple Maps o Waze por etapas."; ex.appendChild(aviso); }
     const ol = document.createElement("ol"); ol.className = "paradas"; $("res").appendChild(ol);
     const items = [];
     const extremos = (tipo, nombre, km, minOSRM, pos) => {
@@ -2997,6 +2990,7 @@ function mostrarOpcion(sesion, op) {
         map.setView([pos[1], pos[0]], 17);
         $("preparar").focus({preventScroll:true});
       };
+      if (!li.querySelector("a.wz")) { const w = document.createElement("a"); w.className = "wz"; w.href = en.waze(pos); w.target = "_blank"; w.rel = "noopener"; w.textContent = "Ir aquí con Waze"; w.setAttribute("aria-label", "Llegar a " + nombre + " con Waze"); li.appendChild(w); }
       li.prepend(boton);
       ol.appendChild(li);
     };
