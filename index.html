@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="rutaev-version" content="4.21-pages">
+<meta name="rutaev-version" content="4.3-pages">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>We're off! · Ruta EV · v4.21</title>
+<title>We're off! · Ruta EV · v4.3</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.6.1/dist/maplibre-gl.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Montserrat:wght@400;500;600;700;800;900&display=swap">
 <style>
@@ -78,9 +78,11 @@ summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--acc2);padding:
 .paradas li.via .numero-parada{background:var(--acc2);color:#fff}
 .pin.via{background:#0284c7;color:#fff}
 .fila-chips{display:flex;gap:6px;margin:3px 0}
-.barra-soc{position:relative;height:6px;border-radius:4px;background:var(--field);margin:4px 0 3px;overflow:hidden}
+.barra-soc{position:relative;height:18px;border-radius:4px;background:var(--field);margin:6px 0 3px;overflow:hidden;box-shadow:inset 2px 2px 4px #0003,inset -2px -2px 4px #ffffff80}
 .barra-soc span{position:absolute;top:0;bottom:0;border-radius:4px;background:linear-gradient(90deg,var(--amber),var(--acc))}
 .carga{font-size:12px;color:var(--mute)}
+.barra-soc span{display:flex;align-items:center;justify-content:space-between;gap:2px;box-sizing:border-box;padding:0 3px}
+.barra-soc b{font-size:10px;line-height:18px;font-weight:700;color:#fff;white-space:nowrap}
 .alt{font-size:12px;color:var(--mute);margin-top:4px;padding:6px 9px;background:var(--field);border-radius:8px}
 .pin{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:700 14px "Montserrat",system-ui,sans-serif;color:#3b2300;background:#f59e0b;border:3px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.35)}
 .perfil{display:block;width:100%;height:auto;margin:4px 0;touch-action:pan-y;cursor:crosshair}
@@ -1027,7 +1029,7 @@ body:has(#progreso-cargadores:not([hidden])) #estado:not(.error){display:none}
     </div>
   </details>
   <details name="panel-principal" class="grupo" id="historial" hidden><summary><span class="icono-grupo" aria-hidden="true">↶</span><span class="texto-grupo"><strong>Viajes recientes</strong><small id="resumen-historial">Recuperar un viaje guardado</small></span><span class="flecha" aria-hidden="true">⌄</span></summary><section id="viajes" class="contenido-grupo"></section></details>
-  <details name="panel-principal" class="grupo creditos-app"><summary><span class="icono-grupo" aria-hidden="true">i</span><span class="texto-grupo"><strong>Información y créditos</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary><p><strong>Versión 4.21 · Open Charge Map y REVE · Europa</strong><br>Idea y desarrollo propiedad de Rafa Galdó</p><p><a href="datos-recarga-4.21.md" target="_blank" rel="noopener">Revisión, fuentes y límites de los datos de recarga</a></p><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p><details class="detalle-resultados" id="cobertura-europa"><summary><span>Europa · Fuentes gratuitas</span><span class="apertura-europa" aria-hidden="true">⌄</span></summary><p class="ayuda">Rutas por carretera y búsqueda internacional de cargadores: España, Portugal, Francia, Alemania, Italia, Benelux, Austria, Suiza, Reino Unido, Irlanda y países nórdicos, según cobertura de OpenStreetMap/OSRM y Open Charge Map. Escribe el país para evitar localidades homónimas.</p><p class="ayuda">La presencia en el mapa no confirma disponibilidad ni varios puntos operativos. El catálogo publicado es una captura fechada y no se actualiza automáticamente desde el teléfono. Esta publicación no conecta al servidor REVE. Los precios, la disponibilidad en directo y los servicios de las estaciones quedan pendientes de confirmar.</p><p class="ayuda">Irlanda y Reino Unido: puedes planificar sus tramos de carretera. Los cruces en ferry o tren se planifican por separado; no se incluyen reservas, horarios ni coste de la travesía.</p></details></details>
+  <details name="panel-principal" class="grupo creditos-app"><summary><span class="icono-grupo" aria-hidden="true">i</span><span class="texto-grupo"><strong>Información y créditos</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary><p><strong>Versión 4.3 · Open Charge Map y REVE · Europa</strong><br>Idea y desarrollo propiedad de Rafa Galdó</p><p><a href="datos-recarga-4.21.md" target="_blank" rel="noopener">Revisión, fuentes y límites de los datos de recarga</a></p><p>Búsqueda de direcciones: <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a>. Datos geográficos: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>. Las estimaciones de viaje no incluyen tráfico en directo.</p><details class="detalle-resultados" id="cobertura-europa"><summary><span>Europa · Fuentes gratuitas</span><span class="apertura-europa" aria-hidden="true">⌄</span></summary><p class="ayuda">Rutas por carretera y búsqueda internacional de cargadores: España, Portugal, Francia, Alemania, Italia, Benelux, Austria, Suiza, Reino Unido, Irlanda y países nórdicos, según cobertura de OpenStreetMap/OSRM y Open Charge Map. Escribe el país para evitar localidades homónimas.</p><p class="ayuda">La presencia en el mapa no confirma disponibilidad ni varios puntos operativos. El catálogo publicado es una captura fechada y no se actualiza automáticamente desde el teléfono. Esta publicación no conecta al servidor REVE. Los precios, la disponibilidad en directo y los servicios de las estaciones quedan pendientes de confirmar.</p><p class="ayuda">Irlanda y Reino Unido: puedes planificar sus tramos de carretera. Los cruces en ferry o tren se planifican por separado; no se incluyen reservas, horarios ni coste de la travesía.</p></details></details>
 </section>
 <section id="datos" class="panel oculto">
   <div id="barra"><div class="titulos-ruta"><p id="localidades-ruta"></p><h2>Ruta seleccionada</h2></div><div class="acciones-ruta"><button id="abrir" class="oculto" aria-label="Editar viaje">editar</button><button id="plegar" aria-label="Plegar resultados" aria-expanded="true">−</button></div></div>
@@ -3067,12 +3069,17 @@ function mostrarOpcion(sesion, op) {
       const t = document.createElement("strong"); t.textContent = p.nombre + (p.pueblo ? ", " + p.pueblo : "");
       const m = document.createElement("span"); m.className = "meta"; m.textContent = `${p.op}${p.distanciaAcceso > 15 ? ` · Acceso cartografiado a ${Math.round(p.distanciaAcceso)} m del punto de recarga` : ""}`;
       const kw = document.createElement("span"); kw.className = "chip kw"; kw.textContent = `${p.kw} kW · potencia de planificación CCS2`;
-      const tm = document.createElement("span"); tm.className = "chip min"; tm.textContent = `${Math.ceil(p.minutos)} min estimados`;
+      const tm = document.createElement("span"); tm.className = "chip min"; tm.textContent = `${Math.ceil(p.minutos)} min estimados · ${p.kwh.toFixed(0)} kWh · media estimada ${p.minutos > 0 ? (p.kwh / p.minutos * 60).toFixed(0) : "0"} kW`;
       const fila = document.createElement("div"); fila.className = "fila-chips"; fila.append(kw, tm);
       const bar = document.createElement("div"); bar.className = "barra-soc";
       const rel = document.createElement("span"); rel.style.left = p.llegada + "%"; rel.style.width = Math.max(0, p.objetivo - p.llegada) + "%"; bar.appendChild(rel);
+      const llegadaCarga = document.createElement("b"); llegadaCarga.textContent = `${p.llegada.toFixed(0)} %`;
+      llegadaCarga.setAttribute("aria-label", `Batería al llegar: ${p.llegada.toFixed(0)} %`);
+      const salidaCarga = document.createElement("b"); salidaCarga.textContent = `${p.objetivo.toFixed(0)} %`;
+      salidaCarga.setAttribute("aria-label", `Batería tras cargar: ${p.objetivo.toFixed(0)} %`);
+      rel.append(llegadaCarga, salidaCarga);
       const c = document.createElement("span"); c.className = "carga";
-      c.textContent = `Llegas con ${p.llegada.toFixed(0)} %, cargas hasta ${p.objetivo.toFixed(0)} % (${p.kwh.toFixed(0)} kWh). Potencia media estimada hacia la batería: ${(p.kwh / p.minutos * 60).toFixed(0)} kW${p.objetivo > 80 ? ". Por encima del 80 % la estimación es menos fiable" : ""}`;
+      c.textContent = p.objetivo > 80 ? "Por encima del 80 % la estimación es menos fiable" : "";
       const fuente = document.createElement("span");
       fuente.className = "meta";
       fuente.textContent = `${puntosCompatibles(p, +$("minkw").value)} puntos CCS2 según catálogo · ${p.acceso24h === true ? "Acceso 24 h declarado" : "Horario sin confirmar"} · Fuente: ${p.fuente || "Open Charge Map"}${p.fechaREVE ? ` · Catálogo REVE descargado el ${new Date(p.fechaREVE).toLocaleDateString("es-ES")}` : ""}`;
