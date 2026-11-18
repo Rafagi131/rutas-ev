@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "fecha": "2026-11-18T16:20:17.003Z",
+  "estaciones": 3520,
+  "archivos": [
+    "catalogo-reve-4.21-1.json",
+    "catalogo-reve-4.21-2.json",
+    "catalogo-reve-4.21-3.json",
+    "catalogo-reve-4.21-4.json"
+  ],
+  "fuentes": [
+    "Mapa REVE · Red Eléctrica",
+    "© OpenStreetMap contributors · ODbL"
+  ],
+  "licenciaContraste": "https://opendatacommons.org/licenses/odbl/1-0/"
+}
