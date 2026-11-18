@@ -2990,7 +2990,7 @@ function mostrarOpcion(sesion, op) {
         map.setView([pos[1], pos[0]], 17);
         $("preparar").focus({preventScroll:true});
       };
-      if (!li.querySelector("a.wz")) { const w = document.createElement("a"); w.className = "wz"; w.href = en.waze(pos); w.target = "_blank"; w.rel = "noopener"; w.textContent = "Ir aquí con Waze"; w.setAttribute("aria-label", "Llegar a " + nombre + " con Waze"); li.appendChild(w); }
+      if (numero > 1 && !li.querySelector("a.wz")) { const w = document.createElement("a"); w.className = "wz"; w.href = en.waze(pos); w.target = "_blank"; w.rel = "noopener"; w.textContent = "Ir aquí con Waze"; w.setAttribute("aria-label", "Llegar a " + nombre + " con Waze"); li.appendChild(w); }
       li.prepend(boton);
       ol.appendChild(li);
     };
