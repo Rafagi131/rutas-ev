@@ -445,12 +445,16 @@ body{line-height:var(--interlineado)}
 .maplibregl-ctrl-bottom-right{bottom:20px;right:8px}
 .maplibregl-ctrl-attrib{font:10px system-ui,sans-serif;max-width:calc(100vw - 70px)}
 .maplibregl-ctrl-scale{font:10px system-ui,sans-serif}
-.prueba-maplibre{margin:0 0 14px;padding:12px;border:1px solid #709395;border-radius:12px;font:12px/1.5 Montserrat,system-ui,sans-serif}
-.prueba-maplibre strong{display:block;font-size:14px}
-.prueba-maplibre p{margin:6px 0}
-.prueba-maplibre label{display:flex;gap:10px;align-items:center}
-.prueba-maplibre select{font:inherit;padding:7px;width:auto;flex:1}
-.prueba-maplibre a{color:inherit;font-weight:600}
+#opciones-mapa .contenido-grupo{padding:12px 4px 16px}
+#opciones-mapa p{font-size:12px;line-height:1.5;color:var(--mute);margin:10px 0}
+#opciones-mapa .campo{display:block}
+#opciones-mapa select{appearance:none;-webkit-appearance:none;width:100%;min-height:48px;padding:12px 42px 12px 16px;border:0;border-radius:18px;background:var(--solid);color:var(--ink);font:600 14px Montserrat,system-ui,sans-serif;box-shadow:var(--relieve);cursor:pointer}
+.selector-mapa{position:relative;display:block;margin:8px 4px 18px}
+.selector-mapa::after{content:"⌄";position:absolute;right:16px;top:12px;color:var(--mute);pointer-events:none}
+#opciones-mapa select:focus-visible{outline:2px solid var(--acc);outline-offset:4px}
+#opciones-mapa select:active{box-shadow:var(--hundido)}
+#opciones-mapa .check{display:flex;align-items:center;gap:12px;font-size:12px}
+#opciones-mapa a{color:var(--ink);font-size:12px;font-weight:600}
 #estado-mapa-prueba{font-size:11px;color:var(--mute)}
 
 </style>
@@ -929,15 +933,6 @@ body:has(#progreso-cargadores:not([hidden])) #estado:not(.error){display:none}
 
 <button id="preparar" class="oculto">Preparar viaje</button>
 <section id="formulario" class="panel" aria-label="Preparar viaje">
-<aside class="prueba-maplibre" aria-label="Prueba gratuita de MapLibre">
-<strong>Prueba · MapLibre</strong>
-<p>Mapa vectorial con OpenFreeMap. Mismo cálculo de rutas y batería.</p>
-<label><input id="mostrar-ec-seleccionadas" type="checkbox" checked>Mostrar EC seleccionadas</label>
-<p>⚡ Solo las recargas incluidas en tu ruta. Pulsa su marcador para ver la estación.</p>
-<p id="estado-mapa-prueba" role="status">Cargando mapa vectorial…</p>
-<p>Amplía y gira con dos dedos. La brújula recupera el norte.</p>
-<a href="../">Abrir versión habitual</a>
-</aside>
   <div class="form">
     <p class="proposito">Tu próximo viaje, con menos energía y tiempo.</p>
     <div class="trayecto">
@@ -961,7 +956,19 @@ body:has(#progreso-cargadores:not([hidden])) #estado:not(.error){display:none}
   </div>
   <details name="panel-principal" class="grupo" id="configuracion">
     <summary><span class="icono-grupo" aria-hidden="true">⚙</span><span class="texto-grupo"><strong>Configuración</strong></span><span class="flecha" aria-hidden="true">⌄</span></summary>
-    <div class="grupos-configuracion"><label class="campo" for="estilo-mapa"><span>Estilo del mapa</span><select id="estilo-mapa"><option value="bright">Bright</option><option value="liberty">Detallado</option></select></label>
+    <div class="grupos-configuracion">
+<details name="panel-configuracion" class="grupo" id="opciones-mapa">
+<summary><span class="icono-grupo" aria-hidden="true">▧</span><span class="texto-grupo"><strong>MapLibre</strong><small>Diseño del mapa y estaciones</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
+<div class="contenido-grupo">
+<label class="campo" for="estilo-mapa"><span>Estilo del mapa</span></label>
+<div class="selector-mapa"><select id="estilo-mapa"><option value="bright">Bright</option><option value="liberty">Detallado</option><option value="clasico">Clásico · mapa anterior</option></select></div>
+<label class="check"><input id="mostrar-ec-seleccionadas" type="checkbox" checked>Mostrar EC seleccionadas</label>
+<p>Solo las recargas incluidas en tu ruta. Pulsa su marcador para ver la estación.</p>
+<p>El estilo cambia el aspecto del mapa, sin modificar el cálculo de rutas y batería.</p>
+<p id="estado-mapa-prueba" role="status">Cargando mapa…</p>
+<p>Amplía y gira con dos dedos. La brújula recupera el norte.</p>
+<a href="../">Abrir versión habitual</a>
+</div></details>
     <details name="panel-configuracion" class="grupo" id="opciones-viaje">
       <summary><span class="icono-grupo" aria-hidden="true">↗</span><span class="texto-grupo"><strong>Para este viaje</strong><small id="resumen-viaje">18 °C · 100 km/h · Sin paradas</small></span><span class="flecha" aria-hidden="true">⌄</span></summary>
       <div class="contenido-grupo">
@@ -1118,7 +1125,7 @@ const MapaEV = (() => {
       this.lista = new Promise(resolve => this.gl.once('load', () => resolve()));
       this.gl.once('idle', () => {
         const estado = document.getElementById('estado-mapa-prueba');
-        estado.textContent = `Mapa vectorial listo · ${((performance.now()-inicio)/1000).toFixed(1)} s`;
+        estado.textContent = `Mapa listo · ${((performance.now()-inicio)/1000).toFixed(1)} s`;
       });
       this.gl.on('error', () => {
         document.getElementById('estado-mapa-prueba').textContent = 'No se ha podido cargar una parte del mapa. Comprueba la conexión.';
@@ -1155,7 +1162,13 @@ const MapaEV = (() => {
         resolve();
         for (const linea of this.lineas) linea.dibujar();
       }));
-      this.gl.setStyle('https://tiles.openfreemap.org/styles/' + fondo, {diff:false});
+      const estilo = nombre === 'clasico' ? {
+        version:8,
+        sources:{clasico:{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,maxzoom:19,
+          attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}},
+        layers:[{id:'mapa-clasico',type:'raster',source:'clasico'}]
+      } : 'https://tiles.openfreemap.org/styles/' + fondo;
+      this.gl.setStyle(estilo, {diff:false});
       this.gl.easeTo({pitch:0,bearing:0,duration:400});
     }
   }
