@@ -932,7 +932,7 @@ body:has(#progreso-cargadores:not([hidden])) #estado:not(.error){display:none}
 <aside class="prueba-maplibre" aria-label="Prueba gratuita de MapLibre">
 <strong>Prueba · MapLibre</strong>
 <p>Mapa vectorial con OpenFreeMap. Mismo cálculo de rutas y batería.</p>
-<label for="estilo-mapa">Mapa <select id="estilo-mapa"><option value="positron">Claro</option><option value="bright">Bright</option><option value="liberty">Detallado</option><option value="dark">Oscuro</option></select></label>
+<label for="estilo-mapa">Mapa <select id="estilo-mapa"><option value="fiord">Fiord</option><option value="liberty-3d">3D</option><option value="bright">Bright</option><option value="liberty">Detallado</option></select></label>
 <label><input id="mostrar-ec-seleccionadas" type="checkbox" checked>Mostrar EC seleccionadas</label>
 <p>⚡ Solo las recargas incluidas en tu ruta. Pulsa su marcador para ver la estación.</p>
 <p id="estado-mapa-prueba" role="status">Cargando mapa vectorial…</p>
@@ -1109,9 +1109,10 @@ const MapaEV = (() => {
   class Mapa {
     constructor(id) {
       const inicio = performance.now();
+      this.es3D = false;
       this.lineas = new Set();
       this.recargas = new Set();
-      this.gl = new maplibregl.Map({container:id,style:'https://tiles.openfreemap.org/styles/positron',
+      this.gl = new maplibregl.Map({container:id,style:'https://tiles.openfreemap.org/styles/fiord',
         center:[2,41.4],zoom:7,attributionControl:false,maxPitch:60});
       this.gl.addControl(new maplibregl.NavigationControl({visualizePitch:true}), 'bottom-right');
       this.gl.addControl(new maplibregl.AttributionControl({compact:true}), 'bottom-left');
@@ -1135,7 +1136,7 @@ const MapaEV = (() => {
       });
       document.getElementById('estilo-mapa').addEventListener('change', ev => this.estilo(ev.target.value));
     }
-    setView(pos, zoom) { this.gl.easeTo({center:lonlat(pos),zoom,padding:{top:0,bottom:0,left:0,right:0},duration:400}); return this; }
+    setView(pos, zoom) { this.gl.easeTo({center:lonlat(pos),zoom,pitch:this.es3D ? 60 : 0,padding:{top:0,bottom:0,left:0,right:0},duration:400}); return this; }
     getZoom() { return this.gl.getZoom(); }
     fitBounds(limites, opciones = {}) {
       if (limites.valor.isEmpty()) return;
@@ -1143,19 +1144,22 @@ const MapaEV = (() => {
       const ancho = this.gl.getContainer().clientWidth, alto = this.gl.getContainer().clientHeight;
       const fx = Math.min(1, (ancho-80)/Math.max(1,tl[0]+br[0]));
       const fy = Math.min(1, (alto-80)/Math.max(1,tl[1]+br[1]));
-      this.gl.fitBounds(limites.valor,{maxZoom:opciones.maxZoom || 15,duration:400,bearing:0,pitch:0,
+      this.gl.fitBounds(limites.valor,{maxZoom:opciones.maxZoom || 15,duration:400,bearing:0,pitch:this.es3D ? 60 : 0,
         padding:{left:Math.max(0,tl[0]*fx),right:Math.max(0,br[0]*fx),top:Math.max(0,tl[1]*fy),bottom:Math.max(0,br[1]*fy)}});
     }
     on(evento, funcion) { this.gl.on(evento, ev => funcion({...ev,latlng:ev.lngLat})); return this; }
     async estilo(nombre) {
-      // Conserva rutas y marcas al cambiar únicamente el fondo cartográfico.
+      // 3D es Liberty con perspectiva, como en la demostración oficial.
+      this.es3D = nombre === "liberty-3d";
+      const fondo = this.es3D ? "liberty" : (["fiord","bright","liberty"].includes(nombre) ? nombre : "fiord");
       document.getElementById('estilo-mapa').disabled = true;
       this.lista = new Promise(resolve => this.gl.once('style.load', () => {
         document.getElementById('estilo-mapa').disabled = false;
         resolve();
         for (const linea of this.lineas) linea.dibujar();
       }));
-      this.gl.setStyle('https://tiles.openfreemap.org/styles/' + (['positron','bright','liberty','dark'].includes(nombre) ? nombre : 'positron'), {diff:false});
+      this.gl.setStyle('https://tiles.openfreemap.org/styles/' + fondo, {diff:false});
+      this.gl.easeTo({pitch:this.es3D ? 60 : 0,bearing:0,duration:400});
     }
   }
   return {map:id => new Mapa(id),layerGroup:() => new Grupo(),latLngBounds:p => new Limites(p),
