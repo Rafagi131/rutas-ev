@@ -440,6 +440,7 @@ body{line-height:var(--interlineado)}
 .numero-maplibre .pin{box-sizing:border-box}
 .numero-maplibre[hidden]{display:none!important}
 .numero-maplibre .pin.recarga{width:44px;height:38px;border-radius:14px;background:#ffcf46;color:#172d3c;display:flex;gap:2px;align-items:center;justify-content:center;font-size:14px;box-shadow:0 3px 12px #0005}
+.navegacion-ec{display:grid;gap:8px;margin-top:12px}.navegacion-ec .acciones-estacion{flex-wrap:wrap}.navegacion-ec .meta{overflow-wrap:anywhere}
 .prueba-maplibre input[type=checkbox]{width:20px;height:20px;flex:none;accent-color:#247bd1}
 .maplibregl-ctrl-bottom-right{bottom:20px;right:8px}
 .maplibregl-ctrl-attrib{font:10px system-ui,sans-serif;max-width:calc(100vw - 70px)}
@@ -1054,7 +1055,7 @@ const MapaEV = (() => {
         this.mapa.gl.addSource(this.id, {type:'geojson',data:{type:'Feature',properties:{},geometry:{type:'LineString',coordinates:this.puntos.map(lonlat)}}});
         this.mapa.gl.addLayer({id:this.id,type:'line',source:this.id,
           layout:{'line-cap':'round','line-join':'round'},
-          paint:{'line-color':this.opciones.color,'line-width':this.opciones.weight || 4,'line-opacity':this.opciones.opacity ?? 1}});
+          paint:{'line-color':this.opciones.color,'line-width':this.opciones.weight || 4,'line-opacity':this.opciones.opacity ?? 1,...(this.opciones.dashArray ? {'line-dasharray':this.opciones.dashArray.split(',').map(Number)} : {})}});
       });
     }
     quitar() {
@@ -1862,16 +1863,59 @@ function dibujarPerfil(perfil, paradas, alMover) {
   return svg;
 }
 // Enlaces para abrir la ruta en otras apps. Los puntos son [lon, lat]; las apps piden "lat,lon".
-const ll = p => p[1].toFixed(5) + "," + p[0].toFixed(5);
-function enlaces(origen, destino, paradas) {
+const ll = p => p[1].toFixed(6) + "," + p[0].toFixed(6);
+// Coordenadas del catálogo: la proyección sobre la carretera se usa solo al calcular accesos.
+function enlaces(origen, destino, paradas = []) {
   const pts = paradas.map(p => p.pos);
-  return {
-    apple: "https://maps.apple.com/?saddr=" + ll(origen) + [...pts, destino].map(p => "&daddr=" + ll(p)).join("") + "&dirflg=d",
-    google: "https://www.google.com/maps/dir/?api=1&origin=" + ll(origen) + "&destination=" + ll(destino) +
-            (pts.length ? "&waypoints=" + pts.map(ll).join("%7C") : "") + "&travelmode=driving",
-    waze: p => "https://waze.com/ul?ll=" + ll(p) + "&navigate=yes"
-  };
+  const apple = new URL('https://maps.apple.com/directions');
+  apple.searchParams.set('source',ll(origen));
+  apple.searchParams.set('destination',ll(destino));
+  apple.searchParams.set('mode','driving');
+  pts.forEach(p => apple.searchParams.append('waypoint',ll(p)));
+  // Tres puntos intermedios es el límite documentado para navegadores móviles.
+  const googleCompleta = pts.length <= 3;
+  const siguiente = pts[0] || destino;
+  const google = new URL('https://www.google.com/maps/dir/');
+  google.searchParams.set('api','1');
+  google.searchParams.set('origin',ll(origen));
+  google.searchParams.set('destination',ll(googleCompleta ? destino : siguiente));
+  if (googleCompleta && pts.length) google.searchParams.set('waypoints',pts.map(ll).join('|'));
+  google.searchParams.set('travelmode','driving');
+  return {apple:apple.href,google:google.href,googleCompleta,
+    siguiente,waze:p => 'https://waze.com/ul?ll='+encodeURIComponent(ll(p))+'&navigate=yes'};
 }
+function destinosEstacion(p) {
+  const coordenadas = ll(p.pos);
+  const apple = new URL('https://maps.apple.com/');
+  apple.searchParams.set('daddr',coordenadas); apple.searchParams.set('dirflg','d');
+  const google = new URL('https://www.google.com/maps/dir/');
+  google.searchParams.set('api','1');google.searchParams.set('destination',coordenadas);
+  google.searchParams.set('travelmode','driving');google.searchParams.set('dir_action','navigate');
+  return [['Apple Maps',apple.href],['Google Maps',google.href],['Waze','https://waze.com/ul?ll='+encodeURIComponent(coordenadas)+'&navigate=yes']];
+}
+function accionesNavegacionEC(p) {
+  const bloque = document.createElement('div'); bloque.className = 'navegacion-ec';
+  const titulo = document.createElement('strong'); titulo.textContent = 'Cómo llegar a esta EC';
+  const detalle = document.createElement('span');detalle.className='meta';
+  detalle.textContent = `${p.nombre}${p.pueblo ? ' · '+p.pueblo : ''} · ${ll(p.pos)} (latitud, longitud)`;
+  bloque.append(titulo,detalle);
+  const botones = document.createElement('div');botones.className='acciones-estacion';
+  for (const [nombre,url] of destinosEstacion(p)) {
+    const a = document.createElement('a');a.className='wz';a.textContent=nombre;a.href=url;a.target='_blank';a.rel='noopener';
+    a.setAttribute('aria-label',`Llegar a ${p.nombre} con ${nombre}`);botones.appendChild(a);
+  }
+  bloque.appendChild(botones);
+  const nota = document.createElement('span');nota.className='meta';
+  nota.textContent='Ubicación según catálogo. Acceso y lado de la vía pendientes de confirmar con el operador.';
+  bloque.appendChild(nota);
+  return bloque;
+}
+function dibujarAccesoEC(p, capas) {
+  if (!p.acceso || !(p.distanciaAcceso > 15)) return;
+  MapaEV.polyline([[p.acceso[1],p.acceso[0]],[p.pos[1],p.pos[0]]],
+    {color:'#b27810',weight:3,opacity:.9,dashArray:'3,3'}).addTo(capas);
+}
+
 function pintaSoc() { const slider = $("soc"); $("socv").textContent = slider.value + " %"; slider.style.setProperty("--bateria-relleno", ((Number(slider.value) - Number(slider.min)) / (Number(slider.max) - Number(slider.min)) * 100) + "%"); }
 $("soc").addEventListener("input", pintaSoc);
 const PREFS = ["reservaCasa", "margenCarga", "modoTiempo", "temp", "vel", "bat", "cons", "maxkw", "min", "max", "minDestino", "minkw", "ops", "velref", "masa", "tmin", "pen", "tmax", "maxkm", "extra", "margen"];
@@ -2921,12 +2965,12 @@ function mostrarOpcion(sesion, op) {
       r.coords.forEach((q,j)=>{const d=km(q,r.corredorVia);if(d<menor){menor=d;idx=j;}});
       puntosCorredor.push({pos:r.corredorVia,km:r.kmCorredor ?? op.acum[idx]});
     }
-    const todos = [...plan.paradas, ...vias,...puntosCorredor].sort((x, y) => x.km - y.km);
+    const todos = [...plan.paradas, ...vias].sort((x, y) => x.km - y.km);
     const en = enlaces(a, b, todos);
     const ex = document.createElement("div"); ex.className = "exportar";
-    const tx = document.createElement("span"); tx.className = "meta"; tx.textContent = "Navegar (la aplicación externa puede cambiar el recorrido):";
+    const tx = document.createElement("span"); tx.className = "meta"; tx.textContent = "Navegar: comprueba las paradas al abrir. Waze recibe solo la primera parada; Google en móvil recibe solo la primera si hay más de tres. El navegador puede cambiar el recorrido.";
     ex.appendChild(tx);
-    [["Apple Maps", en.apple], ["Google Maps", en.google], ["Waze", en.waze(b)]].forEach(([nombre, url]) => {
+    [["Apple Maps", en.apple], [en.googleCompleta ? "Google Maps" : "Google · primera parada", en.google], [todos.length ? "Waze · primera parada" : "Waze · destino", en.waze(en.siguiente)]].forEach(([nombre, url]) => {
       const l = document.createElement("a"); l.href = url; l.target = "_blank"; l.rel = "noopener"; l.textContent = nombre; ex.appendChild(l);
     });
 
@@ -2960,7 +3004,8 @@ function mostrarOpcion(sesion, op) {
     plan.paradas.forEach((p, i) => {
       const acceso = p.acceso || p.pos;
       const numero = i + 2 + vias.filter(v => v.km < p.km).length;
-      MapaEV.marker([acceso[1], acceso[0]], {icon: MapaEV.divIcon({className: "", html: `<div class="pin recarga"><span aria-hidden="true">⚡</span><span>${numero}</span></div>`, iconSize: [30, 30], iconAnchor: [15, 15]})}).addTo(capas).bindPopup(`${numero}. ${p.nombre} (${p.kw} kW)`);
+      MapaEV.marker([p.pos[1], p.pos[0]], {icon: MapaEV.divIcon({className: "", html: `<div class="pin recarga"><span aria-hidden="true">⚡</span><span>${numero}</span></div>`, iconSize: [30, 30], iconAnchor: [15, 15]})}).addTo(capas).bindPopup(`${numero}. ${p.nombre}${p.pueblo ? " · " + p.pueblo : ""} · ${p.op} (${p.kw} kW) · Ubicación según catálogo`);
+      dibujarAccesoEC(p, capas);
       const li = document.createElement("li");
       const t = document.createElement("strong"); t.textContent = p.nombre + (p.pueblo ? ", " + p.pueblo : "");
       const m = document.createElement("span"); m.className = "meta"; m.textContent = `${p.op}${p.distanciaAcceso > 15 ? ` · Acceso cartografiado a ${Math.round(p.distanciaAcceso)} m del punto de recarga` : ""}`;
@@ -2978,9 +3023,9 @@ function mostrarOpcion(sesion, op) {
       const w = document.createElement("a"); w.className = "wz"; w.href = en.waze(p.pos); w.target = "_blank"; w.rel = "noopener";
       w.textContent = "Ir aquí con Waze";
       const acciones = document.createElement("div"); acciones.className = "acciones-estacion";
-      acciones.append(botonFavorito({id:String(p.id).startsWith("reve:") ? p.id : "ocm:"+p.id,nombre:p.nombre,pos:p.pos,operador:p.op,kw:p.kw}), w);
-      li.appendChild(acciones);
-      items.push({km:p.km, minOSRM:p.minOSRM, li, meta:m, pos:acceso, nombre:p.nombre});
+      acciones.append(botonFavorito({id:String(p.id).startsWith("reve:") ? p.id : "ocm:"+p.id,nombre:p.nombre,pos:p.pos,operador:p.op,kw:p.kw}));
+      li.append(acciones, accionesNavegacionEC(p));
+      items.push({km:p.km, minOSRM:p.minOSRM, li, meta:m, pos:p.pos, nombre:p.nombre});
     });
     vias.forEach((v, i) => {
       const numero = i + 2 + plan.paradas.filter(p => p.km <= v.km).length;
